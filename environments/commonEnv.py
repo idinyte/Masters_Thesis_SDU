@@ -7,15 +7,20 @@ class CommonEnv:
 
     SIMULATION_STEP_DELAY = 1 / 240.
 
-    def __init__(self, robot, camera=None, vis=False, realtime=False, debug=False):
+    def __init__(self, robot, camera=None, vis=False, realtime=False, debug=False, VR=False):
         self.robot = robot
         self.vis = vis
         self.realtime = realtime
         self.debug=debug
         self.camera = camera
+        self.VR = VR
 
         # define environment
-        self.physicsClient = p.connect(p.GUI if self.vis else p.DIRECT)
+        if self.VR:
+            self.physicsClient = p.connect(p.SHARED_MEMORY)
+            assert self.physicsClient != -1, "Could not connect to the VR server. Is App_PhysicsServer_SharedMemory_VR_vs2010_x64_release.exe running?"
+        else:
+            self.physicsClient = p.connect(p.GUI if self.vis else p.DIRECT)
         self.connected = True
         p.resetSimulation()
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
