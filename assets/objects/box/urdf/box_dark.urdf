@@ -1,0 +1,134 @@
+<?xml version="1.0"?>
+<robot name="box_dark">
+  
+  <!-- Bottom of the box -->
+  <link name="box_bottom">
+    <visual>
+      <geometry>
+        <box size="0.5 0.5 0.02"/>  <!-- 50cm x 50cm, 2cm thick -->
+      </geometry>
+      <origin xyz="0 0 0.01"/>
+      <material name="gray">
+        <color rgba="0.25 0.25 0.25 1"/>
+      </material>
+    </visual>
+    
+    <collision>
+      <geometry>
+        <box size="0.5 0.5 0.02"/>  <!-- 50cm x 50cm collision box -->
+      </geometry>
+      <origin xyz="0 0 0.01"/>
+    </collision>
+  </link>
+
+  <!-- Walls of the box -->
+
+  <!-- Front Wall -->
+  <link name="box_wall_front">
+    <visual>
+      <geometry>
+        <box size="0.5 0.02 0.25"/>  <!-- Wall thickness 2cm, 50cm height -->
+      </geometry>
+      <origin xyz="0 0.26 0.125"/>
+      <material name="gray">
+        <color rgba="0.25 0.25 0.25 1"/>
+      </material>
+    </visual>
+    
+    <collision>
+      <geometry>
+        <box size="0.5 0.02 0.25"/>  <!-- Wall thickness 2cm, 50cm height -->
+      </geometry>
+      <origin xyz="0 0.26 0.125"/>
+    </collision>
+  </link>
+
+  <!-- Back Wall -->
+  <link name="box_wall_back">
+    <visual>
+      <geometry>
+        <box size="0.5 0.02 0.25"/>
+      </geometry>
+      <origin xyz="0 -0.26 0.125"/>
+      <material name="gray">
+        <color rgba="0.25 0.25 0.25 1"/>
+      </material>
+    </visual>
+    
+    <collision>
+      <geometry>
+        <box size="0.5 0.02 0.25"/>
+      </geometry>
+      <origin xyz="0 -0.26 0.125"/>
+    </collision>
+  </link>
+
+  <!-- Left Wall -->
+  <link name="box_wall_left">
+    <visual>
+      <geometry>
+        <box size="0.02 0.54 0.25"/>  <!-- 2cm thick, 50cm height -->
+      </geometry>
+      <origin xyz="-0.26 0 0.125"/>
+      <material name="gray">
+        <color rgba="0.25 0.25 0.25 1"/>
+      </material>
+    </visual>
+    
+    <collision>
+      <geometry>
+        <box size="0.02 0.54 0.25"/>
+      </geometry>
+      <origin xyz="-0.26 0 0.125"/>
+    </collision>
+  </link>
+
+  <!-- Right Wall -->
+  <link name="box_wall_right">
+    <visual>
+      <geometry>
+        <box size="0.02 0.54 0.25"/>
+      </geometry>
+      <origin xyz="0.26 0 0.125"/>
+      <material name="gray">
+        <color rgba="0.25 0.25 0.25 1"/>
+      </material>
+    </visual>
+    
+    <collision>
+      <geometry>
+        <box size="0.02 0.54 0.25"/>
+      </geometry>
+      <origin xyz="0.26 0 0.125"/>
+    </collision>
+  </link>
+
+  <!-- Trigger collider on the bottom (for detection) -->
+
+
+  <!-- Fixed Joints -->
+  <joint name="joint_bottom_front" type="fixed">
+    <parent link="box_bottom"/>
+    <child link="box_wall_front"/>
+    <origin xyz="0 0 0"/>
+  </joint>
+
+  <joint name="joint_bottom_back" type="fixed">
+    <parent link="box_bottom"/>
+    <child link="box_wall_back"/>
+    <origin xyz="0 0 0"/>
+  </joint>
+
+  <joint name="joint_bottom_left" type="fixed">
+    <parent link="box_bottom"/>
+    <child link="box_wall_left"/>
+    <origin xyz="0 0 0"/>
+  </joint>
+
+  <joint name="joint_bottom_right" type="fixed">
+    <parent link="box_bottom"/>
+    <child link="box_wall_right"/>
+    <origin xyz="0 0 0"/>
+  </joint>
+
+</robot>

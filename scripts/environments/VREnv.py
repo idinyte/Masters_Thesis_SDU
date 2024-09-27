@@ -1,15 +1,15 @@
-from environments.commonEnv import CommonEnv
+from scripts.environments.commonEnv import CommonEnv
 import pybullet as p
 import numpy as np
 
 class VREnv(CommonEnv):
-    def __init__(self, robot, camera=None, vis=True, realtime=False, debug=False, VR=True):
+    def __init__(self, robot, camera=None, vis=True, realtime=False, debug=False, VR=True, VRCameraPos = [0,-3, 1.5], VRCameraRot=[0,0,0]):
         self.vis = True
         self.VR = True
         super().__init__(robot, camera, self.vis, realtime, debug, VR=self.VR)
 
         # Enable VR mode
-        p.setVRCameraState([0,-3, 1.5],p.getQuaternionFromEuler([0,0,0]))
+        p.setVRCameraState(VRCameraPos,p.getQuaternionFromEuler(VRCameraRot))
         self.vr_controller1 = None
         self.vr_controller2 = None
         self.vr_headset = None
@@ -30,3 +30,4 @@ class VREnv(CommonEnv):
 
         # Proceed with the normal simulation step
         super().step_simulation()
+

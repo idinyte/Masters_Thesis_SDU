@@ -20,7 +20,8 @@ class CommonEnv:
             self.physicsClient = p.connect(p.SHARED_MEMORY)
             assert self.physicsClient != -1, "Could not connect to the VR server. Is App_PhysicsServer_SharedMemory_VR_vs2010_x64_release.exe running?"
         else:
-            self.physicsClient = p.connect(p.GUI if self.vis else p.DIRECT)
+            #self.physicsClient = p.connect(p.GUI if self.vis else p.DIRECT)
+            self.physicsClient = p.connect(p.SHARED_MEMORY)
         self.connected = True
         p.resetSimulation()
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
@@ -52,6 +53,12 @@ class CommonEnv:
         p.stepSimulation()
         if self.vis:
             time.sleep(self.SIMULATION_STEP_DELAY)
+
+    def main_loop(self):
+        self.step_simulation()
+
+    def is_connected(self):
+        return self.connected
             
     def read_debug_parameter(self):
         x = p.readUserDebugParameter(self.xin)
