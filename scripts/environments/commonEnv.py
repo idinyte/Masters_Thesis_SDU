@@ -20,14 +20,16 @@ class CommonEnv:
             self.physicsClient = p.connect(p.SHARED_MEMORY)
             assert self.physicsClient != -1, "Could not connect to the VR server. Is App_PhysicsServer_SharedMemory_VR_vs2010_x64_release.exe running?"
         else:
-            #self.physicsClient = p.connect(p.GUI if self.vis else p.DIRECT)
+            # self.physicsClient = p.connect(p.GUI if self.vis else p.DIRECT)
             self.physicsClient = p.connect(p.SHARED_MEMORY)
+            assert self.physicsClient != -1, "Could not connect to the bullet server."
         self.connected = True
-        p.resetSimulation()
+        p.resetSimulation(p.RESET_USE_DEFORMABLE_WORLD)
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
         p.setGravity(0, 0, -9.8)
         p.setRealTimeSimulation(1 if self.realtime else 0)
-
+        p.setPhysicsEngineParameter(sparseSdfVoxelSize=0.25)
+        
         # Load the plane
         self.planeID = p.loadURDF("plane.urdf", [0, 0, 0], [0, 0, 0, 1])
 

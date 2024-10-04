@@ -1,5 +1,6 @@
 from scripts.environments.commonEnv import CommonEnv
 from scripts.environments.VREnv import VREnv
+from scripts.objects.softBall import SoftBall 
 import pybullet as p
 import math
 import os
@@ -22,8 +23,7 @@ class SortBallsEnv():
         else:
             self.baseEnv = CommonEnv(self.robot, camera=self.camera, vis=self.vis, realtime=self.realtime, debug=self.debug, VR=self.VR)
 
-        self.robot_ball_count = 0
-        self.human_ball_count = 0
+        self.balls = []
         self.init_objects()
 
     def init_objects(self):
@@ -42,8 +42,16 @@ class SortBallsEnv():
 
         self.step_simulation()
 
+    def create_ball(self, sitffness = 600, base_position = [0, -1, 20], radius = 0.05):
+        ball = SoftBall(sitffness, base_position, radius)
+        ball.instantiate()
+
+        return ball
+
     def create_balls(self):
-        pass
+        if len(self.balls) < 2:
+            ball = self.create_ball()
+            self.balls.append(ball)
 
     def is_connected(self):
         return self.baseEnv.is_connected()
