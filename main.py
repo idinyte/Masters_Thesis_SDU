@@ -15,6 +15,5 @@ while env.is_connected():
     x, y, z, roll, pitch, yaw, gripper_opening_length = env.read_debug_parameter()
     robot.move_gripper_length(gripper_opening_length)
     #print(f"{robot.actual_gripper_finger_distance(visualize=True):.4f} m")
-  if not env.realtime:
-    env.main_loop()
-  continue
+
+  env.main_loop()

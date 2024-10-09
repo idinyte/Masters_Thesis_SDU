@@ -49,6 +49,7 @@ class SortBallsEnv():
         return ball
 
     def create_balls(self):
+        return
         if len(self.balls) < 2:
             ball = self.create_ball()
             self.balls.append(ball)

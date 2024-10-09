@@ -5,7 +5,7 @@
 # Code
 1. Setup python environment
 ```
-C:\Users\<YourUser>\AppData\Local\Programs\Python\Python39\python.exe -m venv venv
+C:\Users\Admin\AppData\Local\Programs\Python\Python39\python.exe -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
 ```

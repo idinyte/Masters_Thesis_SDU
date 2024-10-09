@@ -18,11 +18,11 @@ class CommonEnv:
         # define environment
         if self.VR:
             self.physicsClient = p.connect(p.SHARED_MEMORY)
-            assert self.physicsClient != -1, "Could not connect to the VR server. Is App_PhysicsServer_SharedMemory_VR_vs2010_x64_release.exe running?"
         else:
-            # self.physicsClient = p.connect(p.GUI if self.vis else p.DIRECT)
-            self.physicsClient = p.connect(p.SHARED_MEMORY)
-            assert self.physicsClient != -1, "Could not connect to the bullet server."
+            self.physicsClient = p.connect(p.GUI if self.vis else p.DIRECT)
+            # self.physicsClient = p.connect(p.SHARED_MEMORY_GUI if self.vis else p.SHARED_MEMORY)
+        
+        assert self.physicsClient != -1, "Could not connect to the bullet server."
         self.connected = True
         p.resetSimulation(p.RESET_USE_DEFORMABLE_WORLD)
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
@@ -47,6 +47,13 @@ class CommonEnv:
             self.pitchId = p.addUserDebugParameter("pitch", -3.14, 3.14, np.pi/2)
             self.yawId = p.addUserDebugParameter("yaw", -np.pi/2, np.pi/2, np.pi/2)
             self.gripper_opening_length_control = p.addUserDebugParameter("gripper_opening_length", self.robot.gripper_range[0], self.robot.gripper_range[1], (self.robot.gripper_range[1] - self.robot.gripper_range[0]) / 2)
+            
+        # debug camera position
+        if self.vis:
+            p.resetDebugVisualizerCamera(cameraDistance=3, 
+                              cameraYaw=0.0, 
+                              cameraPitch=-15.0, 
+                              cameraTargetPosition=[0, 0, 1.5])
 
     def step_simulation(self):
         if self.realtime:
