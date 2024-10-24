@@ -5,15 +5,15 @@ import numpy as np
 
 class CommonEnv:
 
-    SIMULATION_STEP_DELAY = 1 / 240.
 
-    def __init__(self, robot, camera=None, vis=False, realtime=False, debug=False, VR=False):
+    def __init__(self, robot, camera=None, vis=False, realtime=False, debug=False, VR=False, SIMULATION_STEP=1/240):
         self.robot = robot
         self.vis = vis
         self.realtime = realtime
         self.debug=debug
         self.camera = camera
         self.VR = VR
+        self.SIMULATION_STEP = SIMULATION_STEP
 
         # define environment
         if self.VR:
@@ -24,11 +24,13 @@ class CommonEnv:
         
         assert self.physicsClient != -1, "Could not connect to the bullet server."
         self.connected = True
+
         p.resetSimulation(p.RESET_USE_DEFORMABLE_WORLD)
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
         p.setGravity(0, 0, -9.8)
         p.setRealTimeSimulation(1 if self.realtime else 0)
         p.setPhysicsEngineParameter(sparseSdfVoxelSize=0.25)
+        p.setTimeStep(self.SIMULATION_STEP)
         
         # Load the plane
         self.planeID = p.loadURDF("plane.urdf", [0, 0, 0], [0, 0, 0, 1])
@@ -40,13 +42,13 @@ class CommonEnv:
 
         # custom sliders to tune parameters (name of the parameter,range,initial value)
         if self.debug:
-            self.xin = p.addUserDebugParameter("x", -0.224, 0.224, 0)
-            self.yin = p.addUserDebugParameter("y", -0.224, 0.224, 0)
-            self.zin = p.addUserDebugParameter("z", 0, 1., 0.5)
+            self.xin = p.addUserDebugParameter("x", -2, 2, 0)
+            self.yin = p.addUserDebugParameter("y", -2, 2, -0.5)
+            self.zin = p.addUserDebugParameter("z", 0, 2, 1.22)
             self.rollId = p.addUserDebugParameter("roll", -3.14, 3.14, 0)
             self.pitchId = p.addUserDebugParameter("pitch", -3.14, 3.14, np.pi/2)
             self.yawId = p.addUserDebugParameter("yaw", -np.pi/2, np.pi/2, np.pi/2)
-            self.gripper_opening_length_control = p.addUserDebugParameter("gripper_opening_length", self.robot.gripper_range[0], self.robot.gripper_range[1], (self.robot.gripper_range[1] - self.robot.gripper_range[0]) / 2)
+            self.gripper_opening_length_control = p.addUserDebugParameter("gripper_opening_length", self.robot.gripper_range[0], self.robot.gripper_range[1], 0.1)
             
         # debug camera position
         if self.vis:
@@ -60,8 +62,8 @@ class CommonEnv:
           return
 
         p.stepSimulation()
-        if self.vis:
-            time.sleep(self.SIMULATION_STEP_DELAY)
+        # if self.vis:
+        #     time.sleep(self.SIMULATION_STEP_DELAY)
 
     def main_loop(self):
         self.step_simulation()
@@ -77,7 +79,6 @@ class CommonEnv:
         pitch = p.readUserDebugParameter(self.pitchId)
         yaw = p.readUserDebugParameter(self.yawId)
         gripper_opening_length = p.readUserDebugParameter(self.gripper_opening_length_control)
-
         return x, y, z, roll, pitch, yaw, gripper_opening_length
             
     def close(self):

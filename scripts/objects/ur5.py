@@ -10,6 +10,10 @@ class UR5Robot:
         self.eef_id = 7
         self.arm_num_dofs = 6
         self.arm_rest_poses = [-1.57, -1.55, 1.34, -1.37, -1.57, 0]
+        
+        # for debugging
+        self.arm_rest_poses = [-1.789883877596033, -1.430909590958482, 1.954781054223412, -2.095465266615244, -1.5537133877330433, -1.5151807365373613]
+        
         self.gripper_range = [0, 0.127] # max should be 0.14, but when actually measured in simulation it's less
         self.debug_line_handle = None
       
@@ -25,7 +29,7 @@ class UR5Robot:
         self._parse_joint_info()
         self._set_robot_arm_limits()
         self._gripper_contraints()
-        
+                
     def _parse_joint_info(self):
         """Populate self.joints"""
         numJoints = p.getNumJoints(self.robot_id)
@@ -92,6 +96,67 @@ class UR5Robot:
                               useFixedBase=self.use_fixed_base,
                               flags=p.URDF_ENABLE_CACHED_GRAPHICS_SHAPES)
         return robot_id
+    
+    def print_joint_info(self):
+        for info in self.joints:
+            print(info)
+            
+    def visualize_joints(self):
+        for joint in self.joints:
+            # Get the world position of the joint's parent link
+            joint_state = p.getLinkState(self.robot_id, joint.id)
+            joint_position = joint_state[0]  # position in [x, y, z]
+            
+            # Add a small sphere at the joint's position for visualization
+            p.addUserDebugText(f"{joint.name} (ID: {joint.id})", joint_position, textColorRGB=[1, 0, 0], textSize=1.2)
+            p.addUserDebugLine(joint_position, [joint_position[0], joint_position[1], joint_position[2] + 0.01], 
+                            lineColorRGB=[0, 1, 0], lineWidth=2.0)
+
+            # Optional: print joint information for reference
+            print(f"Joint {joint.id}: {joint.name} at {joint_position}")
+            
+    def visualize_gripper_pads_grab_pos(self):
+        p.removeAllUserDebugItems()
+        
+        left_pad_pos = np.array(p.getLinkState(self.robot_id, 12)[0])
+        right_pad_pos = np.array(p.getLinkState(self.robot_id, 17)[0])
+        
+        middle_point = (left_pad_pos + right_pad_pos) / 2
+        
+        p.addUserDebugLine(left_pad_pos, right_pad_pos, lineColorRGB=[0, 1, 0], lineWidth=2.0)
+        p.addUserDebugLine([middle_point[0], middle_point[1], middle_point[2] - 0.05], 
+                        [middle_point[0], middle_point[1], middle_point[2] + 0.05], 
+                        lineColorRGB=[1, 0, 0], lineWidth=2.0)
+        
+    def get_gripper_middle_pad_pos(self):
+        left_pad_pos = np.array(p.getLinkState(self.robot_id, 12)[0])
+        right_pad_pos = np.array(p.getLinkState(self.robot_id, 17)[0])
+        
+        middle_point = (left_pad_pos + right_pad_pos) / 2
+        return middle_point.tolist()
+    
+    def get_gripper_contact_forces(self, ball_id):
+        left_pad_id = 12
+        right_pad_id = 17
+        
+        contact_points = p.getContactPoints(bodyA=self.robot_id, bodyB=ball_id)
+        # print(f"contact_points {contact_points}")
+        
+        left_pad_force = 0
+        right_pad_force = 0
+        
+        # contact_points = p.getContactPoints(bodyA=self.robot_id, bodyB=ball_id, linkIndexA=1)
+        # compressive_normal_force = sum(contact[9] for contact in contact_points)
+        link_ids = []
+        for contact in contact_points:
+            link_id = contact[3]
+            link_ids.append((link_id, contact[9], contact[10], contact[12]))
+            if link_id == left_pad_id:
+                left_pad_force += contact[9]
+            elif link_id == right_pad_id:
+                right_pad_force += contact[9]
+        
+        return left_pad_force, right_pad_force, link_ids
 
     def reset(self):
         self.reset_arm()
@@ -121,8 +186,22 @@ class UR5Robot:
                                 targetPosition=target_position)
         
     def move_gripper_length(self, open_length):
-        open_angle = 0.69432087 - 4.83034527*open_length - 4.74692119*open_length*open_length
+        open_angle = self.gripper_distance_to_angle(open_length)
         self.move_gripper_angle(open_angle)
+        
+    def gripper_distance_to_angle(self, open_length):
+        return 0.69432087 - 4.83034527*open_length - 4.74692119*open_length*open_length
+    
+    def gripper_angle_to_distance(self, angle):
+        a = 4.74692119
+        b = 4.83034527
+        c = angle - 0.69432087
+
+        discriminant = b**2 - 4*a*c
+        if discriminant >= 0:
+            return (-b + np.sqrt(discriminant)) / (2*a)
+        
+        return 0
         
     def move_gripper_angle(self, angle):
       p.setJointMotorControl2(self.robot_id, self.gripper_id, p.POSITION_CONTROL, targetPosition=angle,
@@ -194,3 +273,37 @@ class UR5Robot:
         )
       
       return max(distance, 0)
+  
+    def move_ee_to_target_pos(self, targetPos, targetRot = None):
+        ik_solution = self.calculate_IK(targetPos, targetRot)
+        self.move_joints_arr([1, 2, 3, 4, 5, 6] , ik_solution[:6])
+  
+    def calculate_IK(self, targetPos, targetRot = None):
+        ee_id = 7
+        if targetRot == None:
+            return p.calculateInverseKinematics(self.robot_id, ee_id, targetPos)
+        
+        targetRotQuart = p.getQuaternionFromEuler(targetRot)
+        return p.calculateInverseKinematics(self.robot_id, ee_id, targetPos, targetRotQuart)
+        
+    def move_joints_arr(self, indices, poses, targetRot = None):
+        p.setJointMotorControlArray(
+            bodyUniqueId=self.robot_id,
+            jointIndices=indices,
+            controlMode=p.POSITION_CONTROL,
+            targetPositions=poses
+        )
+        
+    def get_robot_state(self, ballId):
+        joint_states = p.getJointStates(self.robot_id, self.arm_controllable_joints)
+        
+        joint_angles = [state[0] for state in joint_states]
+        
+
+        gripper_joint_angle= p.getJointState(self.robot_id, self.gripper_id)[0]
+        gripper_open_length = self.gripper_angle_to_distance(gripper_joint_angle)
+        
+        gripper_pos = self.get_gripper_middle_pad_pos()
+        left_pad_force, right_pad_force, link_ids = self.get_gripper_contact_forces(ballId)
+        
+        return joint_angles, gripper_open_length, gripper_pos, left_pad_force, right_pad_force, link_ids

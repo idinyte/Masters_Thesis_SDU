@@ -3,13 +3,13 @@ import pybullet as p
 import numpy as np
 
 class VREnv(CommonEnv):
-    def __init__(self, robot, camera=None, vis=True, realtime=False, debug=False, VR=True, VRCameraPos = [0,-3, 1.5], VRCameraRot=[0,0,0]):
+    def __init__(self, robot, camera=None, vis=True, realtime=False, debug=False, VR=True, VRCameraPos = [0,-3, 1.5], VRCameraRot=[0,0,0], SIMULATION_STEP=1/240):
         self.vis = True
         self.VR = True
-        super().__init__(robot, camera, self.vis, realtime, debug, VR=self.VR)
+        super().__init__(robot, camera, self.vis, realtime, debug, VR=self.VR, SIMULATION_STEP=SIMULATION_STEP)
 
         # Enable VR mode
-        p.setVRCameraState(VRCameraPos,p.getQuaternionFromEuler(VRCameraRot))
+        p.setVRCameraState(VRCameraPos, p.getQuaternionFromEuler(VRCameraRot))
         self.vr_controller1 = None
         self.vr_controller2 = None
         self.vr_headset = None
