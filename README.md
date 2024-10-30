@@ -19,7 +19,9 @@ https://store.steampowered.com/app/250820/SteamVR/
 
 4. Launch SteamVR. make sure headset is connected and working
 
-# Turns out latest bullet version 3.25 works with VR but crashes when loading softbody. Use these steps if you don't need soft body, otherwise look bellow 
+---------------------------------------------------------------------------------------------------------------------------------
+Turns out latest bullet version 3.25 works with VR but crashes when loading softbody. Use these steps if you don't need soft body, otherwise look bellow
+
 5. Download bullet3 source
 https://github.com/bulletphysics/bullet3/releases/tag/3.25
 
@@ -36,6 +38,8 @@ https://github.com/bulletphysics/bullet3/releases/tag/3.25
 11. build App_PhysicsServer_SharedMemory_VR
 
 12. Run VR server bullet3-3.25\bin\App_PhysicsServer_SharedMemory_VR_vs2010_x64_release.exe before running pubyllet with shared_memory client (VR only)
+
+---------------------------------------------------------------------------------------------------------------------------------
 
 # VR with SoftBody support
 
@@ -58,8 +62,6 @@ git clone git@github.com:bulletphysics/bullet3.git
 8. The instalation places .dll file in the wrong directory. Move bullet3\build_cmake\examples\SharedMemory\openvr64pi.dll to bullet3\build_cmake\examples\SharedMemory\Debug\openvr64pi.dll
 
 9. Start VR server bullet3\build_cmake\examples\SharedMemory\Debug\App_PhysicsServer_SharedMemory_VR
-
-
 
 # Linux (depricated, poor VR support)
 ```
