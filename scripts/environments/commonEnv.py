@@ -19,7 +19,8 @@ class CommonEnv:
         if self.VR:
             self.physicsClient = p.connect(p.SHARED_MEMORY)
         else:
-            self.physicsClient = p.connect(p.GUI if self.vis else p.DIRECT)
+            self.physicsClient = p.connect(p.SHARED_MEMORY)
+            #self.physicsClient = p.connect(p.GUI if self.vis else p.DIRECT)
             # self.physicsClient = p.connect(p.SHARED_MEMORY_GUI if self.vis else p.SHARED_MEMORY)
         
         assert self.physicsClient != -1, "Could not connect to the bullet server."

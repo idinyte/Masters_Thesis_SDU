@@ -19,6 +19,7 @@ https://store.steampowered.com/app/250820/SteamVR/
 
 4. Launch SteamVR. make sure headset is connected and working
 
+# Turns out latest bullet version 3.25 works with VR but crashes when loading softbody. Use these steps if you don't need soft body, otherwise look bellow 
 5. Download bullet3 source
 https://github.com/bulletphysics/bullet3/releases/tag/3.25
 
@@ -35,6 +36,30 @@ https://github.com/bulletphysics/bullet3/releases/tag/3.25
 11. build App_PhysicsServer_SharedMemory_VR
 
 12. Run VR server bullet3-3.25\bin\App_PhysicsServer_SharedMemory_VR_vs2010_x64_release.exe before running pubyllet with shared_memory client (VR only)
+
+# VR with SoftBody support
+
+5. Git clone bullet3 master, which is currently at version 3.26
+
+git clone git@github.com:bulletphysics/bullet3.git
+
+6. Building with premake is outdated and softbody doesnt work. run build_visual_studio_vr_pybullet_double_cmake.bat instead. This needs some preparation
+
+6.1 Download Cmake https://cmake.org/download/
+
+6.2 modify the bat file to point to corrent visual studio version. I used -G "Visual Studio 17 2022"
+
+6.3 modify bat file to point to correct python locations
+
+6.4 add -DUSE_OPENVR=ON flag to cmake flags
+
+7. open bullet3\build_cmake\BULLET_PHYSICS.sln with visual studio and build App_PhysicsServer_SharedMemory_VR
+
+8. The instalation places .dll file in the wrong directory. Move bullet3\build_cmake\examples\SharedMemory\openvr64pi.dll to bullet3\build_cmake\examples\SharedMemory\Debug\openvr64pi.dll
+
+9. Start VR server bullet3\build_cmake\examples\SharedMemory\Debug\App_PhysicsServer_SharedMemory_VR
+
+
 
 # Linux (depricated, poor VR support)
 ```

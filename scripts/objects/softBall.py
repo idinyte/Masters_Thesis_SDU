@@ -4,7 +4,7 @@ import numpy as np
 import time
 
 class SoftBall():
-    def __init__(self, youngs_modulus, poisson_ration, radius, density = 300, name = "", robot_base_pos = [0, 0, 0]):
+    def __init__(self, youngs_modulus, poisson_ration, radius, density = 400, name = "", robot_base_pos = [0, 0, 0]):
         self.youngs_modulus = youngs_modulus
         self.poisson_ration = poisson_ration
         self.radius = radius
@@ -57,8 +57,8 @@ class SoftBall():
         self.ball_position = p.getBasePositionAndOrientation(self.id)[0]
 
     def is_ball_within_robot_reach(self):
-        radius_min = 0.1
-        radius_max = 1
+        radius_min = 0.2
+        radius_max = 1.5
         distance = self.euclidean_distance(self.robot_base_pos, self.ball_position)
 
         return radius_min <= distance <= radius_max

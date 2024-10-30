@@ -5,6 +5,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from numpy.polynomial import Polynomial
 
+
+RIGHT_PAD_GRIPPER_INDEX = 17
+LEFT_PAD_GRIPPER_INDEX = 12
 class UR5Robot:
     def __init__(self, urdf_path, base_position=[0, 0, 0], base_orientation=[0, 0, 0, 1], use_fixed_base=True):
         self.eef_id = 7
@@ -29,6 +32,9 @@ class UR5Robot:
         self._parse_joint_info()
         self._set_robot_arm_limits()
         self._gripper_contraints()
+        
+        p.changeDynamics(self.robot_id, LEFT_PAD_GRIPPER_INDEX, lateralFriction=10.0)
+        p.changeDynamics(self.robot_id, RIGHT_PAD_GRIPPER_INDEX, lateralFriction=10.0)
                 
     def _parse_joint_info(self):
         """Populate self.joints"""
@@ -118,8 +124,8 @@ class UR5Robot:
     def visualize_gripper_pads_grab_pos(self):
         p.removeAllUserDebugItems()
         
-        left_pad_pos = np.array(p.getLinkState(self.robot_id, 12)[0])
-        right_pad_pos = np.array(p.getLinkState(self.robot_id, 17)[0])
+        left_pad_pos = np.array(p.getLinkState(self.robot_id, LEFT_PAD_GRIPPER_INDEX)[0])
+        right_pad_pos = np.array(p.getLinkState(self.robot_id, RIGHT_PAD_GRIPPER_INDEX)[0])
         
         middle_point = (left_pad_pos + right_pad_pos) / 2
         
@@ -129,34 +135,26 @@ class UR5Robot:
                         lineColorRGB=[1, 0, 0], lineWidth=2.0)
         
     def get_gripper_middle_pad_pos(self):
-        left_pad_pos = np.array(p.getLinkState(self.robot_id, 12)[0])
-        right_pad_pos = np.array(p.getLinkState(self.robot_id, 17)[0])
+        left_pad_pos = np.array(p.getLinkState(self.robot_id, LEFT_PAD_GRIPPER_INDEX)[0])
+        right_pad_pos = np.array(p.getLinkState(self.robot_id, RIGHT_PAD_GRIPPER_INDEX)[0])
         
         middle_point = (left_pad_pos + right_pad_pos) / 2
         return middle_point.tolist()
     
     def get_gripper_contact_forces(self, ball_id):
-        left_pad_id = 12
-        right_pad_id = 17
-        
         contact_points = p.getContactPoints(bodyA=self.robot_id, bodyB=ball_id)
-        # print(f"contact_points {contact_points}")
-        
+
         left_pad_force = 0
         right_pad_force = 0
-        
-        # contact_points = p.getContactPoints(bodyA=self.robot_id, bodyB=ball_id, linkIndexA=1)
-        # compressive_normal_force = sum(contact[9] for contact in contact_points)
-        link_ids = []
+
         for contact in contact_points:
             link_id = contact[3]
-            link_ids.append((link_id, contact[9], contact[10], contact[12]))
-            if link_id == left_pad_id:
+            if link_id == LEFT_PAD_GRIPPER_INDEX:
                 left_pad_force += contact[9]
-            elif link_id == right_pad_id:
+            elif link_id == RIGHT_PAD_GRIPPER_INDEX:
                 right_pad_force += contact[9]
         
-        return left_pad_force, right_pad_force, link_ids
+        return left_pad_force, right_pad_force
 
     def reset(self):
         self.reset_arm()
@@ -304,6 +302,6 @@ class UR5Robot:
         gripper_open_length = self.gripper_angle_to_distance(gripper_joint_angle)
         
         gripper_pos = self.get_gripper_middle_pad_pos()
-        left_pad_force, right_pad_force, link_ids = self.get_gripper_contact_forces(ballId)
+        left_pad_force, right_pad_force = self.get_gripper_contact_forces(ballId)
         
-        return joint_angles, gripper_open_length, gripper_pos, left_pad_force, right_pad_force, link_ids
+        return joint_angles, gripper_open_length, gripper_pos, left_pad_force, right_pad_force 
