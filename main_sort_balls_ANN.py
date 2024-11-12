@@ -1,13 +1,8 @@
 import pybullet as p
 from scripts.objects.ur5 import UR5Robot
-from scripts.environments.commonEnv import CommonEnv
-from scripts.environments.VREnv import VREnv
 from scripts.environments.sortBallsEnv import SortBallsEnv
 from scripts.ANN.sortBallsANN import SortBallsANN
-import numpy as np
 import os
-import sys
-import time
 
 # Initialize the UR5 robot
 robot = UR5Robot(urdf_path=os.path.join(os.getcwd(), "assets/objects/UR5/urdf/ur5_robotiq_140_modified.urdf"), base_position=[0, 0, 0], base_orientation=[0.0, 0.0, 0.0, 1.0], use_fixed_base=True)

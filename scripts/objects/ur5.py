@@ -15,7 +15,7 @@ class UR5Robot:
         self.arm_rest_poses = [-1.57, -1.55, 1.34, -1.37, -1.57, 0]
         
         # for debugging
-        self.arm_rest_poses = [-1.789883877596033, -1.430909590958482, 1.954781054223412, -2.095465266615244, -1.5537133877330433, -1.5151807365373613]
+        # self.arm_rest_poses = [-1.789883877596033, -1.430909590958482, 1.954781054223412, -2.095465266615244, -1.5537133877330433, -1.5151807365373613]
         
         self.gripper_range = [0, 0.127] # max should be 0.14, but when actually measured in simulation it's less
         self.debug_line_handle = None
@@ -36,13 +36,14 @@ class UR5Robot:
         p.changeDynamics(self.robot_id, LEFT_PAD_GRIPPER_INDEX, lateralFriction=10.0)
         p.changeDynamics(self.robot_id, RIGHT_PAD_GRIPPER_INDEX, lateralFriction=10.0)
                 
-    def _parse_joint_info(self):
+    def _parse_joint_info(self, print_info=True):
         """Populate self.joints"""
         numJoints = p.getNumJoints(self.robot_id)
         jointInfo = namedtuple('jointInfo', 
             ['id','name','type','damping','friction','lowerLimit','upperLimit','maxForce','maxVelocity','controllable'])
         self.joints = []
         self.controllable_joints = []
+        self.controllable_joints_axis = []
         for i in range(numJoints):
             info = p.getJointInfo(self.robot_id, i)
             jointID = info[0]
@@ -57,9 +58,13 @@ class UR5Robot:
             controllable = (jointType != p.JOINT_FIXED)
             if controllable:
                 self.controllable_joints.append(jointID)
+                axis = info[13]
+                self.controllable_joints_axis.append(axis)
                 p.setJointMotorControl2(self.robot_id, jointID, p.VELOCITY_CONTROL, targetVelocity=0, force=0)
             info = jointInfo(jointID,jointName,jointType,jointDamping,jointFriction,jointLowerLimit,
                             jointUpperLimit,jointMaxForce,jointMaxVelocity,controllable)
+            if print_info:
+                print(info)
             self.joints.append(info)
         
     def _set_robot_arm_limits(self):
@@ -202,8 +207,7 @@ class UR5Robot:
         return 0
         
     def move_gripper_angle(self, angle):
-      p.setJointMotorControl2(self.robot_id, self.gripper_id, p.POSITION_CONTROL, targetPosition=angle,
-                                force=self.joints[self.gripper_id].maxForce, maxVelocity=self.joints[self.gripper_id].maxVelocity)
+      p.setJointMotorControl2(self.robot_id, self.gripper_id, p.POSITION_CONTROL, targetPosition=angle)
   
     def _gripper_distance_formula(self, min_angle=0, max_angle=1, degree=2):
       """Gets relationship between gripper finger distance (X) and open angle (Y), creates polynomial function."""
@@ -292,16 +296,56 @@ class UR5Robot:
             targetPositions=poses
         )
         
-    def get_robot_state(self, ballId):
-        joint_states = p.getJointStates(self.robot_id, self.arm_controllable_joints)
-        
-        joint_angles = [state[0] for state in joint_states]
-        
-
+    def get_gripper_open_length(self):
         gripper_joint_angle= p.getJointState(self.robot_id, self.gripper_id)[0]
         gripper_open_length = self.gripper_angle_to_distance(gripper_joint_angle)
+        return gripper_open_length
+    
+        
+    def get_robot_state(self, ballId):
+        joint_states = p.getJointStates(self.robot_id, self.arm_controllable_joints)
+        joint_angles = [state[0] for state in joint_states]
+
+        gripper_open_length = self.get_gripper_open_length()
         
         gripper_pos = self.get_gripper_middle_pad_pos()
         left_pad_force, right_pad_force = self.get_gripper_contact_forces(ballId)
         
-        return joint_angles, gripper_open_length, gripper_pos, left_pad_force, right_pad_force 
+        return joint_angles, gripper_open_length, gripper_pos, left_pad_force, right_pad_force
+    
+    def is_grabbing_ball(self, ballId):
+        left_pad_force, right_pad_force = self.get_gripper_contact_forces(ballId)
+        return left_pad_force > 0 and right_pad_force > 0
+    
+    def get_motor_joint_states(self):
+        joint_states = p.getJointStates(self.robot_id, range(p.getNumJoints(self.robot_id)))
+        joint_infos = [p.getJointInfo(self.robot_id, i) for i in range(p.getNumJoints(self.robot_id))]
+        joint_states = [j for j, i in zip(joint_states, joint_infos) if i[3] > -1]
+        joint_positions = [state[0] for state in joint_states]
+        joint_velocities = [state[1] for state in joint_states]
+        joint_torques = [state[3] for state in joint_states]
+
+        return joint_positions, joint_velocities, joint_torques
+    
+    def get_jacobian(self):
+        mpos, mvel, mtorq = self.get_motor_joint_states()
+        result = p.getLinkState(self.robot_id,
+                                self.eef_id,
+                                computeLinkVelocity=1,
+                                computeForwardKinematics=1)
+
+        zero_vec = [0.0] * len(mpos)
+        jac_t, jac_r = p.calculateJacobian(self.robot_id, self.eef_id, result[2], mpos, zero_vec, zero_vec)
+
+        j_t = np.array([jac_t[0][:6], jac_t[1][:6], jac_t[2][:6]])
+        j_r = np.array([jac_r[0][:6], jac_r[1][:6], jac_r[2][:6]])
+        
+        return  j_t, j_r
+    
+    def get_ee_link_pose(self):
+        link_state = p.getLinkState(self.robot_id, self.eef_id)
+        pos_end_effector = link_state[4]
+        orientation_quat = link_state[5]
+
+        return np.array(pos_end_effector), np.array(orientation_quat)
+        

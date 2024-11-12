@@ -19,9 +19,7 @@ class CommonEnv:
         if self.VR:
             self.physicsClient = p.connect(p.SHARED_MEMORY)
         else:
-            self.physicsClient = p.connect(p.SHARED_MEMORY)
-            #self.physicsClient = p.connect(p.GUI if self.vis else p.DIRECT)
-            # self.physicsClient = p.connect(p.SHARED_MEMORY_GUI if self.vis else p.SHARED_MEMORY)
+            self.physicsClient = p.connect(p.GUI if self.vis else p.DIRECT)
         
         assert self.physicsClient != -1, "Could not connect to the bullet server."
         self.connected = True
@@ -48,19 +46,19 @@ class CommonEnv:
             self.zin = p.addUserDebugParameter("z", 0, 2, 1.22)
             self.rollId = p.addUserDebugParameter("roll", -3.14, 3.14, 0)
             self.pitchId = p.addUserDebugParameter("pitch", -3.14, 3.14, np.pi/2)
-            self.yawId = p.addUserDebugParameter("yaw", -np.pi/2, np.pi/2, np.pi/2)
+            self.yawId = p.addUserDebugParameter("yaw", -3*np.pi, 2*np.pi, np.pi/2)
             self.gripper_opening_length_control = p.addUserDebugParameter("gripper_opening_length", self.robot.gripper_range[0], self.robot.gripper_range[1], 0.1)
             
         # debug camera position
         if self.vis:
-            p.resetDebugVisualizerCamera(cameraDistance=3, 
+            p.resetDebugVisualizerCamera(cameraDistance=2, 
                               cameraYaw=0.0, 
                               cameraPitch=-15.0, 
                               cameraTargetPosition=[0, 0, 1.5])
 
     def step_simulation(self):
         if self.realtime:
-          return
+          time.sleep(self.SIMULATION_STEP)
 
         p.stepSimulation()
         # if self.vis:

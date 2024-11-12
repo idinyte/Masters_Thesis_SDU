@@ -24,10 +24,10 @@ class BallDataset(Dataset):
     def __getitem__(self, idx):
         return torch.tensor(self.data[idx], dtype=torch.float32), torch.tensor(self.labels[idx])
 
-data_file_path = os.path.join(os.path.dirname(__file__), 'data', 'data.txt')
-train_file_path = os.path.join(os.path.dirname(__file__), 'data', 'train.txt')
-test_file_path = os.path.join(os.path.dirname(__file__), 'data', 'test.txt')
-train_history = os.path.join(os.path.dirname(__file__), 'data', 'train_history.txt')
+data_file_path = os.path.join(os.path.dirname(__file__), 'data2', 'data.txt')
+train_file_path = os.path.join(os.path.dirname(__file__), 'data2', 'train.txt')
+test_file_path = os.path.join(os.path.dirname(__file__), 'data2', 'test.txt')
+train_history = os.path.join(os.path.dirname(__file__), 'data2', 'train_history.txt')
 
 # Split dataset into train and test sets and save to separate files
 dataset = BallDataset(data_file_path)
@@ -50,7 +50,7 @@ output_dim = 4  # 4 types of balls
 num_epochs = 5000
 batch_size = 32
 learning_rate = 0.001
-model_archtecture = "8_64_4"
+model_archtecture = "8_32_4"
 
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
@@ -115,4 +115,4 @@ accuracy = 100 * correct / total
 print(f'Accuracy on test set: {accuracy:.2f}%')
 
 # Save final model after training
-torch.save(model, os.path.join(os.path.dirname(__file__), f"ann_weights_architecture_{model_archtecture}_epochs_{num_epochs}_acc_{int(accuracy * 10)}.pth"))
+torch.save(model.state_dict(), os.path.join(os.path.dirname(__file__), f"ann_weights_architecture_{model_archtecture}_epochs_{num_epochs}_acc_{int(accuracy * 10)}.pth"))

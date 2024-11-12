@@ -4,9 +4,9 @@ from scripts.objects.softBall import SoftBall
 import pybullet as p
 import random
 import os
+import copy
 
 POISSON_RATIO = 0.4
-RADIUS = 0.045
 DENSITY = 400
 
 BALL_TYPE_1 = "1"
@@ -41,8 +41,10 @@ class SortBallsEnv():
         else:
             self.SIMULATION_STEP = 1/1000
             self.baseEnv = CommonEnv(self.robot, camera=self.camera, vis=self.vis, realtime=self.realtime, debug=self.debug, VR=self.VR, SIMULATION_STEP=self.SIMULATION_STEP)
-
+        
+        self.ball_radius = 0.045
         self.init_objects()
+        self.simulation_time = 0
         
     def print_all_objects(self):
         num_bodies = p.getNumBodies()
@@ -56,33 +58,70 @@ class SortBallsEnv():
 
     def init_objects(self):
         # Table
-        self.table_id = p.loadURDF("table/table.urdf", basePosition=[0, -0.5, 0], baseOrientation=p.getQuaternionFromEuler([0, 0, 0]), globalScaling=1.6, useFixedBase=True)
+        self.table_id = p.loadURDF("table/table.urdf", basePosition=[0, -0.7, 0], baseOrientation=p.getQuaternionFromEuler([0, 0, 0]), globalScaling=1.6, useFixedBase=True)
 
         # Boxes
-        box_hard_base_pos = [0.75, -0.5, 1]
-        self.box_robot_stiff_id = p.loadURDF(os.path.join(os.getcwd(), "assets/objects/box/urdf/box_dark.urdf"), basePosition=[0.75, -0.5, 1], baseOrientation=p.getQuaternionFromEuler([0, 0, 0]), useFixedBase=True)
-        self.hard_ball_goal_pose = box_hard_base_pos
-        self.hard_ball_goal_pose[2] += RADIUS
+        box_1_base_pos = [0.27 + 0.54, -1 + 0.54, 1]
+        self.box_1_id = p.loadURDF(os.path.join(os.getcwd(), "assets/objects/box/urdf/box_light.urdf"), basePosition=box_1_base_pos, baseOrientation=p.getQuaternionFromEuler([0, 0, 0]), useFixedBase=True)
+        self.ball_1_goal_pose = box_1_base_pos
+        self.ball_1_goal_pose[2] += self.ball_radius
 
-        box_soft_base_pos = [-0.75, -0.5, 1]
-        self.box_robot_not_stiff_id = p.loadURDF(os.path.join(os.getcwd(), "assets/objects/box/urdf/box_light.urdf"), basePosition=box_soft_base_pos, baseOrientation=p.getQuaternionFromEuler([0, 0, 0]), useFixedBase=True)
-        self.soft_ball_goal_pose = box_soft_base_pos
-        self.soft_ball_goal_pose[2] += RADIUS
+        box_2_base_pos = [0.27, -0.9, 1]
+        self.box_2_id = p.loadURDF(os.path.join(os.getcwd(), "assets/objects/box/urdf/box_light_gray.urdf"), basePosition=box_2_base_pos, baseOrientation=p.getQuaternionFromEuler([0, 0, 0]), useFixedBase=True)
+        self.ball_2_goal_pose = box_2_base_pos
+        self.ball_2_goal_pose[2] += self.ball_radius
+        
+        box_3_base_pos = [-0.27, -0.9, 1]
+        self.box_3_id = p.loadURDF(os.path.join(os.getcwd(), "assets/objects/box/urdf/box_dark_gray.urdf"), basePosition=box_3_base_pos, baseOrientation=p.getQuaternionFromEuler([0, 0, 0]), useFixedBase=True)
+        self.ball_3_goal_pose = box_3_base_pos
+        self.ball_3_goal_pose[2] += self.ball_radius
+        
+        box_4_base_pos = [-0.27 - 0.54, -1 + 0.54, 1]
+        self.box_4_id = p.loadURDF(os.path.join(os.getcwd(), "assets/objects/box/urdf/box_dark.urdf"), basePosition=box_4_base_pos, baseOrientation=p.getQuaternionFromEuler([0, 0, 0]), useFixedBase=True)
+        self.ball_4_goal_pose = box_4_base_pos
+        self.ball_4_goal_pose[2] += self.ball_radius
 
         # Soft ball
-        pos = [random.randint(-25, 25) / 100, -0.5 + random.randint(-10, 10) / 100, 1.05]
-        self.ball = self.create_random_ball(pos)
-    
+        self.ball_pos_aabb_min = [-0.38, -0.55, 1 + self.ball_radius]
+        self.ball_pos_aabb_max = [0.38, -0.38, 1 + self.ball_radius]
+        posx = random.randint(int(self.ball_pos_aabb_min[0] * 1000), int(self.ball_pos_aabb_max[0] * 1000)) / 1000
+        posy = random.randint(int(self.ball_pos_aabb_min[1] * 1000), int(self.ball_pos_aabb_max[1] * 1000)) / 1000
+        posz = random.randint(int(self.ball_pos_aabb_min[2] * 1000), int(self.ball_pos_aabb_max[2] * 1000)) / 1000
+        self.ball = self.create_random_ball([posx, posy, posz])
+        
+    def get_corresponding_ball_box_id(self):
+        if self.ball.name == "1":
+            return copy.copy(self.box_1_id)
+        elif self.ball.name == "2":
+            return copy.copy(self.box_2_id)
+        elif self.ball.name == "3":
+            return copy.copy(self.box_3_id)
+        elif self.ball.name == "4":
+            return copy.copy(self.box_4_id)
+        else:
+            return None
+        
+    def get_corresponding_ball_box(self):
+        if self.ball.name == "1":
+            return copy.copy(self.ball_1_goal_pose)
+        elif self.ball.name == "2":
+            return copy.copy(self.ball_2_goal_pose)
+        elif self.ball.name == "3":
+            return copy.copy(self.ball_3_goal_pose)
+        elif self.ball.name == "4":
+            return copy.copy(self.ball_4_goal_pose)
+        else:
+            return None
+
     def create_ball(self, youngs_modulus_min, youngs_modulus_max, name):
         youngs_modulus = random.randint(youngs_modulus_min, youngs_modulus_max)
-        ball = SoftBall(youngs_modulus, POISSON_RATIO, RADIUS, DENSITY, name, self.robot.base_position)
+        ball = SoftBall(youngs_modulus, POISSON_RATIO, self.ball_radius, DENSITY, name, self.robot.base_position)
         return ball
     
     def create_random_ball(self, pos):
-        
-        ball_name = random.choice(list(BALLS_MAP.keys()))
-        min_youngs_modulus, max_youngs_modulus = BALLS_MAP[ball_name]
-        ball_obj = self.create_ball(min_youngs_modulus, max_youngs_modulus, ball_name)
+        self.ball_class_name = random.choice(list(BALLS_MAP.keys()))
+        min_youngs_modulus, max_youngs_modulus = BALLS_MAP[self.ball_class_name]
+        ball_obj = self.create_ball(min_youngs_modulus, max_youngs_modulus, self.ball_class_name)
         # for debugging
         # pos = [0, -0.5, 1.045]
         ball_obj.instantiate(pos)
@@ -109,12 +148,20 @@ class SortBallsEnv():
     def get_state(self):
         robot_joint_angles, robot_gripper_open_length, gripper_pos, left_pad_force, right_pad_force = self.robot.get_robot_state(self.ball.id)
 
-        return self.hard_ball_goal_pose, self.soft_ball_goal_pose, self.ball.ball_position, robot_joint_angles, robot_gripper_open_length, gripper_pos, left_pad_force, right_pad_force
+        return self.ball_4_goal_pose, self.ball_1_goal_pose, self.ball.ball_position, robot_joint_angles, robot_gripper_open_length, gripper_pos, left_pad_force, right_pad_force
+    
+    def check_terminal_state(self):
+        for box_id in [self.box_1_id, self.box_2_id, self.box_3_id, self.box_4_id]:
+            if self.ball.is_in_box(box_id):
+                self.terminal_state = True 
     
     def main_loop(self):
         self.check_ball_health()
+        if not self.restart_episode:
+            self.check_terminal_state()
+
         self.step_simulation()
-        
+        self.simulation_time += self.SIMULATION_STEP
         return self.get_state()
         
         

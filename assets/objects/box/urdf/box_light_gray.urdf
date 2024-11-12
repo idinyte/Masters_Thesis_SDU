@@ -9,7 +9,7 @@
       </geometry>
       <origin xyz="0 0 0.01"/>
       <material name="gray">
-        <color rgba="1 1 1 1"/>
+        <color rgba="0.7 0.7 0.7 1"/>
       </material>
     </visual>
     
@@ -31,7 +31,7 @@
       </geometry>
       <origin xyz="0 0.26 0.125"/>
       <material name="gray">
-        <color rgba="1 1 1 1"/>
+        <color rgba="0.7 0.7 0.7 1"/>
       </material>
     </visual>
     
@@ -51,7 +51,7 @@
       </geometry>
       <origin xyz="0 -0.26 0.125"/>
       <material name="gray">
-        <color rgba="1 1 1 1"/>
+        <color rgba="0.7 0.7 0.7 1"/>
       </material>
     </visual>
     
@@ -71,7 +71,7 @@
       </geometry>
       <origin xyz="-0.26 0 0.125"/>
       <material name="gray">
-        <color rgba="1 1 1 1"/>
+        <color rgba="0.7 0.7 0.7 1"/>
       </material>
     </visual>
     
@@ -91,7 +91,7 @@
       </geometry>
       <origin xyz="0.26 0 0.125"/>
       <material name="gray">
-        <color rgba="1 1 1 1"/>
+        <color rgba="0.7 0.7 0.7 1"/>
       </material>
     </visual>
     

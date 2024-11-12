@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<robot name="box_light">
+<robot name="box_dark">
   
   <!-- Bottom of the box -->
   <link name="box_bottom">
@@ -9,7 +9,7 @@
       </geometry>
       <origin xyz="0 0 0.01"/>
       <material name="gray">
-        <color rgba="1 1 1 1"/>
+        <color rgba="0.4 0.4 0.4 1"/>
       </material>
     </visual>
     
@@ -31,7 +31,7 @@
       </geometry>
       <origin xyz="0 0.26 0.125"/>
       <material name="gray">
-        <color rgba="1 1 1 1"/>
+        <color rgba="0.4 0.4 0.4 1"/>
       </material>
     </visual>
     
@@ -51,7 +51,7 @@
       </geometry>
       <origin xyz="0 -0.26 0.125"/>
       <material name="gray">
-        <color rgba="1 1 1 1"/>
+        <color rgba="0.4 0.4 0.4 1"/>
       </material>
     </visual>
     
@@ -71,7 +71,7 @@
       </geometry>
       <origin xyz="-0.26 0 0.125"/>
       <material name="gray">
-        <color rgba="1 1 1 1"/>
+        <color rgba="0.4 0.4 0.4 1"/>
       </material>
     </visual>
     
@@ -91,7 +91,7 @@
       </geometry>
       <origin xyz="0.26 0 0.125"/>
       <material name="gray">
-        <color rgba="1 1 1 1"/>
+        <color rgba="0.4 0.4 0.4 1"/>
       </material>
     </visual>
     
