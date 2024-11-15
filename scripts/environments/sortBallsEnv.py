@@ -22,10 +22,10 @@ BALLS_MAP = {
         }
 
 class SortBallsEnv():
-    def __init__(self, robot, camera=None, vis=False, realtime=False, debug=False, VR=False, VRCameraPos=[0,-3, 1], VRCameraRot=[0,0,0]):
+    def __init__(self, robot, camera=None, vis=False, realtime=False, debug=False, VR=False, VRCameraPos=[0,-3, 1], VRCameraRot=[0,0,0], robot_base_position = [0, 0, 1], robot_base_orientation = [0, 0, 0, 1], softBallPos = None, softBallYoungsModulus = None, softBallName = None):
         self.robot = robot
-        self.robot.base_position = [0, 0, 1]
-        self.robot.base_orientation=[0, 0, 0, 1]
+        self.robot.base_position = robot_base_position
+        self.robot.base_orientation=robot_base_orientation
 
         self.vis = vis
         self.realtime = realtime
@@ -34,6 +34,10 @@ class SortBallsEnv():
         self.VR = VR
         self.baseEnv = None
         self.restart_episode = False
+        
+        self.softBallPos = softBallPos
+        self.softBallYoungsModulus = softBallYoungsModulus
+        self.softBallName = softBallName
 
         if self.VR:
             self.SIMULATION_STEP = 1/1000
@@ -45,7 +49,7 @@ class SortBallsEnv():
         self.ball_radius = 0.045
         self.init_objects()
         self.simulation_time = 0
-        
+            
     def print_all_objects(self):
         num_bodies = p.getNumBodies()
         print(f"Total number of objects: {num_bodies}")
@@ -84,11 +88,14 @@ class SortBallsEnv():
         # Soft ball
         self.ball_pos_aabb_min = [-0.38, -0.55, 1 + self.ball_radius]
         self.ball_pos_aabb_max = [0.38, -0.38, 1 + self.ball_radius]
-        posx = random.randint(int(self.ball_pos_aabb_min[0] * 1000), int(self.ball_pos_aabb_max[0] * 1000)) / 1000
-        posy = random.randint(int(self.ball_pos_aabb_min[1] * 1000), int(self.ball_pos_aabb_max[1] * 1000)) / 1000
-        posz = random.randint(int(self.ball_pos_aabb_min[2] * 1000), int(self.ball_pos_aabb_max[2] * 1000)) / 1000
-        self.ball = self.create_random_ball([posx, posy, posz])
-        
+        if self.softBallPos == None:
+            posx = random.randint(int(self.ball_pos_aabb_min[0] * 1000), int(self.ball_pos_aabb_max[0] * 1000)) / 1000
+            posy = random.randint(int(self.ball_pos_aabb_min[1] * 1000), int(self.ball_pos_aabb_max[1] * 1000)) / 1000
+            posz = random.randint(int(self.ball_pos_aabb_min[2] * 1000), int(self.ball_pos_aabb_max[2] * 1000)) / 1000
+            self.ball = self.create_random_ball([posx, posy, posz])
+        else:
+            self.ball = self.create_random_ball(self.softBallPos)
+
     def get_corresponding_ball_box_id(self):
         if self.ball.name == "1":
             return copy.copy(self.box_1_id)
@@ -114,7 +121,9 @@ class SortBallsEnv():
             return None
 
     def create_ball(self, youngs_modulus_min, youngs_modulus_max, name):
-        youngs_modulus = random.randint(youngs_modulus_min, youngs_modulus_max)
+        youngs_modulus = random.randint(youngs_modulus_min, youngs_modulus_max) if self.softBallYoungsModulus == None else self.softBallYoungsModulus
+        if self.softBallName != None:
+            name = self.softBallName
         ball = SoftBall(youngs_modulus, POISSON_RATIO, self.ball_radius, DENSITY, name, self.robot.base_position)
         return ball
     

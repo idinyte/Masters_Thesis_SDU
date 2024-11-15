@@ -2,13 +2,20 @@ import pybullet as p
 import os
 import numpy as np
 from collections import namedtuple
+import matplotlib.pyplot as plt
+from scripts.objects.gripper_motors import GripperMotors
 
 class Gripper:
-  def __init__(self, SIMULATION_STEP):
+  def __init__(self, SIMULATION_STEP, exosceleton_on = False):
     self.LEFT_PAD_GRIPPER_INDEX = 3
     self.RIGHT_PAD_GRIPPER_INDEX = 8
     self.gripper_range = [0, 0.127]
     self.SIMULATION_STEP = SIMULATION_STEP
+    self.left_forces = []
+    self.right_forces = []
+    self.exosceleton_on = exosceleton_on
+    if exosceleton_on:
+      self.gripper_motors = GripperMotors()
 
   def initialize_gripper_controller(self, pos, orn):
         self.id = p.loadURDF(os.path.join(os.getcwd(), "assets/objects/UR5/urdf/robotiq_140_modified.urdf"), pos, orn)
@@ -81,7 +88,7 @@ class Gripper:
                 right_pad_force += contact[9]
         
         return left_pad_force, right_pad_force
-      
+
   def track_pose(self, target_position, target_orientation):
     # Calculate velocity based on error between gripper and desired positions
     current_position, current_orientation = p.getBasePositionAndOrientation(self.id)
@@ -98,6 +105,10 @@ class Gripper:
     
     # Apply the calculated velocities to the gripper
     p.resetBaseVelocity(self.id, linearVelocity=linear_velocity.tolist(), angularVelocity=angular_velocity.tolist())
+    
+  def exosceleton_update(self, verbose = False):
+    if self.exosceleton_on:
+      self.gripper_motors.update_positions(verbose)
     
   def move_gripper_length(self, open_length):
     open_angle = self.gripper_distance_to_angle(open_length)
@@ -125,4 +136,37 @@ class Gripper:
 
   def close_gripper(self):
     self.move_gripper_length(self.gripper_range[0])
+    
+  def collect_force_data(self, object_id):
+    left_pad_force, right_pad_force = self.get_contact_forces(object_id)
+    
+    self.left_forces.append(left_pad_force)
+    self.right_forces.append(right_pad_force)
+  
+  def plot_forces(self, gripper_opening = None, ball_youngs_modulus = None):
+    if not self.left_forces or not self.right_forces:
+        print("No force data to plot.")
+        return
+    
+    if len(self.left_forces) > 10000:
+      self.left_forces = self.left_forces[-10000:]
+      self.right_forces = self.right_forces[-10000:]
+
+    time_steps = range(len(self.left_forces))
+    
+    plt.figure(figsize=(10, 6))
+    plt.plot(time_steps, self.left_forces, label="Left Pad Force", color="blue")
+    plt.plot(time_steps, self.right_forces, label="Right Pad Force", color="red")
+    
+    plt.xlabel("Time Steps")
+    plt.ylabel("Force (N)")
+    title = "Forces Over Time"
+    if gripper_opening and ball_youngs_modulus:
+      title = f"Forces Over Time. Gripper opening {gripper_opening} m. Ball's Youngs modulus {ball_youngs_modulus} Pa"
+    plt.title("")
+    plt.legend()
+    plt.grid(True)
+    
+    plt.show()
+    
   
