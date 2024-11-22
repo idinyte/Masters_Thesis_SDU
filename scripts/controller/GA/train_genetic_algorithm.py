@@ -43,7 +43,7 @@ class GeneticAlgorithmPID:
 
     def evaluate_fitness(self, individual):
         Kp, Ki, Kd = individual["Kp"], individual["Ki"], individual["Kd"]
-        fitness = self.gripper_motors.train_apply_current_compensation_PWM_PID(motor_id=MOTOR_ID, kp = Kp, ki = Ki, kd = Kd)
+        fitness = self.gripper_motors.test_apply_current_compensation_PWM_PID(motor_id=MOTOR_ID, kp = Kp, ki = Ki, kd = Kd)
         return fitness
 
     def select_parents(self, sorted_population, selection_probs):

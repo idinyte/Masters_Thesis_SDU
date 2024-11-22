@@ -4,7 +4,12 @@ import numpy as np
 from collections import namedtuple
 import matplotlib.pyplot as plt
 from scripts.objects.gripper_motors import GripperMotors
+from enum import Enum
 import time
+
+class ControlType(Enum):
+    PWM = 0
+    Current = 1
 
 class Gripper:
   def __init__(self, SIMULATION_STEP, exosceleton_on = False):
@@ -17,6 +22,9 @@ class Gripper:
     self.exosceleton_on = exosceleton_on
     if exosceleton_on:
       self.gripper_motors = GripperMotors()
+      self.plot_i = 0
+      self.plot_start_time = None
+      self.target_left_pad_currents, self.target_right_pad_currents, self.present_left_pad_currents, self.present_right_pad_currents = [], [], [], []
 
   def initialize_gripper_controller(self, pos, orn):
         self.id = p.loadURDF(os.path.join(os.getcwd(), "assets/objects/UR5/urdf/robotiq_140_modified.urdf"), pos, orn)
@@ -107,22 +115,52 @@ class Gripper:
     # Apply the calculated velocities to the gripper
     p.resetBaseVelocity(self.id, linearVelocity=linear_velocity.tolist(), angularVelocity=angular_velocity.tolist())
     
-  def exosceleton_update(self, verbose = False):
+  def exosceleton_update(self, ball_id, control_type, verbose = False, plot = False):
     if self.exosceleton_on:
       self.gripper_motors.update_state(verbose)
-      #print(self.gripper_motors.currents[1])
-      current_current = self.gripper_motors.get_present_current(self.gripper_motors.left_motor_id)
-      # print(time.time())
-      self.gripper_motors.apply_current_compensation(self.gripper_motors.left_motor_id, 0.1)
-      
-      # current_torque = self.gripper_motors.get_present_torque(self.gripper_motors.left_motor_id, script_accesed_from_outside=False)
-      # goal_torque = 0 + current_torque
-      # self.gripper_motors.set_goal_torque(self.gripper_motors.left_motor_id, goal_torque)
-      # self.gripper_motors.set_goal_torque(self.gripper_motors.right_motor_id, 0)
-      # present_torque_left = self.gripper_motors.get_present_torque(self.gripper_motors.left_motor_id)
-      # present_torque_right = self.gripper_motors.get_present_torque(self.gripper_motors.right_motor_id)
-      # print(f"Left motor torque: {present_torque_left} Right motor torque: {present_torque_right}")
+      gripper_distance = self.gripper_motors.get_scaled_finger_distance(*self.gripper_range)
+      self.move_gripper_length(gripper_distance)
+      left_pad_force, right_pad_force = self.get_contact_forces(ball_id)
 
+      if control_type == ControlType.PWM:
+        target_left_pad_current, target_right_pad_current, present_left_pad_current, present_right_pad_current = self.gripper_motors.pwm_control(left_pad_force, right_pad_force, 28.809, 503.211, 0.191, False)
+      elif control_type == ControlType.Current:
+        target_left_pad_current, target_right_pad_current, present_left_pad_current, present_right_pad_current = self.gripper_motors.direct_current_control(left_pad_force, right_pad_force)
+        
+      if plot:
+        if self.plot_start_time == None:
+          self.plot_start_time = time.time()
+        self.plot_i += 1
+        self.target_left_pad_currents.append(target_left_pad_current)
+        self.target_right_pad_currents.append(target_right_pad_current)
+        self.present_left_pad_currents.append(present_left_pad_current)
+        self.present_right_pad_currents.append(present_right_pad_current)
+        iterations = 3000
+        if self.plot_i == iterations:
+          print(f"iteration time is {1000 * (time.time() - self.plot_start_time) / iterations} ms")
+          self.plot()
+  
+  def plot(self):
+    fig, axs = plt.subplots(2, 1, figsize=(8, 6), sharex=True)
+
+    axs[0].plot(self.present_left_pad_currents, label='Present Current', color='b')
+    axs[0].plot(self.target_left_pad_currents, label='Target Current', color='r')
+    axs[0].set_title('Left Motor')
+    axs[0].set_ylabel('Current (A)')
+    axs[0].legend()
+    axs[0].grid(True)
+
+    axs[1].plot(self.present_right_pad_currents, label='Present Current', color='b')
+    axs[1].plot(self.target_right_pad_currents, label='Target Current', color='r')
+    axs[1].set_title('Right Motor')
+    axs[1].set_xlabel('Iterations')
+    axs[1].set_ylabel('Current (A)')
+    axs[1].legend()
+    axs[1].grid(True)
+
+    plt.tight_layout()
+    plt.show()
+  
   def move_gripper_length(self, open_length):
     open_angle = self.gripper_distance_to_angle(open_length)
     self.move_gripper_angle(open_angle)

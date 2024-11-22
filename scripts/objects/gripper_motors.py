@@ -4,6 +4,7 @@ import time
 import matplotlib.pyplot as plt
 import math
 import numpy as np
+import traceback
 
 DEVICENAME = 'COM5'
 BAUDRATE = 1000000
@@ -15,6 +16,8 @@ ADDR_TORQUE_ENABLE = 64
 ADDR_GOAL_CURRENT = 102
 ADDR_PRESENT_CURRENT = 126
 ADDR_PRESENT_POSITION = 132
+ADDR_CURRENT_LIMIT = 38
+ADDR_PWM_LIMIT = 36
 
 # Constants
 TORQUE_ENABLE = 1
@@ -49,8 +52,9 @@ class GripperMotors():
         self.torque_constant = 10.6 / 4.4  # Stall torque divided by stall current
         self.current_unit = 0.00269  # 1 unit = 2.69 mA
         
-        self.torque_limit = 0.1 # None to disable
-        self.PWM_limit = 70
+        self.torque_limit = None # None to disable
+        self.PWM_limit = 70 # software controller limit
+        self.PWM_safety_limit = 150 # hardware limit, affects current control as well
         self.current_limit = 0.3
         
         self.script_public = True
@@ -64,26 +68,67 @@ class GripperMotors():
         self.previous_time = None
         self.integral_error = 0
         
+        # physical parameters
+        self.distance_between_motors = 73 / 1000
+        self.motor_finger_radius = 62 / 1000
+        
         # Enable motors and set Control Mode
-        self.reset_operating_mode_pwm()
+        #self.reset_operating_mode_current(enable_torque=True)
+        self.torque_enable = TORQUE_DISABLE
+        self.operating_mode = None
+        
+        self._set_motor_limits()
         
         atexit.register(self.cleanup_on_exit)
         
-    def reset_operating_mode_pwm(self):
-        for motor_id in self.motor_ids:
-            self.disable_torque(motor_id, script_accesed_from_outside=False)
-            self.set_operating_mode(motor_id, OPERATING_MODE_PWM_CONTROL, script_accesed_from_outside=False)
-            self.set_pwm(motor_id, 0, script_accesed_from_outside=False)
-            self.enable_torque(motor_id)
-        
-    def reset_operating_mode_current(self):
-        for motor_id in self.motor_ids:
-            self.disable_torque(motor_id, script_accesed_from_outside=False)
-            self.set_operating_mode(motor_id, OPERATING_MODE_CURRENT_CONTROL, script_accesed_from_outside=False)
-            self.set_current(motor_id, 0, script_accesed_from_outside=False)
-            self.enable_torque(motor_id)
+    def _set_motor_limits(self):
+        raw_current_limit = int(self.current_limit / self.current_unit) if self.current_limit is not None else None
 
-    def set_operating_mode(self, motor_id, mode, script_accesed_from_outside=True):
+        for motor_id in self.motor_ids:
+            # Set Current Limit
+            if raw_current_limit is not None:
+                result, error = self.packetHandler.write2ByteTxRx(self.portHandler, motor_id, ADDR_CURRENT_LIMIT, raw_current_limit)
+                if result != COMM_SUCCESS:
+                    print(f"Failed to set current limit for motor {motor_id}: {self.packetHandler.getTxRxResult(result)}")
+                    quit()
+                elif error != 0:
+                    print(f"Hardware error for motor {motor_id}: {self.packetHandler.getRxPacketError(error)}")
+                    quit()
+            
+            # Set PWM Limit
+            result, error = self.packetHandler.write2ByteTxRx(self.portHandler, motor_id, ADDR_PWM_LIMIT, self.PWM_safety_limit)
+            if result != COMM_SUCCESS:
+                print(f"Failed to set PWM limit for motor {motor_id}: {self.packetHandler.getTxRxResult(result)}")
+                quit()
+            elif error != 0:
+                print(f"Hardware error for motor {motor_id}: {self.packetHandler.getRxPacketError(error)}")
+                quit()
+
+        
+    def reset_operating_mode_pwm(self, enable_torque = True):
+        self.disable_torques(script_accesed_from_outside=False)
+        self.operating_mode = OPERATING_MODE_PWM_CONTROL
+        for motor_id in self.motor_ids:
+            self.disable_torque(motor_id, script_accesed_from_outside=False)
+            self._set_operating_mode(motor_id, OPERATING_MODE_PWM_CONTROL, script_accesed_from_outside=False)
+            self.set_pwm(motor_id, 0, script_accesed_from_outside=False)
+
+        if enable_torque:
+            self.enable_torques()
+        
+    def reset_operating_mode_current(self, enable_torque = True):
+        self.operating_mode = OPERATING_MODE_CURRENT_CONTROL
+        self.disable_torques(script_accesed_from_outside=False)
+        for motor_id in self.motor_ids:
+            self.disable_torque(motor_id, script_accesed_from_outside=False)
+            self._set_operating_mode(motor_id, OPERATING_MODE_CURRENT_CONTROL, script_accesed_from_outside=False)
+            self.set_current(motor_id, 0, script_accesed_from_outside=False)
+
+        if enable_torque:
+            self.enable_torques()
+        
+
+    def _set_operating_mode(self, motor_id, mode, script_accesed_from_outside=True):
         if script_accesed_from_outside and not self.script_public:
             return
 
@@ -93,12 +138,15 @@ class GripperMotors():
                 print(f"Failed to set operating mode for motor {motor_id}: {self.packetHandler.getTxRxResult(result)}")
             elif error != 0:
                 print(f"Hardware error for motor {motor_id}: {self.packetHandler.getRxPacketError(error)}")
-        except:
-            print("Exception")
+        except KeyboardInterrupt:
+            quit()
             
     def set_pwm(self, motor_id, pwm_value, script_accesed_from_outside=True):
         if script_accesed_from_outside and not self.script_public:
             return
+        
+        if self.operating_mode != OPERATING_MODE_PWM_CONTROL:
+            self.reset_operating_mode_pwm()
 
         max_pwm = max(min(MAX_PWM, self.PWM_limit), 0)
         pwm_value = max(min(pwm_value, max_pwm), -max_pwm)
@@ -109,26 +157,28 @@ class GripperMotors():
                 print(f"Failed to set PWM for motor {motor_id}: {self.packetHandler.getTxRxResult(result)}")
             elif error != 0:
                 print(f"Hardware error for motor {motor_id}: {self.packetHandler.getRxPacketError(error)}")
-        except:
-            print("Exception")
-            
+        except KeyboardInterrupt:
+            quit()    
 
     def enable_torque(self, motor_id, script_accesed_from_outside = True):
         if script_accesed_from_outside and not self.script_public:
             return
-
+        print(f"enable_torque {motor_id}")
         try:
             result, error = self.packetHandler.write1ByteTxRx(self.portHandler, motor_id, ADDR_TORQUE_ENABLE, TORQUE_ENABLE)
             if result != COMM_SUCCESS:
                 print(f"Failed to enable torque for motor {motor_id}: {self.packetHandler.getTxRxResult(result)}")
             elif error != 0:
                 print(f"Hardware error for motor {motor_id}: {self.packetHandler.getRxPacketError(error)}")
-        except:
-            print("Exception")
+        except KeyboardInterrupt:
+            quit()
     
     def set_current(self, motor_id, current, script_accesed_from_outside = True):
         if script_accesed_from_outside and not self.script_public:
             return
+        
+        if self.operating_mode != OPERATING_MODE_CURRENT_CONTROL:
+            self.reset_operating_mode_current()
 
         current = max(min(current, self.current_limit), -self.current_limit)
         current_quantized = int(current / self.current_unit)
@@ -138,16 +188,29 @@ class GripperMotors():
                 print(f"Failed to set goal torque for motor {motor_id}: {self.packetHandler.getTxRxResult(result)}")
             elif error != 0:
                 print(f"Hardware error for motor {motor_id}: {self.packetHandler.getRxPacketError(error)}")
-        except:
-            print("Exception")
+        except KeyboardInterrupt:
+            quit()
 
     def set_goal_torque(self, motor_id, torque_nm, script_accesed_from_outside = True):
         if self.torque_limit != None and self.torque_limit > 0:
-            torque_nm = min(torque_nm, self.torque_limit)
+            torque_nm = max(min(torque_nm, self.torque_limit), - self.torque_limit)
 
         # Convert torque to current
         current = torque_nm / self.torque_constant
         self.set_current(motor_id, current, script_accesed_from_outside)
+        
+    def set_goal_torques(self, torque_left_nm, torque_right_nm, script_accesed_from_outside = True):
+        if self.torque_limit != None and self.torque_limit > 0:
+            torque_left_nm = max(min(torque_left_nm, self.torque_limit), -self.torque_limit)
+            torque_right_nm = max(min(torque_right_nm, self.torque_limit), -self.torque_limit)
+
+        # Convert torque to current
+        current_left = torque_left_nm / self.torque_constant
+        self.set_current(self.left_motor_id, current_left, script_accesed_from_outside)
+        
+        current_right = torque_right_nm / self.torque_constant
+        # print(f"L {current_left} R {current_right}")
+        self.set_current(self.right_motor_id, current_right, script_accesed_from_outside)
         
             
     def get_present_current(self, motor_id, script_accesed_from_outside = True):
@@ -155,6 +218,12 @@ class GripperMotors():
             return
 
         return self.currents[self.motor_ids.index(motor_id)] * self.current_unit
+    
+    def get_present_position(self, motor_id):
+        return self.positions[self.motor_ids.index(motor_id)]
+
+    def get_present_position_deg(self, motor_id):
+        return self.pos_to_deg(self.get_present_position(motor_id))
     
     def apply_current_compensation(self, motor_id, target_current):
         if self.previous_time == None:
@@ -249,8 +318,8 @@ class GripperMotors():
                     print(f"Failed to get position for motor {motor_id}")
                 else:
                     self.positions[index] = position
-        except:
-            print("Exception")
+        except KeyboardInterrupt:
+            quit()
 
         try:
             # Retrieve current data in bulk
@@ -272,28 +341,33 @@ class GripperMotors():
                     if current > 32767:
                         current -= 65536
                     self.currents[index] = current
-        except:
-            print("Exception")
+        except KeyboardInterrupt:
+            quit()
 
         if verbose:
             print(f"Motor ID {self.motor_ids[0]} position: {self.positions[0]} deg: {self.pos_to_deg(self.positions[0])} Motor ID {self.motor_ids[1]} position: {self.positions[1]} deg: {self.pos_to_deg(self.positions[1])}")
             
-        if not self.positions_healthy():
-            quit()
+        # if not self.positions_healthy():
+        #     quit()
             
             
     def positions_healthy(self):
         for position in self.positions:
-            if not (1400 <= position <= 3800):
+            if not (1500 <= position <= 2500):
                 return False
 
         return True
       
-    def normal_forces_to_torques(self, left_motor_force, right_motor_force):
-        center_to_pad_distance = 0.07
-        left_motor_torque = left_motor_force * center_to_pad_distance
-        right_motor_torque = right_motor_force * center_to_pad_distance
+    def normal_forces_to_symmetric_torques(self, left_motor_force, right_motor_force):
+        average_force = (left_motor_force + right_motor_force) / 2
+        left_motor_torque = average_force * self.motor_finger_radius
+        right_motor_torque = -left_motor_torque
         return left_motor_torque, right_motor_torque
+    
+    def torques_to_currents(self, left_motor_torque, right_motor_torque):
+        left_motor_current = left_motor_torque / self.torque_constant
+        right_motor_current = right_motor_torque / self.torque_constant
+        return left_motor_current, right_motor_current
     
     def pos_to_deg(self, pos):
         """ position is in thicks from 0 to 4095. 1 deg is 4095 / 360 = 11.375 """
@@ -312,8 +386,62 @@ class GripperMotors():
             elif error != 0:
                 print(f"Hardware error for motor {motor_id}: {self.packetHandler.getRxPacketError(error)}")
             return result, error
-        except:
-            print("Exception")
+        except KeyboardInterrupt:
+            quit()
+            
+    def disable_torques(self, script_accesed_from_outside = True):
+        if script_accesed_from_outside and not self.script_public:
+            return
+
+        # Print call stack
+        # print("Call stack leading to disable_torques:")
+        # traceback.print_stack()
+        try:
+            group_bulk_write = GroupBulkWrite(self.portHandler, self.packetHandler)
+            
+            for motor_id in self.motor_ids:
+                param = [TORQUE_DISABLE]
+                if not group_bulk_write.addParam(motor_id, ADDR_TORQUE_ENABLE, 1, param):
+                    print(f"Failed to add motor {motor_id} to bulk write.")
+                    return
+            
+            result = group_bulk_write.txPacket()
+            if result != COMM_SUCCESS:
+                print(f"Failed to disable torques: {self.packetHandler.getTxRxResult(result)}")
+            else:
+                self.torque_enable = TORQUE_DISABLE            
+
+            group_bulk_write.clearParam()
+            
+            return result
+        except KeyboardInterrupt:
+            quit()
+            
+    def enable_torques(self, script_accesed_from_outside = True):
+        if script_accesed_from_outside and not self.script_public:
+            return
+    
+        try:
+            group_bulk_write = GroupBulkWrite(self.portHandler, self.packetHandler)
+            
+            for motor_id in self.motor_ids:
+                param = [TORQUE_ENABLE]
+                if not group_bulk_write.addParam(motor_id, ADDR_TORQUE_ENABLE, 1, param):
+                    print(f"Failed to add motor {motor_id} to bulk write.")
+                    return
+            
+            result = group_bulk_write.txPacket()
+            if result != COMM_SUCCESS:
+                print(f"Failed to enable torques: {self.packetHandler.getTxRxResult(result)}")
+            else:
+                print("Successfully enabled torques for all motors.")
+                self.torque_enable = TORQUE_ENABLE            
+
+            group_bulk_write.clearParam()
+            
+            return result
+        except KeyboardInterrupt:
+            quit()
 
     def close_port(self):
         self.portHandler.closePort()
@@ -398,9 +526,34 @@ class GripperMotors():
             period = 50
             scale = 0.1
             return scale/2 * math.sin(2 * math.pi * (i - period/4) / period) + scale/2
+        
+    def get_gripper_finger_distance(self, scale_range = None):
+        scaled_distance = None
+        deg1 = self.get_present_position_deg(self.motor_ids[0])
+        deg2 = self.get_present_position_deg(self.motor_ids[1])
+        
+        # subtract 90 to make the angle 0 at x axis position
+        deg1 -= 90
+        deg2 -= 90
+        
+        projection1 = self.motor_finger_radius * math.cos(math.radians(deg1))
+        projection1 *= -1 # Swap direction
+        projection2 = self.motor_finger_radius * math.cos(math.radians(deg2))
+        
+        finger_distance = self.distance_between_motors + projection1 + projection2
+        
+        return finger_distance
+    
+    def get_scaled_finger_distance(self, scale_min, scale_max):
+        scale = scale_max / self.distance_between_motors
+        scaled_distance = scale * self.get_gripper_finger_distance()
+        scaled_distance = max(min(scaled_distance, scale_max), scale_min)
+        
+        return scaled_distance
+        
     
     ### PWM CONTROL ###
-    def train_apply_current_compensation_PWM_PID(self, target_current_function, motor_id = 2, kp = 150, ki = 110 , kd = 1, iterations = 1800):
+    def test_apply_current_compensation_PWM_PID(self, target_current_function, motor_id = 2, kp = 150, ki = 110 , kd = 1, iterations = 1800):
         self.train_reset()
         self.reset_operating_mode_pwm()
         sum_absolute_arror = 0
@@ -454,7 +607,7 @@ class GripperMotors():
         return sum_absolute_arror
     
     ## CURRENT CONTROL ##
-    def train_apply_current_compensation_CURRENT_BUILT_IN(self, target_current_function, motor_id = 2, iterations = 1800):
+    def test_apply_current_compensation_CURRENT_BUILT_IN(self, target_current_function, motor_id = 2, iterations = 1800):
         self.train_reset()
         self.reset_operating_mode_current()
         sum_absolute_arror = 0
@@ -480,3 +633,68 @@ class GripperMotors():
         self.set_current(motor_id, 0)
         
         return sum_absolute_arror
+    
+    def direct_current_control(self, left_pad_force, right_pad_force):
+        left_pad_torque, right_pad_torque = self.normal_forces_to_symmetric_torques(left_pad_force, right_pad_force)
+        if left_pad_torque == 0 and right_pad_torque == 0:
+            if self.torque_enable == TORQUE_ENABLE:
+                self.disable_torques()
+        else:
+            if self.torque_enable == TORQUE_DISABLE:
+                self.enable_torques()
+            self.set_goal_torques(left_pad_torque, right_pad_torque)
+            
+        # for plotting
+        left_pad_current, right_pad_current = self.torques_to_currents(left_pad_torque, right_pad_torque)
+        return left_pad_current, right_pad_current, self.get_present_current(self.left_motor_id), self.get_present_current(self.right_motor_id)
+
+    def pwm_control(self, left_pad_force, right_pad_force, kp, ki, kd, update_state):
+        left_pad_torque, right_pad_torque = self.normal_forces_to_symmetric_torques(left_pad_force, right_pad_force)
+        left_pad_current, right_pad_current = self.torques_to_currents(left_pad_torque, right_pad_torque)
+        
+        if left_pad_torque == 0 and right_pad_torque == 0:
+            if self.torque_enable == TORQUE_ENABLE:
+                self.integral_error = 0
+                self.previous_time = time.time()
+                self.disable_torques()
+        else:
+            if self.torque_enable == TORQUE_DISABLE:
+                self.enable_torques()
+        
+        if update_state:
+            self.update_state()
+
+        # Do PID only for left motor and set right as the opposite value
+        target_current = left_pad_current
+        if self.previous_time == None:
+            self.previous_time = time.time()
+            self.prev_error = target_current - self.get_present_current(self.left_motor_id)
+            return left_pad_current, right_pad_current, self.get_present_current(self.left_motor_id), self.get_present_current(self.right_motor_id)
+
+        current_time = time.time()
+        dt = current_time - self.previous_time
+        if dt < 1.01/1000:
+            return left_pad_current, right_pad_current, self.get_present_current(self.left_motor_id), self.get_present_current(self.right_motor_id)
+        
+        present_current = self.get_present_current(self.left_motor_id)
+        
+        current_error = target_current - present_current
+        
+        positional = current_error
+        positional *= kp
+        self.integral_error += current_error * dt
+        integral = ki * self.integral_error
+        integral = max(min(integral, self.PWM_limit), -self.PWM_limit)
+        derivative = (current_error - self.prev_error) / dt
+        derivative *= kd
+        derivative = max(min(integral, 30), -30)
+        pwm_value = int(positional + integral + derivative)
+        self.set_pwm(self.left_motor_id, pwm_value)
+        self.set_pwm(self.right_motor_id, -pwm_value)
+        
+        self.previous_time = current_time
+        self.prev_error = current_error
+        
+        # for plotting
+        return left_pad_current, right_pad_current, self.get_present_current(self.left_motor_id), self.get_present_current(self.right_motor_id)
+ 

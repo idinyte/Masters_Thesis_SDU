@@ -4,12 +4,11 @@ from scripts.environments.commonEnv import CommonEnv
 from scripts.environments.VREnv import VREnv
 from scripts.environments.sortBallsEnv import SortBallsEnv
 from scripts.ANN.sortBallsANN import SortBallsANN
-from scripts.objects.gripper import Gripper
+from scripts.objects.gripper import Gripper, ControlType
 import keyboard
 import numpy as np
 import os
-import sys
-import time
+
 
 # Initialize the UR5 robot
 robot = UR5Robot(urdf_path=os.path.join(os.getcwd(), "assets/objects/UR5/urdf/ur5_robotiq_140_modified.urdf"), base_position=[0, 0, 0], base_orientation=[0.0, 0.0, 0.0, 1.0], use_fixed_base=True)
@@ -22,7 +21,7 @@ VRCameraPos = [0, 0, 1]
 VRCameraRot = [0, 0, 180]
 
 softBallPos = [0, 0, 1.045]
-softBallYoungsModulus = 7500
+softBallYoungsModulus = 5000
 softBallName = "1"
 
 robot_base_position = [1, -1, 1]
@@ -50,8 +49,8 @@ while True:
   hard_ball_goal_pose, soft_ball_goal_pose, ball_position, robot_joint_angles, robot_gripper_open_length, gripper_pos, left_pad_force, right_pad_force = env.main_loop()
 
   gripper.track_pose(gripper_target_position, gripper_target_orientation)
-  gripper.move_gripper_length(gripper_opening)
-  gripper.exosceleton_update(verbose = False)
+  # gripper.move_gripper_length(gripper_opening)
+  gripper.exosceleton_update(env.ball.id, ControlType.PWM, verbose = False, plot = True)
   #print(i)
   if 500 < i:
     gripper.collect_force_data(env.ball.id)

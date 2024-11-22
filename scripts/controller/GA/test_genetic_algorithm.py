@@ -19,7 +19,7 @@ class GeneticAlgorithmPID:
     def evaluate_fitness(self):
         start = time.time()
         iterations = 6000
-        fitness = self.gripper_motors.train_apply_current_compensation_PWM_PID(self.gripper_motors.test_target_current_function, motor_id=MOTOR_ID, kp = KP, ki = KI, kd = KD, iterations=iterations)
+        fitness = self.gripper_motors.test_apply_current_compensation_PWM_PID(self.gripper_motors.test_target_current_function, motor_id=MOTOR_ID, kp = KP, ki = KI, kd = KD, iterations=iterations)
         # iterations = 1300
         # fitness = self.gripper_motors.train_apply_current_compensation_PWM_PID(lambda x: 0.1, motor_id=MOTOR_ID, iterations=iterations)
         end = time.time()

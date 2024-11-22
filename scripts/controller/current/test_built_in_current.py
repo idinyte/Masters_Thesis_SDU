@@ -13,10 +13,10 @@ class BuiltInCurrentAlgorithm:
 
     def evaluate_fitness(self):
         start = time.time()
-        # iterations = 6000
-        # fitness = self.gripper_motors.train_apply_current_compensation_CURRENT_BUILT_IN(self.gripper_motors.test_target_current_function, motor_id=MOTOR_ID, iterations=iterations)
-        iterations = 600
-        fitness = self.gripper_motors.train_apply_current_compensation_CURRENT_BUILT_IN(lambda x: 0.1, motor_id=MOTOR_ID, iterations=iterations)
+        iterations = 6000
+        fitness = self.gripper_motors.test_apply_current_compensation_CURRENT_BUILT_IN(self.gripper_motors.test_target_current_function, motor_id=MOTOR_ID, iterations=iterations)
+        # iterations = 600
+        # fitness = self.gripper_motors.test_apply_current_compensation_CURRENT_BUILT_IN(lambda x: 0.1, motor_id=MOTOR_ID, iterations=iterations)
         end = time.time()
         delay, shifted_array = self.gripper_motors.get_delay_between_present_current_and_target()
         iteration_time_ms = 1000*(end - start)/iterations
