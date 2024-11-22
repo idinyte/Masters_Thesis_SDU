@@ -1,0 +1,11 @@
+PWM control. Genetic algorithm. 1000 iterations. Kp = 28.809, KI = 503.211, KD = 0.191. Fitness =  17.730463955870754. Iterration time = 48.00487494468689 ms. Delay = -288.02924966812134 ms
+
+# Changed usb settings to 1ms latency
+
+PWM control. Genetic algorithm. 6000 iterations. Kp = 28.809, KI = 503.211, KD = 0.191. Fitness =  91.5008591121052. Iterration time = 7.715756972630818 ms. Delay = -231.47270917892456 ms
+
+PWM control. Steady State goal current 0.1A. 500 iterations. Kp = 28.809, KI = 503.211, KD = 0.191. Fitness =  0.2825499999999974. Iterration time = 7.7287492385277385 ms.
+
+# Clamped positional and integral terms
+
+PWM control. Genetic algorithm. 6000 iterations. Kp = 28.809, KI = 503.211, KD = 0.191. Fitness =  54.80558047708063. Iterration time = 7.709359725316365 ms. Delay = -131.0591153303782 ms

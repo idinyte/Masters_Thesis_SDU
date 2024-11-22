@@ -51,8 +51,8 @@ while True:
 
   gripper.track_pose(gripper_target_position, gripper_target_orientation)
   gripper.move_gripper_length(gripper_opening)
-  gripper.exosceleton_update(verbose = True)
-
+  gripper.exosceleton_update(verbose = False)
+  #print(i)
   if 500 < i:
     gripper.collect_force_data(env.ball.id)
   

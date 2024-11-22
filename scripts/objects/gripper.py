@@ -4,6 +4,7 @@ import numpy as np
 from collections import namedtuple
 import matplotlib.pyplot as plt
 from scripts.objects.gripper_motors import GripperMotors
+import time
 
 class Gripper:
   def __init__(self, SIMULATION_STEP, exosceleton_on = False):
@@ -108,8 +109,20 @@ class Gripper:
     
   def exosceleton_update(self, verbose = False):
     if self.exosceleton_on:
-      self.gripper_motors.update_positions(verbose)
-    
+      self.gripper_motors.update_state(verbose)
+      #print(self.gripper_motors.currents[1])
+      current_current = self.gripper_motors.get_present_current(self.gripper_motors.left_motor_id)
+      # print(time.time())
+      self.gripper_motors.apply_current_compensation(self.gripper_motors.left_motor_id, 0.1)
+      
+      # current_torque = self.gripper_motors.get_present_torque(self.gripper_motors.left_motor_id, script_accesed_from_outside=False)
+      # goal_torque = 0 + current_torque
+      # self.gripper_motors.set_goal_torque(self.gripper_motors.left_motor_id, goal_torque)
+      # self.gripper_motors.set_goal_torque(self.gripper_motors.right_motor_id, 0)
+      # present_torque_left = self.gripper_motors.get_present_torque(self.gripper_motors.left_motor_id)
+      # present_torque_right = self.gripper_motors.get_present_torque(self.gripper_motors.right_motor_id)
+      # print(f"Left motor torque: {present_torque_left} Right motor torque: {present_torque_right}")
+
   def move_gripper_length(self, open_length):
     open_angle = self.gripper_distance_to_angle(open_length)
     self.move_gripper_angle(open_angle)

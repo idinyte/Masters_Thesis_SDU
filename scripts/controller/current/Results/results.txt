@@ -1,0 +1,10 @@
+Built in current control. 1000 iterations. Fitness = 4.454786012383616. Iterration time = 48.14307689666748 ms. Delay = -48.14307689666748 ms
+
+Built in current control. Steady state 0.1A goal current. 1000 iterations. Fitness = 2.8438199999999747. Iterration time = 48.143160820007324 ms
+
+
+# Changed usb settings to 1ms latency
+
+Built in current control. 6000 iterations. Fitness = 18.823103709862743. Iterration time = 8.003098646799723 ms. Delay = -8.003098646799723 ms
+
+BBuilt in current control. 500 iterations. Fitness = 1.3541899999999958. Iterration time = 8.016756375630697 ms. Delay = -24.05026912689209 ms

@@ -1,0 +1,1 @@
+By default usb communication latency is 16ms which makes communication laggy
