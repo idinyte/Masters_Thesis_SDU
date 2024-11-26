@@ -21,7 +21,7 @@ VRCameraPos = [0, 0, 1]
 VRCameraRot = [0, 0, 180]
 
 softBallPos = [0, 0, 1.045]
-softBallYoungsModulus = 5000
+softBallYoungsModulus = 3000
 softBallName = "1"
 
 robot_base_position = [1, -1, 1]
@@ -50,7 +50,8 @@ while True:
 
   gripper.track_pose(gripper_target_position, gripper_target_orientation)
   # gripper.move_gripper_length(gripper_opening)
-  gripper.exosceleton_update(env.ball.id, ControlType.PWM, verbose = False, plot = True)
+
+  gripper.exosceleton_update(env.ball.id, ControlType.Current, verbose = False, plot = True)
   #print(i)
   if 500 < i:
     gripper.collect_force_data(env.ball.id)

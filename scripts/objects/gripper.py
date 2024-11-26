@@ -24,7 +24,7 @@ class Gripper:
       self.gripper_motors = GripperMotors()
       self.plot_i = 0
       self.plot_start_time = None
-      self.target_left_pad_currents, self.target_right_pad_currents, self.present_left_pad_currents, self.present_right_pad_currents = [], [], [], []
+      self.target_left_pad_currents, self.target_right_pad_currents, self.present_left_pad_currents, self.present_right_pad_currents, self.present_left_pwm, self.present_right_pwm = [], [], [], [], [], []
 
   def initialize_gripper_controller(self, pos, orn):
         self.id = p.loadURDF(os.path.join(os.getcwd(), "assets/objects/UR5/urdf/robotiq_140_modified.urdf"), pos, orn)
@@ -123,9 +123,16 @@ class Gripper:
       left_pad_force, right_pad_force = self.get_contact_forces(ball_id)
 
       if control_type == ControlType.PWM:
-        target_left_pad_current, target_right_pad_current, present_left_pad_current, present_right_pad_current = self.gripper_motors.pwm_control(left_pad_force, right_pad_force, 28.809, 503.211, 0.191, False)
+        target_left_pad_current, target_right_pad_current, present_left_pad_current, present_right_pad_current, pwm_value_left, pwm_value_right = self.gripper_motors.pwm_control(left_pad_force, right_pad_force, 28.809, 503.211, 0.191, False)
       elif control_type == ControlType.Current:
-        target_left_pad_current, target_right_pad_current, present_left_pad_current, present_right_pad_current = self.gripper_motors.direct_current_control(left_pad_force, right_pad_force)
+        target_left_pad_current, target_right_pad_current, present_left_pad_current, present_right_pad_current = self.gripper_motors.direct_current_control(left_pad_force, right_pad_force, True, 10)
+        
+        # smoothed_curves, target_left_pad_current, target_right_pad_current, present_left_pad_current, present_right_pad_current = self.gripper_motors.test_delays_direct_current_control(left_pad_force, right_pad_force)
+        # if plot:
+        #   if not hasattr(self, 'smoothed_curves_history'):
+        #       self.smoothed_curves_history = {w: [] for w in smoothed_curves}
+        #   for window, smoothed_value in smoothed_curves.items():
+        #       self.smoothed_curves_history[window].append(smoothed_value)
         
       if plot:
         if self.plot_start_time == None:
@@ -135,10 +142,34 @@ class Gripper:
         self.target_right_pad_currents.append(target_right_pad_current)
         self.present_left_pad_currents.append(present_left_pad_current)
         self.present_right_pad_currents.append(present_right_pad_current)
-        iterations = 3000
+        if control_type == ControlType.PWM:
+          self.present_left_pwm.append(pwm_value_left)
+          self.present_right_pwm.append(pwm_value_right)
+        iterations = 400
         if self.plot_i == iterations:
           print(f"iteration time is {1000 * (time.time() - self.plot_start_time) / iterations} ms")
           self.plot()
+          if control_type == ControlType.PWM:
+            self.plot_pwm()
+          #self.plot_smoothed_curves()
+          
+  def plot_smoothed_curves(self):
+    if not hasattr(self, 'smoothed_curves_history'):
+        print("No smoothed curves to plot.")
+        return
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(self.target_left_pad_currents, label=f'Target')
+    for window, curve in self.smoothed_curves_history.items():
+        plt.plot(curve, label=f'Window size k = {window}')
+
+    plt.title('Exponentially Smoothed Curves with Different k Values')
+    plt.xlabel('Iterations')
+    plt.ylabel('Current (A)')
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
   
   def plot(self):
     fig, axs = plt.subplots(2, 1, figsize=(8, 6), sharex=True)
@@ -155,6 +186,25 @@ class Gripper:
     axs[1].set_title('Right Motor')
     axs[1].set_xlabel('Iterations')
     axs[1].set_ylabel('Current (A)')
+    axs[1].legend()
+    axs[1].grid(True)
+
+    plt.tight_layout()
+    plt.show()
+    
+  def plot_pwm(self):
+    fig, axs = plt.subplots(2, 1, figsize=(8, 6), sharex=True)
+
+    axs[0].plot(self.present_left_pwm, color='b')
+    axs[0].set_title('Left Motor')
+    axs[0].set_ylabel('PWM')
+    axs[0].legend()
+    axs[0].grid(True)
+
+    axs[1].plot(self.present_right_pwm, color='b')
+    axs[1].set_title('Right Motor')
+    axs[1].set_xlabel('Iterations')
+    axs[1].set_ylabel('PWM')
     axs[1].legend()
     axs[1].grid(True)
 
