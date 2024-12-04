@@ -189,12 +189,12 @@ class SortBallsANN:
         with open(results_file, 'a+') as file:
             file.write(result)
             
-    def start(self, results_file):
+    def start(self, results_file, use_camera = True):
         self.env.simulation_time = 0
         ball_find_end_time, ball_grab_start_time, ball_grab_end_time, ball_classify_start_time, ball_classify_end_time, ball_place_start_time, ball_place_end_time = 0, 0, 0, 0, 0, 0, 0
         
         ball_find_start_time = time.time()
-        if self.scene_point_cloud == None:
+        if use_camera and self.scene_point_cloud == None:
             # Move the robot arm from camera view so point cloud can be taken
             self.env.robot.move_ee_to_target_pos([0, -0.3, 2.5], [0, np.pi/2, np.pi/2])
             for _ in range(300):
@@ -206,7 +206,8 @@ class SortBallsANN:
         ball_find_end_time = time.time()
         
         real_position, orientation = p.getBasePositionAndOrientation(self.env.ball.id)
-        #self.ball_position = list(real_position)
+        if not use_camera:
+            self.ball_position = list(real_position)
 
         ball_position_error = np.linalg.norm(np.array(real_position) - np.array(self.ball_position))
         print(f"real ball position {real_position} found ball position {self.ball_position} error {ball_position_error}")

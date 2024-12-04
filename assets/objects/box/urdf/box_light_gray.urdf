@@ -5,7 +5,7 @@
   <link name="box_bottom">
     <visual>
       <geometry>
-        <box size="0.5 0.5 0.02"/>  <!-- 50cm x 50cm, 2cm thick -->
+        <box size="0.3 0.3 0.02"/>  <!-- 30cm x 30cm, 2cm thick -->
       </geometry>
       <origin xyz="0 0 0.01"/>
       <material name="gray">
@@ -15,7 +15,7 @@
     
     <collision>
       <geometry>
-        <box size="0.5 0.5 0.02"/>  <!-- 50cm x 50cm collision box -->
+        <box size="0.3 0.3 0.02"/>  <!-- 30cm x 30cm collision box -->
       </geometry>
       <origin xyz="0 0 0.01"/>
     </collision>
@@ -27,9 +27,9 @@
   <link name="box_wall_front">
     <visual>
       <geometry>
-        <box size="0.5 0.02 0.25"/>  <!-- Wall thickness 2cm, 50cm height -->
+        <box size="0.3 0.02 0.25"/>  <!-- Wall thickness 2cm, 30cm height -->
       </geometry>
-      <origin xyz="0 0.26 0.125"/>
+      <origin xyz="0 0.16 0.125"/>
       <material name="gray">
         <color rgba="0.7 0.7 0.7 1"/>
       </material>
@@ -37,9 +37,9 @@
     
     <collision>
       <geometry>
-        <box size="0.5 0.02 0.25"/>  <!-- Wall thickness 2cm, 50cm height -->
+        <box size="0.3 0.02 0.25"/>  <!-- Wall thickness 2cm, 30cm height -->
       </geometry>
-      <origin xyz="0 0.26 0.125"/>
+      <origin xyz="0 0.16 0.125"/>
     </collision>
   </link>
 
@@ -47,9 +47,9 @@
   <link name="box_wall_back">
     <visual>
       <geometry>
-        <box size="0.5 0.02 0.25"/>
+        <box size="0.3 0.02 0.25"/>
       </geometry>
-      <origin xyz="0 -0.26 0.125"/>
+      <origin xyz="0 -0.16 0.125"/>
       <material name="gray">
         <color rgba="0.7 0.7 0.7 1"/>
       </material>
@@ -57,9 +57,9 @@
     
     <collision>
       <geometry>
-        <box size="0.5 0.02 0.25"/>
+        <box size="0.3 0.02 0.25"/>
       </geometry>
-      <origin xyz="0 -0.26 0.125"/>
+      <origin xyz="0 -0.16 0.125"/>
     </collision>
   </link>
 
@@ -67,9 +67,9 @@
   <link name="box_wall_left">
     <visual>
       <geometry>
-        <box size="0.02 0.54 0.25"/>  <!-- 2cm thick, 50cm height -->
+        <box size="0.02 0.34 0.25"/>  <!-- 2cm thick, 30cm height -->
       </geometry>
-      <origin xyz="-0.26 0 0.125"/>
+      <origin xyz="-0.16 0 0.125"/>
       <material name="gray">
         <color rgba="0.7 0.7 0.7 1"/>
       </material>
@@ -77,9 +77,9 @@
     
     <collision>
       <geometry>
-        <box size="0.02 0.54 0.25"/>
+        <box size="0.02 0.34 0.25"/>
       </geometry>
-      <origin xyz="-0.26 0 0.125"/>
+      <origin xyz="-0.16 0 0.125"/>
     </collision>
   </link>
 
@@ -87,9 +87,9 @@
   <link name="box_wall_right">
     <visual>
       <geometry>
-        <box size="0.02 0.54 0.25"/>
+        <box size="0.02 0.34 0.25"/>
       </geometry>
-      <origin xyz="0.26 0 0.125"/>
+      <origin xyz="0.16 0 0.125"/>
       <material name="gray">
         <color rgba="0.7 0.7 0.7 1"/>
       </material>
@@ -97,9 +97,9 @@
     
     <collision>
       <geometry>
-        <box size="0.02 0.54 0.25"/>
+        <box size="0.02 0.34 0.25"/>
       </geometry>
-      <origin xyz="0.26 0 0.125"/>
+      <origin xyz="0.16 0 0.125"/>
     </collision>
   </link>
 

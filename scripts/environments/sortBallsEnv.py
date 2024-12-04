@@ -65,22 +65,22 @@ class SortBallsEnv():
         self.table_id = p.loadURDF("table/table.urdf", basePosition=[0, -0.7, 0], baseOrientation=p.getQuaternionFromEuler([0, 0, 0]), globalScaling=1.6, useFixedBase=True)
 
         # Boxes
-        box_1_base_pos = [0.27 + 0.54, -1 + 0.54, 1]
+        box_1_base_pos = [0.16 + 0.54, -0.6 + 0.34, 1]
         self.box_1_id = p.loadURDF(os.path.join(os.getcwd(), "assets/objects/box/urdf/box_light.urdf"), basePosition=box_1_base_pos, baseOrientation=p.getQuaternionFromEuler([0, 0, 0]), useFixedBase=True)
         self.ball_1_goal_pose = box_1_base_pos
         self.ball_1_goal_pose[2] += self.ball_radius
 
-        box_2_base_pos = [0.27, -0.9, 1]
+        box_2_base_pos = [0.16 + 0.54, -0.6, 1]
         self.box_2_id = p.loadURDF(os.path.join(os.getcwd(), "assets/objects/box/urdf/box_light_gray.urdf"), basePosition=box_2_base_pos, baseOrientation=p.getQuaternionFromEuler([0, 0, 0]), useFixedBase=True)
         self.ball_2_goal_pose = box_2_base_pos
         self.ball_2_goal_pose[2] += self.ball_radius
         
-        box_3_base_pos = [-0.27, -0.9, 1]
+        box_3_base_pos = [-0.16 - 0.54, -0.6, 1]
         self.box_3_id = p.loadURDF(os.path.join(os.getcwd(), "assets/objects/box/urdf/box_dark_gray.urdf"), basePosition=box_3_base_pos, baseOrientation=p.getQuaternionFromEuler([0, 0, 0]), useFixedBase=True)
         self.ball_3_goal_pose = box_3_base_pos
         self.ball_3_goal_pose[2] += self.ball_radius
         
-        box_4_base_pos = [-0.27 - 0.54, -1 + 0.54, 1]
+        box_4_base_pos = [-0.16 - 0.54, -0.6 + 0.34, 1]
         self.box_4_id = p.loadURDF(os.path.join(os.getcwd(), "assets/objects/box/urdf/box_dark.urdf"), basePosition=box_4_base_pos, baseOrientation=p.getQuaternionFromEuler([0, 0, 0]), useFixedBase=True)
         self.ball_4_goal_pose = box_4_base_pos
         self.ball_4_goal_pose[2] += self.ball_radius
