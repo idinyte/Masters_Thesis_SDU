@@ -9,7 +9,7 @@ import scripts.environments.robotBallPress as robotBallPress
 BALLS_MAP = sortBallsEnv.BALLS_MAP
 
 # prepare folder
-data_folder_path = os.path.join(os.path.dirname(__file__), 'data2')
+data_folder_path = os.path.join(os.path.dirname(__file__), 'data3')
 data_file_path = os.path.join(data_folder_path, 'data.txt')
 os.makedirs(data_folder_path, exist_ok=True)
 with open(data_file_path, 'w') as file:

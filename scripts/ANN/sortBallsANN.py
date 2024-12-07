@@ -16,19 +16,19 @@ class STATES(Enum):
     FAILED_TO_PLACE_BALL = 4
     
 class SortBallsANN:
-    def __init__(self, env):
+    def __init__(self, env, record_trajectory = False):
         self.env = env
         self.robot = self.env.robot
         self.scene_point_cloud = None
         self.point_cloud_obj = PointCloud()
-        self.trajectory = Trajectory(self.env.SIMULATION_STEP, self.env.robot, self.env.main_loop)
+        self.trajectory = Trajectory(self.env.SIMULATION_STEP, self.env.robot, self.env.main_loop, record_trajectory, self.env.get_state)
         self._load_neural_network()
     
     def _load_neural_network(self):
         input_dim = 8
         output_dim = 4
         self.model = ANN(input_dim=input_dim, output_dim=output_dim)
-        weights_path = 'scripts/ANN/ann_weights_architecture_8_32_4_epochs_5000_acc_996.pth'
+        weights_path = 'scripts/ANN/data3/ann_weights_architecture_8_32_4_epochs_300_acc_1000.pth'
         self.model.load_state_dict(torch.load(weights_path))
         self.model.eval()
 
@@ -56,8 +56,9 @@ class SortBallsANN:
         self.ball_position = None
 
     def grab_ball(self):
-        gripper_to_eef_z_offset = 0.19
-        gripper_grab_ball_length = 0.06
+        gripper_to_eef_z_offset = 0.186
+        gripper_grab_ball_length = 0.05
+        above_box = gripper_to_eef_z_offset + 0.3
         points, orientations, gripper, durations = [], [], [], []
         
         # Current point
@@ -69,7 +70,7 @@ class SortBallsANN:
         # Point above ball
         durations.append(3)
         p2 = copy.copy(self.ball_position)
-        p2[2] += gripper_to_eef_z_offset + 0.4
+        p2[2] += above_box
         points.append(p2)
         orientations.append(p.getQuaternionFromEuler([0, np.pi/2, np.pi/2]))
         gripper.append(self.robot.gripper_range[1])
@@ -93,7 +94,7 @@ class SortBallsANN:
         # Lift ball
         durations.append(2)
         p5 = copy.copy(self.ball_position)
-        p5[2] += gripper_to_eef_z_offset + 0.4
+        p5[2] += above_box
         points.append(p5)
         orientations.append(p.getQuaternionFromEuler([0, np.pi/2, np.pi/2]))
         gripper.append(gripper_grab_ball_length)
@@ -104,7 +105,8 @@ class SortBallsANN:
         return not self.env.restart_episode
     
     def place_ball(self):
-        gripper_grab_ball_length = 0.06
+        gripper_grab_ball_length = 0.05
+        above_box_global = 1.65
         points, orientations, gripper, durations = [], [], [], []
         
         # Current point
@@ -116,7 +118,7 @@ class SortBallsANN:
         # Rise
         durations.append(1)
         p2 = copy.copy(self.ball_position)
-        p2[2] = 1.8
+        p2[2] = above_box_global
         points.append(p2)
         orientations.append(p.getQuaternionFromEuler([0, np.pi/2, np.pi/2]))
         gripper.append(gripper_grab_ball_length)
@@ -124,23 +126,23 @@ class SortBallsANN:
         # Point above correct box
         durations.append(3)
         p3 = self.env.get_corresponding_ball_box()
-        p3[2] = 1.8
+        p3[2] = above_box_global
         points.append(p3)
         orientations.append(p.getQuaternionFromEuler([0, np.pi/2, np.pi/2]))
         gripper.append(gripper_grab_ball_length)
         
-        # Move down
-        durations.append(1)
-        p4 = self.env.get_corresponding_ball_box()
-        p4[2] = 1.4
-        points.append(p4)
-        orientations.append(p.getQuaternionFromEuler([0, np.pi/2, np.pi/2]))
-        gripper.append(gripper_grab_ball_length)
+        # # Move down
+        # durations.append(1)
+        # p4 = self.env.get_corresponding_ball_box()
+        # p4[2] = 1.4
+        # points.append(p4)
+        # orientations.append(p.getQuaternionFromEuler([0, np.pi/2, np.pi/2]))
+        # gripper.append(gripper_grab_ball_length)
         
         # Release ball
         durations.append(1)
         p5 = self.env.get_corresponding_ball_box()
-        p5[2] = 1.4
+        p5[2] = above_box_global
         points.append(p5)
         orientations.append(p.getQuaternionFromEuler([0, np.pi/2, np.pi/2]))
         gripper.append(self.robot.gripper_range[1])
@@ -160,7 +162,7 @@ class SortBallsANN:
         
         gripper_distances = []
         forces = []
-        smooth = 5
+        smooth = 1
         for _ in range(smooth):
             gripper_distance = self.robot.get_gripper_open_length()
             left_pad_force, right_pad_force = self.robot.get_gripper_contact_forces(self.env.ball.id)

@@ -2,10 +2,13 @@ import numpy as np
 import pybullet as p
 
 class Trajectory():
-  def __init__(self, TIME_STEP, robot, main_loop) -> None:
+  def __init__(self, TIME_STEP, robot, main_loop, record_trajectory, get_state) -> None:
     self.TIME_STEP = TIME_STEP
     self.robot = robot
     self.main_loop = main_loop
+    self.record_trajectory = record_trajectory
+    self.recorded_trajectory = []
+    self.get_state = get_state
     
   def linear_interpolation(self, start, end, duration, t):
     return start + (end - start) * (t / duration)
@@ -41,6 +44,8 @@ class Trajectory():
       return trajectory
     
   def follow_trajectory(self, trajectory):
+    state = self.get_state()
+
     for point in trajectory:
       target_position = point[0]
       target_orientation = point[1]
@@ -51,6 +56,13 @@ class Trajectory():
       p.setJointMotorControlArray(bodyIndex=self.robot.robot_id, jointIndices=[1, 2, 3, 4, 5, 6], controlMode=p.POSITION_CONTROL, targetPositions=joint_positions[:6])
       self.robot.move_gripper_length(target_gripper)
 
-      self.main_loop()
-
-  # trajectory = generate_trajectory(target_positions, target_orientations, target_gripper, durations)
+      next_state = self.main_loop()
+      
+      ee_pos = state[0]
+      action_position = target_position - ee_pos
+      current_gripper_opening = state[3]
+      action_gripper = target_gripper - current_gripper_opening
+      action = (action_position, action_gripper)
+      if self.record_trajectory:
+        self.recorded_trajectory.append((state, action))
+      state = next_state

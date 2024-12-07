@@ -24,10 +24,10 @@ class BallDataset(Dataset):
     def __getitem__(self, idx):
         return torch.tensor(self.data[idx], dtype=torch.float32), torch.tensor(self.labels[idx])
 
-data_file_path = os.path.join(os.path.dirname(__file__), 'data2', 'data.txt')
-train_file_path = os.path.join(os.path.dirname(__file__), 'data2', 'train.txt')
-test_file_path = os.path.join(os.path.dirname(__file__), 'data2', 'test.txt')
-train_history = os.path.join(os.path.dirname(__file__), 'data2', 'train_history.txt')
+data_file_path = os.path.join(os.path.dirname(__file__), 'data3', 'data.txt')
+train_file_path = os.path.join(os.path.dirname(__file__), 'data3', 'train.txt')
+test_file_path = os.path.join(os.path.dirname(__file__), 'data3', 'test.txt')
+train_history = os.path.join(os.path.dirname(__file__), 'data3', 'train_history.txt')
 
 # Split dataset into train and test sets and save to separate files
 dataset = BallDataset(data_file_path)
@@ -47,7 +47,7 @@ with open(test_file_path, 'w') as test_file:
 
 input_dim = 8   # 4 pairs of (diameter, force)
 output_dim = 4  # 4 types of balls
-num_epochs = 5000
+num_epochs = 300
 batch_size = 32
 learning_rate = 0.001
 model_archtecture = "8_32_4"
