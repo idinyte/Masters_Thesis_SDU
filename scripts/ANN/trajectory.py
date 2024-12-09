@@ -56,13 +56,19 @@ class Trajectory():
       p.setJointMotorControlArray(bodyIndex=self.robot.robot_id, jointIndices=[1, 2, 3, 4, 5, 6], controlMode=p.POSITION_CONTROL, targetPositions=joint_positions[:6])
       self.robot.move_gripper_length(target_gripper)
 
-      next_state = self.main_loop()
+      next_state = self.main_loop(gym_state = True)
       
-      ee_pos = state[0]
-      action_position = target_position - ee_pos
-      current_gripper_opening = state[3]
+      ee_pos = state[:3]
+      action_position = np.array(target_position) - ee_pos
+      current_gripper_opening = state[10]
       action_gripper = target_gripper - current_gripper_opening
-      action = (action_position, action_gripper)
+      action = np.concatenate([action_position, [action_gripper]])
+      
+      # ee_pos = state[0]
+      # action_position = target_position - ee_pos
+      # current_gripper_opening = state[3]
+      # action_gripper = target_gripper - current_gripper_opening
+      # action = (action_position, action_gripper)
       if self.record_trajectory:
         self.recorded_trajectory.append((state, action))
       state = next_state

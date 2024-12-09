@@ -61,7 +61,7 @@ class SoftBall():
     def is_ball_within_robot_reach(self):
         # From ur5 manual min 45cm max 2m, but pybullet distances != meters
         radius_min = 0.2
-        radius_max = 1.5
+        radius_max = 2
         pos1=copy.copy(self.robot_base_pos)
         pos1[2] = 0
         pos2=list(copy.copy(self.ball_position))

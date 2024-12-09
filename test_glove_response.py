@@ -46,7 +46,7 @@ while True:
     #gripper_target_orientation = p.getQuaternionFromEuler([roll, pitch, yaw])
     gripper_opening = gripper_opening_length
   
-  hard_ball_goal_pose, soft_ball_goal_pose, ball_position, robot_joint_angles, robot_gripper_open_length, gripper_pos, left_pad_force, right_pad_force = env.main_loop()
+  env.main_loop()
 
   gripper.track_pose(gripper_target_position, gripper_target_orientation)
   # gripper.move_gripper_length(gripper_opening)

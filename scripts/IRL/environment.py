@@ -1,0 +1,103 @@
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+from gym import Env
+from gym import spaces
+import numpy as np
+import pybullet as p
+from scripts.objects.ur5 import UR5Robot
+from scripts.environments.sortBallsEnv import SortBallsEnv
+
+class GymWrapper(Env):
+  def __init__(self, vis = False):
+    self.vis = vis
+    self.reset()
+    self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=self.state.shape, dtype=np.float64)
+    self.action_space = spaces.Box(low=np.array([-0.01, -0.01, -0.01, -0.01]),
+                               high=np.array([0.01, 0.01, 0.01, 0.01]),
+                               dtype=np.float64)
+
+  def step(self, action):
+    info = {}
+    self._perform_action(action)
+    new_state = self.env.main_loop(gym_state = True)
+    self.state = new_state
+    reward = self._get_reward()
+    self.cumulative_reward += reward
+    self.step_counter += 1
+    
+    done = self.env.terminal_state or self.env.restart_episode or self.step_counter > 100000
+    if self.env.restart_episode:
+        info['done_reason'] = 'restart'
+    elif self.step_counter > 100000:
+        info['done_reason'] = 'time_limit'
+    elif self.env.terminal_state:
+        info['done_reason'] = 'finish'
+    
+    return self.state, reward, done, info
+  
+  def reset(self):
+    robot = UR5Robot(urdf_path=os.path.join(os.getcwd(), "assets/objects/UR5/urdf/ur5_robotiq_140_modified.urdf"), base_position=[0, 0, 0], base_orientation=[0.0, 0.0, 0.0, 1.0], use_fixed_base=True)
+    camera=None
+    debug=False
+    realtime=False
+    VR=False
+    VRCameraPos = [0, 0, 1]
+    VRCameraRot = [0, 0, 180]
+    robot_base_position = [0, 0, 1]
+    self.env = SortBallsEnv(robot, camera, self.vis, realtime, debug, VR, VRCameraPos, VRCameraRot, robot_base_position = robot_base_position)
+    self.env.check_ball_health()
+
+    self.cumulative_reward = 0
+    self.ball_grabbed = False
+    self.step_counter = 0
+
+    self.state = self.env.state_to_gym_state(self.env.get_state())
+    
+    return self.state  
+    
+  
+  def _perform_action(self, action):
+    robot_pos, robot_ori = self.env.robot.get_ee_link_pose()
+    target_position_delta = action[:3]
+    target_position = robot_pos + target_position_delta
+    target_orientation = p.getQuaternionFromEuler(np.radians([180, 0, 90]))
+    target_gripper = self.env.robot.get_gripper_open_length() + action[3]
+    
+    joint_positions = p.calculateInverseKinematics(self.env.robot.robot_id, self.env.robot.eef_id, target_position, targetOrientation=target_orientation)
+
+    p.setJointMotorControlArray(bodyIndex=self.env.robot.robot_id, jointIndices=[1, 2, 3, 4, 5, 6], controlMode=p.POSITION_CONTROL, targetPositions=joint_positions[:6])
+    self.env.robot.move_gripper_length(target_gripper)
+    
+  def _get_reward(self):
+    ball_position, orientation = p.getBasePositionAndOrientation(self.env.ball.id)
+    # reward for gripper being close to the ball
+    reward = 0.1 - np.linalg.norm(np.array(self.env.robot.get_gripper_middle_pad_pos()) - np.array(ball_position))
+    
+    # reward for holding ball
+    left_pad_force, right_pad_force = self.state[11], self.state[12]
+    gripper_opening_length = self.state[10]
+    if self._is_touching_ball(left_pad_force, right_pad_force) and gripper_opening_length < 0.06:
+      reward += 0.01
+      self.ball_grabbed = True
+      
+    # punishment for dropping ball
+    if self.ball_grabbed and not self._is_touching_ball(left_pad_force, right_pad_force):
+      goal_position, orientation = p.getBasePositionAndOrientation(self.env.ball.id)
+      # reward if dropping in correct box
+      if np.linalg.norm(np.array(goal_position) - np.array(ball_position)) < 0.3:
+        reward += 10
+      else:
+        reward -= 0.1
+      
+    # reward for placing in correct box
+    if self.env.ball.is_in_box(self.env.get_corresponding_ball_box_id()):
+      reward += 50000
+    
+    return reward
+
+  def _is_touching_ball(self, left_pad_force, right_pad_force):
+    return left_pad_force > 0 and right_pad_force > 0
+
+  def render(self):
+    pass

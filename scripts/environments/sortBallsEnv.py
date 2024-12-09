@@ -1,6 +1,7 @@
 from scripts.environments.commonEnv import CommonEnv
 from scripts.environments.VREnv import VREnv
-from scripts.objects.softBall import SoftBall 
+from scripts.objects.softBall import SoftBall
+import numpy as np
 import pybullet as p
 import random
 import os
@@ -34,6 +35,7 @@ class SortBallsEnv():
         self.VR = VR
         self.baseEnv = None
         self.restart_episode = False
+        self.terminal_state = False
         
         self.softBallPos = softBallPos
         self.softBallYoungsModulus = softBallYoungsModulus
@@ -168,20 +170,21 @@ class SortBallsEnv():
 
         return (ee_pos, ee_ori, gripper_pos, robot_gripper_open_length, left_pad_force, right_pad_force, ball_pos, self.ball_1_goal_pose, self.ball_2_goal_pose, self.ball_3_goal_pose, self.ball_4_goal_pose)
     
+    def state_to_gym_state(self, state):
+        return np.concatenate([np.ravel(x) if isinstance(x, (np.ndarray, list, tuple)) else np.array([x]) for x in state])
+    
     def check_terminal_state(self):
         for box_id in [self.box_1_id, self.box_2_id, self.box_3_id, self.box_4_id]:
             if self.ball.is_in_box(box_id):
                 self.terminal_state = True 
     
-    def main_loop(self, do_step_simulation = True):
+    def main_loop(self, do_step_simulation = True, gym_state = False):
         self.check_ball_health()
         if not self.restart_episode:
             self.check_terminal_state()
         if do_step_simulation:
             self.step_simulation()
             self.simulation_time += self.SIMULATION_STEP
-        return self.get_state()
-        
-        
-
-    
+        if not gym_state:
+            return self.get_state()
+        return self.state_to_gym_state(self.get_state())
