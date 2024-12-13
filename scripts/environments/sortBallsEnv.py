@@ -72,22 +72,22 @@ class SortBallsEnv():
         box_1_base_pos = [0.16 + 0.54, -0.5 + 0.34, 1]
         self.box_1_id = p.loadURDF(os.path.join(os.getcwd(), "assets/objects/box/urdf/box_light.urdf"), basePosition=box_1_base_pos, baseOrientation=p.getQuaternionFromEuler([0, 0, 0]), useFixedBase=True)
         self.ball_1_goal_pose = box_1_base_pos
-        self.ball_1_goal_pose[2] += self.ball_radius
+        self.ball_1_goal_pose[2] += self.ball_radius + 0.3
 
         box_2_base_pos = [0.16 + 0.54, -0.5, 1]
         self.box_2_id = p.loadURDF(os.path.join(os.getcwd(), "assets/objects/box/urdf/box_light_gray.urdf"), basePosition=box_2_base_pos, baseOrientation=p.getQuaternionFromEuler([0, 0, 0]), useFixedBase=True)
         self.ball_2_goal_pose = box_2_base_pos
-        self.ball_2_goal_pose[2] += self.ball_radius
+        self.ball_2_goal_pose[2] += self.ball_radius + 0.3
         
         box_3_base_pos = [-0.16 - 0.54, -0.5, 1]
         self.box_3_id = p.loadURDF(os.path.join(os.getcwd(), "assets/objects/box/urdf/box_dark_gray.urdf"), basePosition=box_3_base_pos, baseOrientation=p.getQuaternionFromEuler([0, 0, 0]), useFixedBase=True)
         self.ball_3_goal_pose = box_3_base_pos
-        self.ball_3_goal_pose[2] += self.ball_radius
+        self.ball_3_goal_pose[2] += self.ball_radius + 0.3
         
         box_4_base_pos = [-0.16 - 0.54, -0.5 + 0.34, 1]
         self.box_4_id = p.loadURDF(os.path.join(os.getcwd(), "assets/objects/box/urdf/box_dark.urdf"), basePosition=box_4_base_pos, baseOrientation=p.getQuaternionFromEuler([0, 0, 0]), useFixedBase=True)
         self.ball_4_goal_pose = box_4_base_pos
-        self.ball_4_goal_pose[2] += self.ball_radius
+        self.ball_4_goal_pose[2] += self.ball_radius + 0.3
 
         # Soft ball
         self.ball_pos_aabb_min = [-0.38, -0.55, 1 + self.ball_radius]
@@ -167,8 +167,10 @@ class SortBallsEnv():
         except:
             self.check_ball_health()
             ball_pos = self.ball.ball_position
+            
+        relative_ball_pos = ball_pos - gripper_pos
 
-        return (ee_pos, ee_ori, gripper_pos, robot_gripper_open_length, left_pad_force, right_pad_force, ball_pos, self.ball_1_goal_pose, self.ball_2_goal_pose, self.ball_3_goal_pose, self.ball_4_goal_pose)
+        return (ee_pos, ee_ori, gripper_pos, robot_gripper_open_length, left_pad_force, right_pad_force, relative_ball_pos, self.ball_1_goal_pose, self.ball_2_goal_pose, self.ball_3_goal_pose, self.ball_4_goal_pose)
     
     def state_to_gym_state(self, state):
         return np.concatenate([np.ravel(x) if isinstance(x, (np.ndarray, list, tuple)) else np.array([x]) for x in state])

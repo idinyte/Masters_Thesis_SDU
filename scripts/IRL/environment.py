@@ -11,11 +11,13 @@ from scripts.environments.sortBallsEnv import SortBallsEnv
 class GymWrapper(Env):
   def __init__(self, vis = False):
     self.vis = vis
+    self.episode = 0
+    self.max_reward = -np.inf
     self.reset()
-    self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=self.state.shape, dtype=np.float64)
+    self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=self.state.shape, dtype=np.float32)
     self.action_space = spaces.Box(low=np.array([-0.01, -0.01, -0.01, -0.01]),
                                high=np.array([0.01, 0.01, 0.01, 0.01]),
-                               dtype=np.float64)
+                               dtype=np.float32)
 
   def step(self, action):
     info = {}
@@ -26,17 +28,15 @@ class GymWrapper(Env):
     self.cumulative_reward += reward
     self.step_counter += 1
     
-    done = self.env.terminal_state or self.env.restart_episode or self.step_counter > 100000
-    if self.env.restart_episode:
-        info['done_reason'] = 'restart'
-    elif self.step_counter > 100000:
-        info['done_reason'] = 'time_limit'
-    elif self.env.terminal_state:
-        info['done_reason'] = 'finish'
+    done = self.env.terminal_state or self.env.restart_episode or self.step_counter > 100
     
     return self.state, reward, done, info
   
   def reset(self):
+    self.episode += 1
+    if self.episode > 1:
+      self.max_reward = max(self.max_reward, self.cumulative_reward)
+
     robot = UR5Robot(urdf_path=os.path.join(os.getcwd(), "assets/objects/UR5/urdf/ur5_robotiq_140_modified.urdf"), base_position=[0, 0, 0], base_orientation=[0.0, 0.0, 0.0, 1.0], use_fixed_base=True)
     camera=None
     debug=False
@@ -70,30 +70,29 @@ class GymWrapper(Env):
     self.env.robot.move_gripper_length(target_gripper)
     
   def _get_reward(self):
-    ball_position, orientation = p.getBasePositionAndOrientation(self.env.ball.id)
+    ball_position_world_coordinates = self.state[13:16] + self.state[7:10]
+    
     # reward for gripper being close to the ball
-    reward = 0.1 - np.linalg.norm(np.array(self.env.robot.get_gripper_middle_pad_pos()) - np.array(ball_position))
+    reward = -np.linalg.norm(self.state[13:16])
     
     # reward for holding ball
     left_pad_force, right_pad_force = self.state[11], self.state[12]
     gripper_opening_length = self.state[10]
     if self._is_touching_ball(left_pad_force, right_pad_force) and gripper_opening_length < 0.06:
-      reward += 0.01
+      reward += 0.5
       self.ball_grabbed = True
-      
-    # punishment for dropping ball
-    if self.ball_grabbed and not self._is_touching_ball(left_pad_force, right_pad_force):
-      goal_position, orientation = p.getBasePositionAndOrientation(self.env.ball.id)
-      # reward if dropping in correct box
-      if np.linalg.norm(np.array(goal_position) - np.array(ball_position)) < 0.3:
-        reward += 10
-      else:
-        reward -= 0.1
-      
-    # reward for placing in correct box
-    if self.env.ball.is_in_box(self.env.get_corresponding_ball_box_id()):
-      reward += 50000
     
+    # reward for ball being close to goal
+    reward -= np.linalg.norm(np.array(self.env.get_corresponding_ball_box()) - np.array(ball_position_world_coordinates))
+      
+    # reward for placing ball in correct box
+    if self.env.ball.is_in_box(self.env.get_corresponding_ball_box_id()):
+      reward += 20000
+    
+    # reward for crashing the environment (ball being too far or exploding)
+    if self.env.restart_episode:
+      reward -= 100000
+
     return reward
 
   def _is_touching_ball(self, left_pad_force, right_pad_force):

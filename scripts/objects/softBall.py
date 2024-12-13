@@ -86,7 +86,8 @@ class SoftBall():
         self.update_pos()
 
         # The soft body simulation has exploded
-        if self.calculate_volume() > 2*self.aabb_volume:
+        calculated_volume = self.calculate_volume()
+        if calculated_volume > 2*self.aabb_volume or calculated_volume < 0.1*self.aabb_volume:
             print("Self destruct: ball exploded!")
             self.dead = True
         

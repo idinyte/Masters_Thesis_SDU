@@ -36,7 +36,7 @@ class UR5Robot:
         p.changeDynamics(self.robot_id, LEFT_PAD_GRIPPER_INDEX, lateralFriction=10.0)
         p.changeDynamics(self.robot_id, RIGHT_PAD_GRIPPER_INDEX, lateralFriction=10.0)
                 
-    def _parse_joint_info(self, print_info=True):
+    def _parse_joint_info(self, print_info=False):
         """Populate self.joints"""
         numJoints = p.getNumJoints(self.robot_id)
         jointInfo = namedtuple('jointInfo', 
@@ -144,7 +144,7 @@ class UR5Robot:
         right_pad_pos = np.array(p.getLinkState(self.robot_id, RIGHT_PAD_GRIPPER_INDEX)[0])
         
         middle_point = (left_pad_pos + right_pad_pos) / 2
-        return middle_point.tolist()
+        return middle_point
     
     def get_gripper_contact_forces(self, ball_id):
         contact_points = p.getContactPoints(bodyA=self.robot_id, bodyB=ball_id)

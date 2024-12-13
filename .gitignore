@@ -3,3 +3,6 @@ __pycache__/
 *.Lnk
 scripts/IRL/expert_demos/demos_backup*
 scripts/IRL/expert_demos/expert_demos*
+logs
+checkpoints
+*.ods*
