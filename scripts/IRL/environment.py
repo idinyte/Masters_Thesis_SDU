@@ -9,8 +9,9 @@ from scripts.objects.ur5 import UR5Robot
 from scripts.environments.sortBallsEnv import SortBallsEnv
 
 class GymWrapper(Env):
-  def __init__(self, vis = False):
+  def __init__(self, max_episode_steps = 15000, vis = False):
     self.vis = vis
+    self.max_episode_steps = max_episode_steps
     self.episode = 0
     self.max_reward = -np.inf
     self.reset()
@@ -28,7 +29,7 @@ class GymWrapper(Env):
     self.cumulative_reward += reward
     self.step_counter += 1
     
-    done = self.env.terminal_state or self.env.restart_episode or self.step_counter > 100
+    done = self.env.terminal_state or self.env.restart_episode or self.step_counter > self.max_episode_steps
     
     return self.state, reward, done, info
   
@@ -36,6 +37,8 @@ class GymWrapper(Env):
     self.episode += 1
     if self.episode > 1:
       self.max_reward = max(self.max_reward, self.cumulative_reward)
+
+    self.close()
 
     robot = UR5Robot(urdf_path=os.path.join(os.getcwd(), "assets/objects/UR5/urdf/ur5_robotiq_140_modified.urdf"), base_position=[0, 0, 0], base_orientation=[0.0, 0.0, 0.0, 1.0], use_fixed_base=True)
     camera=None
@@ -61,7 +64,7 @@ class GymWrapper(Env):
     robot_pos, robot_ori = self.env.robot.get_ee_link_pose()
     target_position_delta = action[:3]
     target_position = robot_pos + target_position_delta
-    target_orientation = p.getQuaternionFromEuler(np.radians([180, 0, 90]))
+    target_orientation = np.array([ 0.49769387,  0.49769387, -0.50189555,  0.50269538])
     target_gripper = self.env.robot.get_gripper_open_length() + action[3]
     
     joint_positions = p.calculateInverseKinematics(self.env.robot.robot_id, self.env.robot.eef_id, target_position, targetOrientation=target_orientation)
@@ -78,9 +81,12 @@ class GymWrapper(Env):
     # reward for holding ball
     left_pad_force, right_pad_force = self.state[11], self.state[12]
     gripper_opening_length = self.state[10]
-    if self._is_touching_ball(left_pad_force, right_pad_force) and gripper_opening_length < 0.06:
-      reward += 0.5
-      self.ball_grabbed = True
+    if gripper_opening_length < 0.06:
+      if self._is_touching_ball(left_pad_force, right_pad_force):
+        reward += 0.5
+        self.ball_grabbed = True
+      else:
+        reward -= 0.5
     
     # reward for ball being close to goal
     reward -= np.linalg.norm(np.array(self.env.get_corresponding_ball_box()) - np.array(ball_position_world_coordinates))
@@ -100,3 +106,9 @@ class GymWrapper(Env):
 
   def render(self):
     pass
+  
+  def close(self):
+    try:
+      self.env.baseEnv.close()
+    except:
+      pass

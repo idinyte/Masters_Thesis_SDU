@@ -18,14 +18,14 @@ model = SAC("MlpPolicy",
             env, 
             verbose=1, 
             seed=seed,
-            learning_rate=3e-4,
+            learning_rate=1e-3,
             buffer_size=1_000_000,
             batch_size=256,
-            gamma=0.99,
+            gamma=0.8,
             tau=0.005)
 
-checkpoint_callback = CheckpointCallback(save_freq=1000, save_path=os.path.join(os.getcwd(), "scripts/IRL/checkpoints/"), name_prefix='sac_model')
+checkpoint_callback = CheckpointCallback(save_freq=150000, save_path=os.path.join(os.getcwd(), "scripts/IRL/checkpoints/"), name_prefix='sac_model')
 logger = configure(log_dir, ["stdout", "csv", "tensorboard"])
-model.learn(total_timesteps=100000, callback=checkpoint_callback, log_interval=1)
+model.learn(total_timesteps=150000000, callback=checkpoint_callback, log_interval=1)
 
 model.save(os.path.join(os.getcwd(), "scripts/IRL/trained_policy/sac_final_model"))
