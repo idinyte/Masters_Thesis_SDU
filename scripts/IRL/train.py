@@ -11,7 +11,7 @@ os.makedirs(log_dir, exist_ok=True)
 
 env = Env()
 
-seed = 1107
+seed = 1111
 env.seed(seed)
 
 model = SAC("MlpPolicy", 
@@ -21,7 +21,7 @@ model = SAC("MlpPolicy",
             learning_rate=1e-3,
             buffer_size=1_000_000,
             batch_size=256,
-            gamma=0.8,
+            gamma=0.9,
             tau=0.005)
 
 checkpoint_callback = CheckpointCallback(save_freq=150000, save_path=os.path.join(os.getcwd(), "scripts/IRL/checkpoints/"), name_prefix='sac_model')

@@ -23,7 +23,7 @@ signal.signal(signal.SIGINT, cleanup)
 robot = UR5Robot(urdf_path=os.path.join(os.getcwd(), "assets/objects/UR5/urdf/ur5_robotiq_140_modified.urdf"), base_position=[0, 0, 0], base_orientation=[0.0, 0.0, 0.0, 1.0], use_fixed_base=True)
 camera=None
 vis=True
-debug=False
+debug=True
 realtime=False
 VR=False
 VRCameraPos = [0, 0, 1]
@@ -32,14 +32,49 @@ VRCameraRot = [0, 0, 180]
 robot_base_position = [1, -1, 1] if VR else [0, 0, 1]
 env = SortBallsEnv(robot, camera, vis, realtime, debug, VR, VRCameraPos, VRCameraRot, robot_base_position = robot_base_position)
 
+robot.print_joint_info()
+
+def _get_reward(state, env):
+    ball_position_world_coordinates = state[13:16] + state[7:10]
+    
+    # reward for gripper being close to the ball
+    reward = 0.5 - np.linalg.norm(state[13:16])
+
+    # reward for holding ball
+    left_pad_force, right_pad_force = state[11], state[12]
+    gripper_opening_length = state[10]
+    if gripper_opening_length < 0.06:
+      if left_pad_force > 0 and right_pad_force > 0:
+        reward += 0.5
+      else:
+        reward -= 0.5
+    
+    # reward for ball being close to goal
+    reward += 0.5 - np.linalg.norm(np.array(env.get_corresponding_ball_box()) - np.array(ball_position_world_coordinates))
+
+    # reward for crashing the environment (ball being too far or exploding)
+    if env.restart_episode:
+      reward -= 10
+      
+    # reward for being in collision with something that is not ball
+    if env.robot.non_ball_contact:
+      reward -= 1
+
+    # reward for placing ball in correct box
+    if env.ball.is_in_box(env.get_corresponding_ball_box_id()):
+      reward += 500
+
+    return reward
+
 while env.is_connected():
   if env.debug:
     x, y, z, roll, pitch, yaw, gripper_opening_length = env.read_debug_parameter()
     robot.move_gripper_length(gripper_opening_length)
     robot.move_ee_to_target_pos([x, y ,z], [roll, pitch, yaw])
     current_position, current_orientation_euler = robot.get_ee_link_pose()
+    print(_get_reward(env.state_to_gym_state(env.get_state()), env))
   
-  hard_ball_goal_pose, soft_ball_goal_pose, ball_position, robot_joint_angles, robot_gripper_open_length, gripper_pos, left_pad_force, right_pad_force = env.main_loop()
+  env.main_loop()
 
   if env.restart_episode:
     p.disconnect(env.baseEnv.physicsClient)

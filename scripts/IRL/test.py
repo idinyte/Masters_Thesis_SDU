@@ -5,11 +5,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')
 from scripts.IRL.environment import GymWrapper as Env
 from stable_baselines3 import SAC
 
-checkpoint_path = os.path.join(os.getcwd(), "scripts/IRL/checkpoints/sac_model_7800000_steps.zip")
+checkpoint_path = os.path.join(os.getcwd(), "scripts/IRL/checkpoints/sac_model_1350000_steps.zip")
 
 env = Env(vis=True)
 
-seed = 1107
+seed = 1111
 env.seed(seed)
 
 model = SAC.load(checkpoint_path, env=env)
@@ -25,7 +25,7 @@ for episode in range(num_episodes):
         observation, reward, done, info = env.step(action)
         total_reward += reward
         # time.sleep(0.05)  # Slow down for visualization, adjust as needed
-        print(f"Observation {observation}: \n\n action = {action} reward {reward}")
-        input("Press Enter to continue...")
+        #print(f"Observation {observation}: \n\n action = {action} reward {reward}")
+        # input("Press Enter to continue...")
 
 env.close()

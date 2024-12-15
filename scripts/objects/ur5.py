@@ -26,6 +26,8 @@ class UR5Robot:
         self.base_orientation = base_orientation
         self.use_fixed_base = use_fixed_base
         
+        self.non_ball_contact = False
+        
     def load(self):
         self.robot_id = self._load_ur5()
         
@@ -146,18 +148,43 @@ class UR5Robot:
         middle_point = (left_pad_pos + right_pad_pos) / 2
         return middle_point
     
-    def get_gripper_contact_forces(self, ball_id):
-        contact_points = p.getContactPoints(bodyA=self.robot_id, bodyB=ball_id)
+    # def get_gripper_contact_forces(self, ball_id):
+    #     contact_points = p.getContactPoints(bodyA=self.robot_id, bodyB=ball_id)
 
+    #     left_pad_force = 0
+    #     right_pad_force = 0
+
+    #     for contact in contact_points:
+    #         link_id = contact[3]
+    #         if link_id == LEFT_PAD_GRIPPER_INDEX:
+    #             left_pad_force += contact[9]
+    #         elif link_id == RIGHT_PAD_GRIPPER_INDEX:
+    #             right_pad_force += contact[9]
+        
+    #     return left_pad_force, right_pad_force
+    
+    def get_gripper_contact_forces(self, ball_id):
+        all_contact_points = p.getContactPoints(bodyA=self.robot_id)
+        
         left_pad_force = 0
         right_pad_force = 0
-
-        for contact in contact_points:
+        non_ball_contact = False
+        
+        for contact in all_contact_points:
             link_id = contact[3]
-            if link_id == LEFT_PAD_GRIPPER_INDEX:
-                left_pad_force += contact[9]
-            elif link_id == RIGHT_PAD_GRIPPER_INDEX:
-                right_pad_force += contact[9]
+            other_body_id = contact[2]
+            
+            if other_body_id == ball_id:
+                # Contact with the ball
+                if link_id == LEFT_PAD_GRIPPER_INDEX:
+                    left_pad_force += contact[9]
+                elif link_id == RIGHT_PAD_GRIPPER_INDEX:
+                    right_pad_force += contact[9]
+            else:
+                if link_id > 0:
+                    non_ball_contact = True
+                    
+        self.non_ball_contact = non_ball_contact
         
         return left_pad_force, right_pad_force
 

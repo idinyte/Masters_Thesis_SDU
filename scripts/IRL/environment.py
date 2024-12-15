@@ -9,15 +9,15 @@ from scripts.objects.ur5 import UR5Robot
 from scripts.environments.sortBallsEnv import SortBallsEnv
 
 class GymWrapper(Env):
-  def __init__(self, max_episode_steps = 15000, vis = False):
+  def __init__(self, max_episode_steps = 10000, vis = False):
     self.vis = vis
     self.max_episode_steps = max_episode_steps
     self.episode = 0
     self.max_reward = -np.inf
     self.reset()
     self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=self.state.shape, dtype=np.float32)
-    self.action_space = spaces.Box(low=np.array([-0.01, -0.01, -0.01, -0.01]),
-                               high=np.array([0.01, 0.01, 0.01, 0.01]),
+    self.action_space = spaces.Box(low=np.array([-0.02, -0.02, -0.02, -0.01]),
+                               high=np.array([0.02, 0.02, 0.02, 0.01]),
                                dtype=np.float32)
 
   def step(self, action):
@@ -52,7 +52,6 @@ class GymWrapper(Env):
     self.env.check_ball_health()
 
     self.cumulative_reward = 0
-    self.ball_grabbed = False
     self.step_counter = 0
 
     self.state = self.env.state_to_gym_state(self.env.get_state())
@@ -76,28 +75,31 @@ class GymWrapper(Env):
     ball_position_world_coordinates = self.state[13:16] + self.state[7:10]
     
     # reward for gripper being close to the ball
-    reward = -np.linalg.norm(self.state[13:16])
-    
+    reward = 0.5 - np.linalg.norm(self.state[13:16])
+
     # reward for holding ball
     left_pad_force, right_pad_force = self.state[11], self.state[12]
     gripper_opening_length = self.state[10]
-    if gripper_opening_length < 0.06:
-      if self._is_touching_ball(left_pad_force, right_pad_force):
-        reward += 0.5
-        self.ball_grabbed = True
+    if gripper_opening_length < 0.08:
+      if self._is_touching_ball(left_pad_force, right_pad_force) and gripper_opening_length > 0.04:
+        reward += 1
       else:
-        reward -= 0.5
+        reward -= 0.1
     
     # reward for ball being close to goal
-    reward -= np.linalg.norm(np.array(self.env.get_corresponding_ball_box()) - np.array(ball_position_world_coordinates))
-      
-    # reward for placing ball in correct box
-    if self.env.ball.is_in_box(self.env.get_corresponding_ball_box_id()):
-      reward += 20000
-    
+    reward += 0.5 - np.linalg.norm(np.array(self.env.get_corresponding_ball_box()) - np.array(ball_position_world_coordinates))
+
     # reward for crashing the environment (ball being too far or exploding)
     if self.env.restart_episode:
-      reward -= 100000
+      reward -= 10
+      
+    # reward for being in collision with something that is not ball
+    if self.env.robot.non_ball_contact:
+      reward -= 1
+
+    # reward for placing ball in correct box
+    if self.env.ball.is_in_box(self.env.get_corresponding_ball_box_id()):
+      reward += 500
 
     return reward
 
