@@ -16,8 +16,8 @@ class GymWrapper(Env):
     self.max_reward = -np.inf
     self.reset()
     self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=self.state.shape, dtype=np.float32)
-    self.action_space = spaces.Box(low=np.array([-0.02, -0.02, -0.02, -0.01]),
-                               high=np.array([0.02, 0.02, 0.02, 0.01]),
+    self.action_space = spaces.Box(low=np.array([-0.02, -0.02, -0.02, 0]),
+                               high=np.array([0.02, 0.02, 0.02, 0.127]),
                                dtype=np.float32)
 
   def step(self, action):
@@ -64,7 +64,7 @@ class GymWrapper(Env):
     target_position_delta = action[:3]
     target_position = robot_pos + target_position_delta
     target_orientation = np.array([ 0.49769387,  0.49769387, -0.50189555,  0.50269538])
-    target_gripper = self.env.robot.get_gripper_open_length() + action[3]
+    target_gripper = action[3]
     
     joint_positions = p.calculateInverseKinematics(self.env.robot.robot_id, self.env.robot.eef_id, target_position, targetOrientation=target_orientation)
 
@@ -81,17 +81,18 @@ class GymWrapper(Env):
     left_pad_force, right_pad_force = self.state[11], self.state[12]
     gripper_opening_length = self.state[10]
     if gripper_opening_length < 0.08:
-      if self._is_touching_ball(left_pad_force, right_pad_force) and gripper_opening_length > 0.04:
-        reward += 1
-      else:
-        reward -= 0.1
-    
-    # reward for ball being close to goal
-    reward += 0.5 - np.linalg.norm(np.array(self.env.get_corresponding_ball_box()) - np.array(ball_position_world_coordinates))
+      if self._is_touching_ball(left_pad_force, right_pad_force) and gripper_opening_length > 0.02:
+        reward += 0.5 - 5*abs(gripper_opening_length - 0.04)
+        
+        # reward for closing distance to target
+        reward += max(2 - np.linalg.norm(np.array(self.env.get_corresponding_ball_box()) - np.array(ball_position_world_coordinates)), 0)
+        
+    if not self._is_ball_touching_table():
+      reward += 2
 
     # reward for crashing the environment (ball being too far or exploding)
     if self.env.restart_episode:
-      reward -= 10
+      reward -= 50
       
     # reward for being in collision with something that is not ball
     if self.env.robot.non_ball_contact:
@@ -105,6 +106,9 @@ class GymWrapper(Env):
 
   def _is_touching_ball(self, left_pad_force, right_pad_force):
     return left_pad_force > 0 and right_pad_force > 0
+  
+  def _is_ball_touching_table(self):
+    return len(p.getContactPoints(bodyA=self.env.ball.id, bodyB=self.env.table_id)) > 0
 
   def render(self):
     pass

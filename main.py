@@ -43,11 +43,9 @@ def _get_reward(state, env):
     # reward for holding ball
     left_pad_force, right_pad_force = state[11], state[12]
     gripper_opening_length = state[10]
-    if gripper_opening_length < 0.06:
+    if gripper_opening_length < 0.08:
       if left_pad_force > 0 and right_pad_force > 0:
         reward += 0.5
-      else:
-        reward -= 0.5
     
     # reward for ball being close to goal
     reward += 0.5 - np.linalg.norm(np.array(env.get_corresponding_ball_box()) - np.array(ball_position_world_coordinates))
@@ -65,6 +63,9 @@ def _get_reward(state, env):
       reward += 500
 
     return reward
+  
+def is_ball_touching_table(ball_id, table_id):
+  return len(p.getContactPoints(bodyA=ball_id, bodyB=table_id)) > 0
 
 while env.is_connected():
   if env.debug:
@@ -72,7 +73,8 @@ while env.is_connected():
     robot.move_gripper_length(gripper_opening_length)
     robot.move_ee_to_target_pos([x, y ,z], [roll, pitch, yaw])
     current_position, current_orientation_euler = robot.get_ee_link_pose()
-    print(_get_reward(env.state_to_gym_state(env.get_state()), env))
+    _get_reward(env.state_to_gym_state(env.get_state()), env)
+    print(is_ball_touching_table(env.ball.id, env.table_id))
   
   env.main_loop()
 

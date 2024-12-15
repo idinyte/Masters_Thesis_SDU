@@ -14,15 +14,20 @@ env = Env()
 seed = 1111
 env.seed(seed)
 
+policy_kwargs = dict(
+    net_arch=[512, 512, 256]
+)
+
 model = SAC("MlpPolicy", 
             env, 
             verbose=1, 
             seed=seed,
-            learning_rate=1e-3,
-            buffer_size=1_000_000,
-            batch_size=256,
+            learning_rate=0.0007,
+            buffer_size=100_000_000,
+            batch_size=8192,
             gamma=0.9,
-            tau=0.005)
+            tau=0.005,
+            policy_kwargs=policy_kwargs)
 
 checkpoint_callback = CheckpointCallback(save_freq=150000, save_path=os.path.join(os.getcwd(), "scripts/IRL/checkpoints/"), name_prefix='sac_model')
 logger = configure(log_dir, ["stdout", "csv", "tensorboard"])
