@@ -15,7 +15,7 @@ seed = 1111
 env.seed(seed)
 
 policy_kwargs = dict(
-    net_arch=[512, 512, 256]
+    net_arch=[256]
 )
 
 model = SAC("MlpPolicy", 
