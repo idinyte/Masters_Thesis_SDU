@@ -86,7 +86,8 @@ class GymWrapper(Env):
         
         # reward for closing distance to target
         reward += max(2 - np.linalg.norm(np.array(self.env.get_corresponding_ball_box()) - np.array(ball_position_world_coordinates)), 0)
-        
+      
+    # reward for lifting ball
     if not self._is_ball_touching_table():
       reward += 2
 
@@ -101,6 +102,8 @@ class GymWrapper(Env):
     # reward for placing ball in correct box
     if self.env.ball.is_in_box(self.env.get_corresponding_ball_box_id()):
       reward += 500
+      
+    print(reward)
 
     return reward
 

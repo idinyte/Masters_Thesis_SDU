@@ -2,13 +2,14 @@ import numpy as np
 import pybullet as p
 
 class Trajectory():
-  def __init__(self, TIME_STEP, robot, main_loop, record_trajectory, get_state) -> None:
+  def __init__(self, TIME_STEP, robot, main_loop, record_trajectory, get_state, state_to_gym_state) -> None:
     self.TIME_STEP = TIME_STEP
     self.robot = robot
     self.main_loop = main_loop
     self.record_trajectory = record_trajectory
     self.recorded_trajectory = []
     self.get_state = get_state
+    self.state_to_gym_state = state_to_gym_state
     
   def linear_interpolation(self, start, end, duration, t):
     return start + (end - start) * (t / duration)
@@ -44,7 +45,7 @@ class Trajectory():
       return trajectory
     
   def follow_trajectory(self, trajectory):
-    state = self.get_state()
+    state = self.state_to_gym_state(self.get_state())
 
     for point in trajectory:
       target_position = point[0]

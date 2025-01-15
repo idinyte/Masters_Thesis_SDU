@@ -21,7 +21,7 @@ class SortBallsANN:
         self.robot = self.env.robot
         self.scene_point_cloud = None
         self.point_cloud_obj = PointCloud()
-        self.trajectory = Trajectory(self.env.SIMULATION_STEP, self.env.robot, self.env.main_loop, record_trajectory, self.env.get_state)
+        self.trajectory = Trajectory(self.env.SIMULATION_STEP, self.env.robot, self.env.main_loop, record_trajectory, self.env.get_state, self.env.state_to_gym_state)
         self._load_neural_network()
     
     def _load_neural_network(self):
@@ -216,7 +216,7 @@ class SortBallsANN:
 
         if ball_position_error > 0.02:
             print("Failed to detect acurate ball position")
-            result = f"{STATES.FAILED_TO_FIND_BALL.value} {ball_find_start_time} {ball_find_end_time} {ball_grab_start_time} {ball_grab_end_time} {ball_classify_start_time} {ball_classify_end_time} {ball_place_start_time} {ball_place_end_time}"
+            result = f"{self.env.ball.name} {STATES.FAILED_TO_FIND_BALL.value} {ball_find_start_time} {ball_find_end_time} {ball_grab_start_time} {ball_grab_end_time} {ball_classify_start_time} {ball_classify_end_time} {ball_place_start_time} {ball_place_end_time} \n"
             self.append_result(results_file, result)
             return False
 
@@ -226,7 +226,7 @@ class SortBallsANN:
 
         if rc == False or not self.robot.is_grabbing_ball(self.env.ball.id):
             print("Failed to grab ball")
-            result = f"{STATES.FAILED_TO_GRAB_BALL.value} {ball_find_start_time} {ball_find_end_time} {ball_grab_start_time} {ball_grab_end_time} {ball_classify_start_time} {ball_classify_end_time} {ball_place_start_time} {ball_place_end_time}"
+            result = f"{self.env.ball.name} {STATES.FAILED_TO_GRAB_BALL.value} {ball_find_start_time} {ball_find_end_time} {ball_grab_start_time} {ball_grab_end_time} {ball_classify_start_time} {ball_classify_end_time} {ball_place_start_time} {ball_place_end_time} \n"
             self.append_result(results_file, result)
             return False
 
@@ -236,7 +236,7 @@ class SortBallsANN:
 
         if str(ball_class + 1) != self.env.ball.name:
             print(f"Failed to classify ball predicted ball name {ball_class + 1} actual {self.env.ball.name}")
-            result = f"{STATES.FAILED_TO_CLASSIFY_BALL.value} {ball_find_start_time} {ball_find_end_time} {ball_grab_start_time} {ball_grab_end_time} {ball_classify_start_time} {ball_classify_end_time} {ball_place_start_time} {ball_place_end_time}"
+            result = f"{self.env.ball.name} {STATES.FAILED_TO_CLASSIFY_BALL.value} {ball_find_start_time} {ball_find_end_time} {ball_grab_start_time} {ball_grab_end_time} {ball_classify_start_time} {ball_classify_end_time} {ball_place_start_time} {ball_place_end_time} \n"
             self.append_result(results_file, result)
             return False
 
@@ -245,7 +245,7 @@ class SortBallsANN:
         ball_place_end_time = self.env.simulation_time
         if rc == False:
             print("Failed place ball")
-            result = f"{STATES.FAILED_TO_PLACE_BALL.value} {ball_find_start_time} {ball_find_end_time} {ball_grab_start_time} {ball_grab_end_time} {ball_classify_start_time} {ball_classify_end_time} {ball_place_start_time} {ball_place_end_time}"
+            result = f"{self.env.ball.name} {STATES.FAILED_TO_PLACE_BALL.value} {ball_find_start_time} {ball_find_end_time} {ball_grab_start_time} {ball_grab_end_time} {ball_classify_start_time} {ball_classify_end_time} {ball_place_start_time} {ball_place_end_time} \n"
             self.append_result(results_file, result)
             return False
 
@@ -254,10 +254,10 @@ class SortBallsANN:
 
         if not self.env.ball.is_in_box(self.env.get_corresponding_ball_box_id()):
             print("Ball is not in correct box")
-            result = f"{STATES.FAILED_TO_PLACE_BALL.value} {ball_find_start_time} {ball_find_end_time} {ball_grab_start_time} {ball_grab_end_time} {ball_classify_start_time} {ball_classify_end_time} {ball_place_start_time} {ball_place_end_time}"
+            result = f"{self.env.ball.name} {STATES.FAILED_TO_PLACE_BALL.value} {ball_find_start_time} {ball_find_end_time} {ball_grab_start_time} {ball_grab_end_time} {ball_classify_start_time} {ball_classify_end_time} {ball_place_start_time} {ball_place_end_time} \n"
             self.append_result(results_file, result)
             return False
 
-        result = f"{STATES.SUCCESS.value} {ball_find_start_time} {ball_find_end_time} {ball_grab_start_time} {ball_grab_end_time} {ball_classify_start_time} {ball_classify_end_time} {ball_place_start_time} {ball_place_end_time}"
+        result = f"{self.env.ball.name} {STATES.SUCCESS.value} {ball_find_start_time} {ball_find_end_time} {ball_grab_start_time} {ball_grab_end_time} {ball_classify_start_time} {ball_classify_end_time} {ball_place_start_time} {ball_place_end_time} \n"
         self.append_result(results_file, result)
         return True

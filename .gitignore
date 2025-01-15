@@ -6,3 +6,12 @@ scripts/IRL/expert_demos/expert_demos*
 logs
 checkpoints
 *.ods*
+*.ply
+thesis/main.aux
+thesis/main.bbl
+thesis/main.blg
+thesis/main.fdb_latexmk
+thesis/main.fls
+thesis/main.log
+thesis/main.synctex.gz
+thesis/main.toc

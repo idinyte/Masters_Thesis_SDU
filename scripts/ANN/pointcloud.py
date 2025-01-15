@@ -57,6 +57,8 @@ class PointCloud():
 
       pcd = o3d.geometry.PointCloud()
       pcd.points = o3d.utility.Vector3dVector(point_cloud_world)
+      output_file = "point_cloud.ply"  # Use .ply, .pcd, or other supported formats
+      o3d.io.write_point_cloud(output_file, pcd)
       return pcd
     
     def get_point_cloud_from_object(self, object, num_points):

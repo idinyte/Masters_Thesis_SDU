@@ -1,13 +1,16 @@
 import pybullet as p
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from scripts.objects.ur5 import UR5Robot
 from scripts.environments.sortBallsEnv import SortBallsEnv
 from scripts.ANN.sortBallsANN import SortBallsANN
-import os
 
 class TestSortBallsANN():
-  def __init__(self, ball_class_name = None, record_trajectory = False):
+  def __init__(self, ball_class_name = None, record_trajectory = False, use_camera = True):
     self.ball_class_name = ball_class_name
     self.record_trajectory = record_trajectory
+    self.use_camera = use_camera
 
   def reset(self):
     robot = UR5Robot(urdf_path=os.path.join(os.getcwd(), "assets/objects/UR5/urdf/ur5_robotiq_140_modified.urdf"), base_position=[0, 0, 0], base_orientation=[0.0, 0.0, 0.0, 1.0], use_fixed_base=True)
@@ -28,7 +31,6 @@ class TestSortBallsANN():
       with open(results_file, "w") as file:
         pass
 
-    success = self.algorithm.start(results_file, use_camera=False)
+    success = self.algorithm.start(results_file, use_camera=self.use_camera)
     p.disconnect(self.env.baseEnv.physicsClient)
     return success
-    
