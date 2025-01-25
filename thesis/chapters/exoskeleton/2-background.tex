@@ -1,0 +1,153 @@
+\section{Background}
+
+In this section a comparison of physics world simulators and state of the art exoskeletons that attempt to incorporate touch into virtual environments will be made.
+
+\subsection{Virtual environment}
+The hard requirements
+for the choice of the simulator for this thesis are simple, it must have:
+\begin{enumerate}
+  \item VR support. Users should be able to interact with the environment.
+  \item Support of the soft-body physics.
+\end{enumerate}
+\noindent
+A great to have features for the simulator are the following:
+\begin{enumerate}
+  \item Free and open-source, so the research in this thesis could be easily accesible and replicated.
+  \item Fast, so the development would go smoothly on an affordable computer.
+  \item Popular, it is easier to fix problems if we can find people in forums who already had them.
+  \item Easy to learn, it would be great to have more time on research and implementation than learning the engine.
+  \item Used in robotics applications.
+\end{enumerate}
+Numerous physics engines have been developed in which virtual environemnts can be created. Most notable are \cite{physics_simulators_review}: Mujoco, Gazebo, CoppeliaSim, Webots, PyBullet and SOFA.
+
+\bigskip \noindent
+Multi-Joint dynamics with Contact (MuJoCo) \cite{mujoco} is a popular physics engine that required
+a commercial license up until recently. In 2021 Google Deepmind acquired the simulator and made it
+freely available for everyone \cite{deepmind2021mujoco}. In 2022, they open-sourced and published it on Github. The MuJoCo is widely used in research due to its contact stability \cite{app13020680}. State of the art research leverages MuJoCo for training robotic manipulator policies in simulation. It is worth noting that MuJoCo lacks built-in functionality for inverse kinematics or path planning.
+
+\bigskip \noindent
+Gazebo is another popular robotics simulator that is widely used in research. One of the things that makes it so appealing is support of Robotics Operating System \cite{ros} (ROS). ROS houses a expansive set of libraries and tools
+for building robotics applications. ROS-based software is platform and language agnostic making incorporation of user developed libraries very easy. The working principle that allows for this seamless integration is Publish/Subscribe model. ROS processes called nodes, communicate between each other by publishing
+messages to topics and receiving messages from subscribed
+topics allowing interprocess communication. A study has shown that if the robot model in Gazebo was created properly, the code that was used in simulation can be directly reused in real robot without any modifications \cite{ros-gazebo-integration}. Unfortnately the engine does not support soft-body physics natively. There are however attempts to bridge this gap between rigid-body and soft-body physics. One study developed a ROS-Gazebo Toolbox that allows user to bring Articulated Soft Robots in the simulation with satisfactory Sim2Real performance \cite{Mengacci2021}
+
+\bigskip \noindent
+CoppeliaSim, formerly known as V-REP \cite{coppelia}, has an easy learning curve with it's GUI driven design and user-
+centric feature including forward and inverse kinematics, sensor simulation, motion and path planning. Built around a distributed control architecture, the engine supports scripts written in Lua or Python and plugins written in C/C++ that act as synchronous controllers. This is useful in multi-robot setups. It also has ROS support, but unlike Gazebo, it is secondary to the engine's design. CoppeliaSim supports 5 different physics engines (MuJoCo, Bullet Physics, ODE, Newton and Vortex Dynamics), but the support for soft body and deformable objects is lacking.
+
+\bigskip \noindent
+Webots \cite{michel2004cyberbotics}, started in 1996, is an open-source simulator witten in C++. It has a large collection of sensors, actuator and robot models. The simulator is beginner friendly with polished GUI that makes it easy to build models from scratch. One study comparing robot simulators has shown that Webots was least resource intensive, it the lowest CPU usage compared to CoppeliaSim and Gazebo \cite{DBLP:journals/corr/abs-2008-04627}. These reasons make the simulator appealing for fast prototyping and multi-robot simulation purposes. Despite these great features the simulator lacks soft-body dynamics support.
+
+\bigskip \noindent
+Bullet is a professional library written in C++. It is videly used in games, visual effects and robotics applications. It can simulate Soft-Body as well as Rigid-Body physics with discrete and continuous collision detection. The PyBullet is a library with Python bindings that interact with the Bullet engine. This approach merges best of both worlds, the C++ speed and Python's ease of use. PyBullet also has reinforcement learning, robotics simulation and VR support. 
+
+\begin{table}[tb] % placement: h for here, t for top, b for bottom
+  \centering
+  \begin{tabular}{l c c c c c}  % two columns: l for left, c for center, r for right
+    Simulator & Force Sensor & Inverse Kinematics & Soft-Body & VR & ROS
+ \\\hline
+ MuJoCo & \cmark & \xmark & \cmark & \cmark & \xmark
+ \\
+ Gazebo & \cmark & \cmark & \xmark & \cmark & \cmark
+ \\
+ CoppeliaSim & \cmark & \cmark & \xmark & \cmark & \cmark
+ \\
+ Webots & \cmark & \xmark & \xmark & \cmark & \cmark
+ \\
+ PyBullet & \cmark & \cmark & \cmark & \cmark & \xmark
+  \end{tabular}
+  \caption{Feature Comparison of Popular Physics Simulators for Robotics Applications}
+  \label{tab:robot-advantages}
+\end{table}
+
+\bigskip \noindent
+From the examined physics engines only MuJoCo and PyBullet support deformable objects and virtual reality. PyBullet was chosen as the physics engine for this thesis as it has a well documented VR section and broader VR support. Teleoperation with MuJuCo is only avaialble through the use of MuJoCo HAPTIX \cite{7363441} whereas PyBullet support a variety of VR controllers.
+
+\subsection{Exoskeletons}
+Skin is the largest human organ. The density of touch receptors varies throughout different skin regions. The palms of the hand, especially fingertips are one of the most touch sensitive parts of the body. This makes sense as hands are the primary way we interact with the environment. Creating an exoskeleton that covers the whole body is too expensive and too big of a task to take up on alone, so the focus of this thesis will be to create an exoskeleton suited for the hand only. There have already been multiple attempts to create an exoskeleton that allows user to feel the virtual objects. Some have even became comercially available.
+
+\subsubsection{Types of feedback}
+There are many types of feedback a simple touch can provide. They will be discussed in this section.
+
+\bigskip \noindent
+Transient contact and normal force provide important information aobut perceived object stiffness. A study has show that this type of contact can be modeled easily without complex mechatronics / control systems. They have achieved this using transient vibration and visuo-haptic illusion \cite{9117062}.
+
+\bigskip \noindent
+Lateral stretch of the skin provide information about the weight of the object and the stick-slip condition gives us an insight on when we are about to drop the object. That allows us to react quickly by gripping the object tighter or catching it mid-air. Different approaches and designs have been
+investigated to achieve this \cite{10.1145/1278280.1278289}\cite{10.1145/3126594.3126599}
+
+\bigskip \noindent
+Skin is also capable of recognizing the texture of objects. A study has shown that it is feasibile to simulate texture perception with vibratory-only
+feedback by leveraging spatial information from skin interactions with textures \cite{article2615616}
+
+\bigskip \noindent
+Temperature feedback can also provide important information about the type of material we are in contact with. Different heat flows and temperature gradients are experienced when touching objects due to the different termal conductivity coefficients between materials. A wearable device has been proposed for the VR setting. It contains a film with high thermal conductivity controller by Pielted element attached to water-cooling heatsink \cite{10.1007/978-3-030-58147-3_32}.
+
+\bigskip \noindent
+As we can see, there are systems that propose how to achieve the different types of feedbacks, but combining multiple types remains a difficult engineering challenge. 
+ 
+
+\subsubsection{Tracking}
+There are two types of tracking. Global position tracking that provides insight on whereabouts of your hand is in the world space and local position tracking that provides information on the shape of your hand, where each of your finger is and how it is positioned.
+There are existing tracking technology that can simply be attached to the exoskeleton to provide global position tracking.
+
+\bigskip \noindent
+Vive tracker, the first commercially available VR tracker developed by HTC enable object and body tracking in virtual reality environments. These small, lightweight and fully wireless trackers can be attached to body parts like hands, feet, or waists to track their position and orientation in 3D space. 
+
+\bigskip \noindent
+Optitrack camera system can track position of reflective objects with very high precision. Special reflective markers are put on the object of interest. These markers reflect infrared light emitted by Optitrack camera system. This allows cameras to determine marker position in space.
+
+\bigskip \noindent
+Since most VR systems you buy come along with VR controllers, to save some costs, some exoskeletons provide global position tracking by simply attaching the controller to the exoskeleton. However, this approach does have the disadvantage of unnecessary components increasing the weight of the exoskeleton.
+
+\noindent
+Local position tracking can be achieved in several ways as well.
+
+\bigskip \noindent
+Valve index knuckles use a proximity sensor to detect if finger is touching the controller or not. This results in only 5 Degrees of Freedom (DOF) where each finger is in a binary state, either extended or flexed.
+
+\bigskip \noindent
+Data gloves can provide continuous finger state tracking. Some data gloves \cite{mi14112050} achieve that using flex capacitive stretch sensors. These sensors work due to their physical properties that resistance changes based on mechanical deformation. This fact means that they wear and thus have a limited life cycle. Modern flex capacitive strech sensors achieve life cycle of >1 million cycles. Some data gloves \cite{articleIMU} achieve local position tracking using multiple IMUs. This has an advantage of improved life cycle, but these type of gloves do experience “data drifting” which requires frequent re-calibration. Moreover the the reliability of IMU sensor in influenced by metal and magnetic fields nearby making them difficult to use with motor based exoskeletons.
+
+\bigskip \noindent
+Vision based solution like leap motion provide the highest number of degrees of freedom. They do only provide the tracking if the hands are in camera's field of view and may loose accuracy the more hands are obstructed. The reliability of these systems is yet to be tested when wearing an exoskeleton.
+
+\subsubsection{Prototypes and products}
+Dexta Robotics have been researching human-machine-interactions for virtual and mixed reality since 2014. They believe that user interface define user experience, the way motion controllers took over console controllers in VR space, the next big step could be for glove controllers replace motion controllers to achieve more intuitive button free hands-like experience. Their latest model Dexmo Force Feedback Gloves are available purchase privately for enterprises or research institutions, to be used in: VR arcade, training simulation, entertainment, colleges and other scientific research institutions. The consumer edition is still under development. They're design relies on rigid kinematic links actuated with a small gear motors, which were designed and manufactured in-house to provide the small form factor. They are capable of providing 0.5N of torque each. The system is fully wireless with a battery life of up to 6H. The whole system weights under 300g. These gloves use rotational sensors to achieve 11 DOF local position tracking.
+
+\begin{figure}[!h!t]
+  \centering
+  \includegraphics[width=0.8\linewidth]{chapters/exoskeleton/images/background/dexmo_glove.png}
+  \caption{Design of Dexmo Glove}
+  \label{fig:dexmo_glove_design}
+\end{figure}
+
+\bigskip \noindent
+Sensaglove Nova 2 uses magnetic friction brakes that transfer the force to the fingertips through through mechanical wires. each brake can deliver up to 20N of force. Additionaly vibrotactile feedback is provided for the fingertips using voice coil actuators. The local position tracking is provided by combining sensor-based finger tracking with computer vision hand tracking algorithms.
+
+\bigskip \noindent
+DextrES \cite{10.1145/3242587.3242657} research paper proposes a more innovative yet experimental approach. They rely on flexible metal strips to generate an electrically-controlled friction force. Such design is much more compact and light as it does not rely on motors. The haptic glove that weighs only 8g is capable of generating up to 20N of holding force for each finger.
+
+\begin{figure}[!h!t]
+  \centering
+  \includegraphics[width=0.8\linewidth]{chapters/exoskeleton/images/background/sensaglove.png}
+  \caption{Design of Sensaglove Nova 2}
+  \label{fig:sensaglove_design}
+\end{figure}
+
+\begin{figure}[!h!t]
+  \centering
+  \includegraphics[width=0.8\linewidth]{chapters/exoskeleton/images/background/flexible_strips.png}
+  \caption{Design of DextrES}
+  \label{fig:dextrES_design}
+\end{figure}
+
+\bigskip \noindent
+Lastly, there has been proposed a gripper like exoskeleton for the purpose of learning from demonstration \cite{dai2023gripper}. With the use of displacement and IMU sensors Fig \ref{fig:gripper_like_exoskeleton_dai}, it is capable of collecting position, orientation and gripper displacement information. It has no force feedback as it is designed to grip real objects.
+
+\begin{figure}[!h!t]
+  \centering
+  \includegraphics[width=0.5\linewidth]{chapters/exoskeleton/images/background/gripper_like_exoskeleton.png}
+  \caption{Design of gripper like exoskeleton}
+  \label{fig:gripper_like_exoskeleton_dai}
+\end{figure}

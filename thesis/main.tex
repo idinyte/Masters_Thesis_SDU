@@ -1,0 +1,66 @@
+\documentclass[a4paper,oneside,11pt]{memoir}
+
+\usepackage[utf8]{inputenc} % input encoding
+\usepackage[T1]{fontenc} % font encoding
+
+\usepackage{graphicx} %to include images/graphics
+\usepackage{amsmath,amssymb} %better math type setting
+\usepackage{listings} %for source code snippets
+\usepackage{textcomp} %for upquote
+\usepackage{xcolor} % nice colors (for source code)
+\usepackage{hyperref}
+\usepackage{pifont}
+\newcommand{\cmark}{\ding{51}} % Checkmark
+\newcommand{\xmark}{\ding{55}} % Cross
+\newcommand{\nameone}{RoboGripVR V1}
+\newcommand{\nametwo}{RoboGripVR V2}
+\renewcommand{\ttdefault}{pcr} % nicer font for source code
+
+% an example configuration of the 'listings' package
+\lstset{basicstyle=\ttfamily, 
+        keywordstyle=\color{purple}\ttfamily,
+        commentstyle=\color{gray}\ttfamily,
+        stringstyle=\color{orange}\ttfamily,
+        captionpos=b,
+        float=tb,
+        upquote=true,
+}
+
+\chapterstyle{tandh} % configuration of the 'memoir' class
+
+%
+% The actual document starts here
+%
+\begin{document}
+
+\input{chapters/frontpage.tex}
+
+\cleardoublepage
+
+\frontmatter
+
+\input{chapters/abstract.tex}
+
+\cleardoublepage
+
+\tableofcontents
+
+\mainmatter
+
+\input{chapters/introduction.tex}
+
+\input{chapters/exoskeleton/entry.tex}
+
+\input{chapters/algorithms/entry.tex}
+
+\input{chapters/discussion.tex}
+
+\input{chapters/conclusion.tex}
+
+\appendix
+\input{chapters/appendix.tex}
+
+\bibliographystyle{plain}
+\bibliography{mybibliography}
+
+\end{document}

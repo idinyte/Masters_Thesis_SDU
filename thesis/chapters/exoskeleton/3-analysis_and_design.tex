@@ -1,0 +1,20 @@
+\section{Analysis and Design}
+
+A design using magnetic friction brakes is not an ideal solution as it provides feedback primarilly during the squeezing of virtual object, during releasing the brakes are disengaged and no resistance is felt. This may be a good solution for VR simulations consisting of only rigid objects, but since this thesis is focused on soft objects an exoskeleton with servo motors will be used. 
+
+\subsection{Design 1}
+
+A quick and simple prototype was put together from the parts available in the lab. The purpose of this design is to simply get a good idea of the scope of the project, make a working prototype quickly and detect the possible issues with the project early on. The prototype, which from now on will be refered to as \nameone, consists of two Dynamixel XM540-W270-R servo motors connected in daisy-chain using single line of RS-485 communication. The Dynamixel XM540-W270-R is a high-performance and precision servo motor from Robotis, this motor can provide 10.6 Nm of torque at 12V. The SMPS2Dynamixel is a power converter for the motors and U2D2 is a USB communication converter that enables to control and operate DYNAMIXEL motors using a personal computer (PC) Fig \ref{fig:design_prototype_one}. 
+
+\begin{figure}[!h!t]
+  \centering
+  \includegraphics[width=\linewidth]{chapters/exoskeleton/images/background/prototype 1.png}
+  \caption{Design of \nameone}
+  \label{fig:design_prototype_one}
+\end{figure}
+
+\bigskip \noindent
+This design is not in glove from, it does not have sensors for global position tracking as it is not supposed to be worn just yet, it is instead positioned on a table and squeezing motion can be performed using thumb and index finger.
+
+\subsection{Design 2}
+The goal of this design was to make it suitable to be worn on a hand. It was inspired by the design of the gripper like exoskeleton and the force feedback as provided by Dexmo glove.
