@@ -195,6 +195,7 @@ This control mode allows the current to be controlled directly. Internally it wo
   \label{fig:current_control_test}
 \end{figure}
 
+\bigskip \noindent
 When squeezing the virtual ball (Fig \ref{fig:current_control_5_times_squeeze}) we can see that the current is followed closely, but subjectively the experience does not feel smooth, rapid oscilations in target current occur. By taking a closer look to a single squeeze Fig \ref{fig:current_no_smoothing} we can see how uneven the target current is. This issues could be mitigated by processing the signal using exponential smoothing Eq \ref{eq:test_exponential_smoothing}. A variety of different window size values have been tested and plotted \ref{fig:exponential_smoothing_k_variations}. Increasing the window size provides smoother signal but adds a higher delay. For the controller a windows size of 10 is used as it provides a smoother signal without much delay \ref{fig:current_smoothing}. This controller still does struggle to maintain low target current when suddenly introduced with external forces from the fingers.
 
 \begin{figure}[ht]
@@ -223,10 +224,10 @@ When squeezing the virtual ball (Fig \ref{fig:current_control_5_times_squeeze}) 
   \begin{subfigure}{\textwidth}
     \centering
     \includegraphics[width=0.8\linewidth]{chapters/exoskeleton/images/current/smoothing_k10.png}
-    \caption{Target current exponential smoothing with k=10}
+    \caption{Target current exponential smoothing with K=10}
     \label{fig:current_smoothing}
   \end{subfigure}
-  \caption{Comparison of smoothing and no smoothing in target current}
+  \caption{Influence of exponential smoothing when squeezing a virtual ball}
   \label{fig:current_smoothing_no_smoothing}
 \end{figure}
 
