@@ -84,10 +84,19 @@ The normal forces between soft ball and gripper pads are obtained using PyBullet
 \begin{equation}
   \label{eq:motor_reaction_torques}
   \begin{aligned}
-      \tau_l &= R_l d_l \\
-      \tau_r &= R_r d_r
+      \tau_l &= R_l d_l sin\theta \\
+      \tau_r &= R_r d_r sin\theta
   \end{aligned}
 \end{equation}
+
+where:  
+\begin{itemize}
+    \item \( \tau \) is the motor torque required to exhert equivalent reaction force,
+    \item \( R \) is the equivalent normal reaction force,
+    \item \( d \) is the distance between the reaction force and the center of rotation,
+    \item \( \theta \) is the angle between force and the lever arm.
+\end{itemize}
+
 
 \begin{figure}[ht]
   \centering
