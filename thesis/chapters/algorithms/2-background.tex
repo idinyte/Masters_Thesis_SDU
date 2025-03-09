@@ -68,7 +68,7 @@ Action - actions are choices available to the agent in a given state. The action
 Action space - set of all valid actions in a given environment.
 
 \bigskip \noindent
-Reward - the feedback from the environment. A numerical value associated with how good the agent's action was. A positive value represents a reward and a negative value represents a punishment. It depends on the state, action and the next state of the environment $r_t = R(s_t, a_t, s_{t+1})$. Although frequently the reward dependance is simplified only to state-action pair or only the current state. The agent's goal is to maximize the cumulative reward. Designing a reward function that aligns with the desired behavior of the agent is a challenging task often requiring lots of trial and error by tuning and retraining the agent. Another difficulty are sparse rewards, for example the winner in the game of chess is only decided after the game has ended, it is difficult for the agent to know which of the moves led the agent to the victory or loss. Sparse rewards make the agent learn at a much slower rate leading to extensive training times.
+Reward - the feedback from the environment. A numerical value associated with how good the agent's action was. A positive value represents a reward and a negative value represents a punishment. It depends on the state, action and the next state of the environment $r_t = R(s_t, a_t, s_{t+1})$. Although frequently the reward dependance on inputs is simplified only to state-action pair  $r_t = R(s_t, a_t)$ or even the current state only $r_t = R(s_t)$. The agent's goal is to maximize the cumulative reward. Designing a reward function that aligns with the desired behavior of the agent is a challenging task often requiring lots of trial and error by tuning and retraining the agent. Another difficulty are sparse rewards, for example the winner in the game of chess is only decided after the game has ended, it is difficult for the agent to know which of the moves led the agent to the victory or loss. Sparse rewards make the agent learn at a much slower rate leading to extensive training times.
 
 \bigskip \noindent
 Discount factor - $\gamma \in [0,1]$ is a parameter that discounts the future rewards. Often instead of weighting all of the rewards equally, more weight is given to short term rewards. Total cumulative reward over trajectory $\tau$ with discount factor is calculated as $R(\tau) = \sum_{t=0}^{\infty} \gamma^t r_t.
@@ -81,21 +81,25 @@ Policy - policy is what defines the agent's strategy. It is a mapping between st
 Value function - represents an expected cumulative reward for a certain state or state-action pair if the agent were to act according to the same policy forever after. It shows how good a particular state or action is. State-value function $V(s)$: represents expected reward starting in a state s. Action-value function $Q(s, a)$: represents expected reward for taking action a in state s and following the policy thereafter. The action-value function is also known as Q-function.
 
 \bigskip \noindent
-Exploration vs. Exploitation - is a key challenge in RL on how to balance between exploration and exploitation. Exploitation means the agent chooses the best known action in order to maximize it's reward. Exploration means agent tries less known action in order to discover new, potentially better strategies. There are several exploration vs exploitation balancing strategies, one that is simple and well known is called $\epsilon - Greedy$. 
-
-\begin{equation}
-a =
-\begin{cases} 
-\text{random action}, & \text{with probability } \varepsilon \\
-\arg\max_{a} Q(s, a), & \text{with probability } 1 - \varepsilon
-\end{cases}
-\end{equation}
+Exploration vs. Exploitation - is a key challenge in RL on how to balance between exploration and exploitation. Exploitation means the agent chooses the best known action in order to maximize it's reward. Exploration means agent tries less known action in order to discover new, potentially better strategies. There are several exploration vs exploitation balancing strategies, one that is simple and well known is called $\epsilon - Greedy$.
 
 \noindent
-During beginning of the training $\epsilon \in [0,1]$ is initialized to a high value (e.g. 1), making the agent perform mostly random actions and as training continues epsilon decreases, making the robot prefer to exploit the policy.
+During beginning of the training $\epsilon \in [0,1]$ is initialized to a high value (e.g. 1), making the agent perform mostly random actions and as training continues epsilon decreases, making the robot prefer to exploit the policy Eq. \ref{eq:e-greedy}.
+
+\begin{equation}
+  a =
+  \begin{cases} 
+  \text{random action}, & \text{with probability } \varepsilon \\
+  \arg\max_{a} Q(s, a), & \text{with probability } 1 - \varepsilon
+  \end{cases}
+  \label{eq:e-greedy}
+\end{equation}
 
 \bigskip \noindent
 On-Policy and Off-Polict learning. These are two ways the policies can be categorized. On-Policy learning refers to a process when the agent continuously updates the same policy it uses to interact with the environment. On-Policy learning often results in more stable, but much slower training compared to Off-Policy traing. Off-Policy training refers to a process when agent learns from experiences collected using different policy than the one it is currently improving. The agent saves a tuple $(s_t, a_t, r_t, s_{t+1}, done)$ to a replay buffer after each action it takes. during the training loop a number of random experiences is sampled from the replay buffer and used to update agent's policy. This parallelism of using many experiences at each iteration loop allow's the agent to learn quickly, but the learning may be less stable.
+
+\bigskip \noindent
+Model-Based and Model-Free Learning. Approaches to RL differ depending if we have a model of the environment (transition probabilities $ P(s_{t+1} | s, a)$ and rewards $r_t$). Tasks where the model is known are less common and usually applicable to smaller problems. The Model-Free learning is a more general case, it is more suitable for large state spaces and continuous action spaces. In this case the agent learns purely through trial and error.
 
 \bigskip \noindent
 Many RL problems are modeled as Markov Decision Process (MDP). Problems that are modeled as MDP's assume a Markov Property that probability of transitioning to the next state $s_{t+1}$ depends only on the current state-action pair and not the past history of state-action pairs.
@@ -119,20 +123,20 @@ If the environment is only partially observable or it depends on the past states
 This framework formalizes RL problems. The value functions for RL problem defined by MDP can be determined with the use of recursive formula called Bellman equation. The following are the Bellman equations for the On-Policy value functions:
 
 \begin{align}
-V^\pi(s) &= \mathbb{E}_\pi \left[ r_{t+1} + \gamma V^\pi(s_{t+1}) \right] \\
-Q^\pi(s, a) &= \mathbb{E}_\pi \left[ r_{t+1} + \gamma Q^\pi(s_{t+1}, a_{t+1})\right]
+V^\pi(s) &= \mathbb{E}_\pi \left[ r_{t+1} + \gamma V^\pi(S_{t+1}) \mid S_t = s \right] \\
+Q^\pi(s, a) &= \mathbb{E}_\pi \left[ r_{t+1} + \gamma Q^\pi(S_{t+1}, A_{t+1}) \mid S_t = s, A_t = a\right]
 \end{align}
 
 \bigskip \noindent
 These are used when evaluating a specific policy $\pi$. The actions are sampled from the policy $a \sim \pi(\cdot \mid s)$ and future states from the probability distribution $s_{t+1} \sim P(\cdot \mid s, a)$. The Bellman equations for the optimal policy are:
 
 \begin{align}
-V^*(s) &= \max_a \mathbb{E} \left[ r_{t+1} + \gamma V^*(s_{t+1}) \right] \\
-Q^*(s, a) &= \mathbb{E} \left[ r_{t+1} + \gamma \max_{a_{t+1}} Q^*(s_{t+1}, a_{t+1}) \right]
+V^*(s) &= \max_a \mathbb{E} \left[ r_{t+1} + \gamma V^*(S_{t+1}) \mid S_t = s, A_t = a \right] \\
+Q^*(s, a) &= \mathbb{E} \left[ r_{t+1} + \gamma \max_{a'} Q^*(S_{t+1}, a') \mid S_t = s, A_t = a \right]
 \end{align}
 
 \bigskip \noindent
-These describe the best possible values if the agent always acts optimally. The $\max_a$ and $\max_{a_{t+1}}$ denote that the agent always picks the best action that maximizes the expected future rewards. From these equations value function update methods can be derived. The On-Policy method SARSA has the following Q-function update equation:
+These describe the best possible values if the agent always acts optimally. The $\max_a$ and $\max_{a'}$ denote that the agent always picks the best action that maximizes the expected future rewards. From these equations value function update methods can be derived. The On-Policy method SARSA has the following Q-function update equation:
 
 \begin{align}
 Q(s_t, a_t) &\leftarrow Q(s_t, a_t) + \alpha \left( r_{t+1} + \gamma Q(s_{t+1}, a_{t+1}) - Q(s_t, a_t) \right)
@@ -146,4 +150,69 @@ Q(s_t, a_t) &\leftarrow Q(s_t, a_t) + \alpha \left( r_{t+1} + \gamma \max_{a'} Q
 \end{align}
 
 \subsection{Learning from Demonstration}
+In the previous section reinforcement learning was discussed. It is an interesting area of machine learning that generalizes to many applications requiring decision making. RL depends on agent maximizing reward function, more often than not the reward function is not clear and manually designing a reward function that satisfies the desired behaviour can be extremely challenging. A feasible solution to this problem is Learning from Demonstration (LfD), also known as imitation learning. In LfD, instead of specifying reward function, expert provides a set of demonstrations on how the task should be acomplished and the agent tries to learn the policy that best matches what the expert attempted to do. The environment in imitation learning, as well as in majority in RL tasks, is defined as a Markov Decision Process. The environment has a set of states and actions, transition probabilities between the states and an unknown reward function. The expert demonstrations, also known as trajectories, are defined as an array of state action pairs. 
 
+\begin{align}
+  \tau &= (s_0, a_0, s_1, a_1, \dots)
+\end{align}
+
+\noindent
+The expert demonstrations are considered to be comming from an optimal policy $\pi^*$. There are a few methods with which LfD can be achieved. In this section two common ones: behaviour cloning (BC) and inverse reinforcement learning (IRL) will be discussed.
+
+\subsubsection{Behaviour Cloning}
+Idea for behaviour cloning \cite{bain1995framework} relatively straightforward. Given expert trajectories, learn a mapping from states to actions using supervised learning. A commonly used example of behaviour cloning is an radio controlled (RC) car equiped with sensors and controller on a race track. A human expert would drive around the race track recording the state (camera feedback, speed) and actions (steering, acceleration). The state would be passed through a neural network (CNN if camera is used) and the network would attempt to minimize the loss between predicted actions and the action of the expert. Behaviou cloning is simple and efficient method, suited for tasks that do not require long-term planning and in which expert trajectories cover the whole state space. On the other hand, BC has severe limitations, it can only get as good as the expert, the agent can only perform well in situations it has seen before and the generalization is poor. Often the agent does not match expert trajectory perfectly, leading to accumulation of error over time, once the error grows large, the agent can find itself in a situation it has never seen before, this will lead to failure as the agent will not know what to do in novel states. 
+
+\bigskip \noindent
+The paper "ChauffeurNet: Learning to Drive by Imitating the Best and Synthesizing the Worst" \cite{bansal2018chauffeurnet} proposes that the network is trained not only the expert trajectories, but the dataset be augmented with simulated uncommon scenarios, such as collisions and off-road events in the case of training a car to drive autonomously. Another interesting proposition \cite{goecks2020integratingbehaviorcloningreinforcement} is the Cycle-of-Learning (CoL) framework, where behaviour cloning and reinforcement learning are cobined, by pre-training the agent from expert demonstrations and fine tuning it through RL.
+
+\subsubsection{Inverse Reinforcement Learning}
+The inverse reinforcement learning takes a different approach to imitation learning. The main idea of this method is to learn the reward function, instead of the policy directly. This learned reward function then can be used to train the agent through the reinforcement learning. 
+
+\begin{algorithm}
+  \caption{Inverse Reinforcement Learning (IRL)}
+  \begin{algorithmic}[1]
+      \State \textbf{Input:} Expert demonstrations $D = \{\tau_1, \tau_2,\dots, \tau_n\}$
+      \Repeat
+          \State Learn reward function $r(s, a)$
+          \State Given reward function $r$ find policy $\pi$ using the reinforcement learning approach
+          \State Compare $\pi$ with expert policy $\pi_E$
+      \Until{Policy is satisfactory}
+  \end{algorithmic}
+\end{algorithm}
+
+\noindent
+In the case we have a model of our system, the rewards are assumed to be linear. Then during each iteration of IRL, a full RL problem is solved using approaches, such as dynamic programming (DP). In Model-Free approach the reward function is often non-linear (neural network) and transition probabilities are unknown, in this case the reward function is continuously updated using a short-horizon updates (e.g. 1-step of RL) instead of running the full RL.
+
+\bigskip \noindent
+The inverse reinforcement learning has very good generalization, meaning, unlike the behaviour cloning, IRL can better deal with scenarios that were not explicitly shown by the expert as the model learns the goal rather than state-action mappings. Sometimes the policy trained with IRL can even outperform the expert. It is a good choice for more complex scenarios requiring long-term planning or decision making. On the other hand, the IRL has problems of it's own. The biggest is ambiguity in reward function. There can be many reward functions that explain the behaviour of the expert. Different approaches has been proposed on which reward function to choose.
+
+\bigskip \noindent
+Maximum Margin Inverse Reinforcement Learning (MM-IRL) \cite{ratliff2006maximum} envisions the problem as structured prediction over the space of policies. The goal of MM-IRL is to learn a mapping from features to costs. The features are problem specific, for example in robot pick-and-place task, they could be: time taken to achieve a task, applied grasping force, smoothness of motion, etc. The cost is just a negative reward function. The cost function is assumed to be linear in the features.
+
+\begin{align}
+  R(s,a) &= -C(s,a) \\
+  C(s,a) &= w^T \phi(s,a)
+\end{align}
+
+\noindent
+where:  
+\begin{itemize}
+    \item \( C(s,a) \) is the cost function,
+    \item \( w \) is the weight vector that must be learned,
+    \item \( \phi(s,a) \) are the features describing state-action pairs,
+\end{itemize}
+
+\noindent
+Knowing the cost funciton is akin to knowing the reward function and thus the policy can be learned. The problem can be viewed as constrained optimization problem, where the goal is to find the set of weights that explain the expert trajectory. More specifically, the cost of expert trajectory has to be smaller or equal to cost of all the possible trajectories in MDP. This optimization problem can not be solved by simply passing it to a linear solver as the case of weight vector equal zero would satisfy the constraint. In order to avoid trivial solutions the margin term is introduced, the cost of human trajectories has to be smaller than the cost of the remaining trajectories by a margin. In order to account for cases where the set of weight is very large (and thus the margin term becomes small) additional contraint is added that maximizes the margin.
+
+%The authors see that mapping features to costs involves a simultaneous tweaking of large set of parameters, so they automate this mapping with the use of supervised learning. 
+
+\bigskip \noindent
+Maximum Entropy Inverse Reinforcement Learning \cite{ziebart2008maximum} chooses the reward function that induces a trajectory distribution with maximum entropy while matching the expert's expected feature counts. The idea is built upon a moment maching principle. This principle states that if the expected values of the features between the learner and the expert match, then the expert cost will be equal to the learner cost and the bahviour of the agent will result in a similar behavior to the expert, without explicitly observing the expert's actions.
+
+\begin{align}
+  \mathbb{E}_{\pi_{\text{expert}}}[\phi(s, a)] &= \mathbb{E}_{\pi_{\text{learner}}}[\phi(s, a)]
+\end{align}
+
+\noindent
+If we plot the feature counts of the expert as a histogram, there are many potential distributions that matches the average feature counts. The objective function that determines which distribution best matches features counts is chosen as the one that has maximum entropy. The idea behind maximum entropy is to choose a distribution which is least comital as this will result in the most unbiast distribution over feature counts.
