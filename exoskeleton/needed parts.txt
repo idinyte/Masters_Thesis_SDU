@@ -1,0 +1,27 @@
+DYNAMIXEL XM430-W350-T motor
+
+(a bunch of M2, M2,5, M3 screws of various lengths)
+4x WB M2.5x14 screws and spacer rings for mounting motor bottom described in https://www.robotis.us/dynamixel-xm430-w350-t/
+8x screws for horn attachment (attachment is 7mm in Length M2 or M2.5 I'm not sure)
+8x M2 4mm screws (for jaws)
+4x M2.5 8mm screws (for slider)
+4x M3 16mm screws
+12x M3 8mm scews
+
+(inserts)
+16x brass inserts M3 (OD 4.5mm length 5mm)
+
+(2x MGN7C linear guides and 100mm slide)
+2X MGN7C sliders https://www.aliexpress.com/item/1005006710864653.html?aff_fcid=c76e608802ee48eb8ccfea2afcf08275-1740060324742-04151-_oEZfs3x&tt=CPS_NORMAL&aff_fsk=_oEZfs3x&aff_platform=shareComponent-detail&sk=_oEZfs3x&aff_trace_key=c76e608802ee48eb8ccfea2afcf08275-1740060324742-04151-_oEZfs3x&terminal_id=6868bce4880b4bafb59c5e69fe910b3a&afSmartRedirect=y
+
+100 mm linear guide https://www.aliexpress.com/item/1005004908405311.html?aff_fcid=51b87363406d4f34b444513359f551a3-1740060399234-00442-_DDKJiLF&tt=CPS_NORMAL&aff_fsk=_DDKJiLF&aff_platform=shareComponent-detail&sk=_DDKJiLF&aff_trace_key=51b87363406d4f34b444513359f551a3-1740060399234-00442-_DDKJiLF&terminal_id=6868bce4880b4bafb59c5e69fe910b3a&afSmartRedirect=y
+
+(I think the top link doesn't work so maybe this is the same) https://www.aliexpress.us/item/3256804722090559.html?spm=a2g0o.productlist.main.3.58183558zncYS7&algo_pvid=ead6afc8-f701-4728-b731-5f525e86703d&algo_exp_id=ead6afc8-f701-4728-b731-5f525e86703d-1&pdp_ext_f=%7B%22order%22%3A%221203%22%2C%22eval%22%3A%221%22%7D&pdp_npi=4%40dis%21DKK%21113.18%2155.64%21%21%21112.52%2155.32%21%4021038df617400607295073097e7293%2112000031182888806%21sea%21US%210%21ABX&curPageLogUid=52syPzJKOtBV&utparam-url=scene%3Asearch%7Cquery_from%3A
+
+
+Velcro straps (one long, couple short, about 2.5cm wide)
+
+A glove to put Velcro straps and an attachment.
+
+Tools, super glue and probably lithium grease for the sliders
+
