@@ -2,7 +2,7 @@
 The three algorithms: classical, reinforcement learning and inverse reinforcement learning have been implemented.
 
 \subsection{Classical Algorithm}
-A classical algorithm consists of the following steps: ball detection, trajectory generation and ball classification. Each of these will be discussed in greater detail.
+A classical algorithm consists of the following steps: ball detection, trajectory generation to pick up the ball, ball classification and trajectory generation to drop the ball off in correct box. Each of these will be discussed in a greater detail.
 
 \subsubsection{Ball Detection}
 The simulator provides the precise position and orientation of the ball in world coordinates, but in real use case this information would need to be acquired. In order to immitate the real world, the ball position will be found with the use of camera. One way robots can detect objects in the physical world is to extract depth information from the environment with the use of two or more regular cameras and perform triangulation. Similar to biological process of stereopsis. Depth cameras such as Intel Realsense make this an easy to implement solution. There are also different methods such as structured light or time of flight. There will be no need to manually perform triangulation in PyBullet as it has getCameraImage function which can return a depth image.
@@ -152,4 +152,51 @@ The point cloud of a scene, when a camera is placed a meter above the table and 
     \label{fig:pointcloud}
 \end{figure}
 
-The point cloud is further processed by cropping it to the working area only. This is a common method for speeding up localization. Then global alignment is performed by extracting features for the scene and object, obtaining correspondences, and using RANSAC to randomly sample 3 correspondences, aligning the object with the correspondences, and counting inliers. After 200 iterations, the pose with the highest inlier count is returned. The iterative closest point algorithm is not performed as orientation does not matter for a spherical object.
+\noindent
+The accuracy and speed of object detection from point cloud can be improved by pre-processing a point cloud. The density of the point cloud can be reduced by applying voxel grid filtering and the noise can be removed by methods like statistical outlier removal. As the density of the point cloud is not high and there is no noise due to point cloud obtained in simulation these methods were not applied. What was aplied was AABB crop. Since we know the area where the ball will be initialized the rest of the points in the point cloud can be discarded. Object detection from pointcloud can be categorized in to two methods, global alignmnent and local alignment.
+
+\bigskip \noindent
+Global alignment provides a pose of the object. The steps for the global alignment are: feature extraction, feature matching and Random Sample Consensus (RANSAC). There are many variants of feature descriptors, a lot of them are based on surface normals (vectors perpendicular to the surface) and curvature (rate of change of surface normals). This work uses Fast Point Feature Histograms (FPFH) \cite{rusu2009fast} as they are fast to compute, pose invariant with good discriminative power. The feature matching loops through the points in the object point cloud, compares it to all points in the scene point cloud and stores closes matches (having shortes euclidean distance). The RANSAC is an iterative method that estimates global alignment pose. The method samples three correspondances between object and scene features, calculates a pose transformation matrix that aligns the correspondences and counts the inliers (number of overlaping points between the scene and object with some tolerance). The pose of the transfomation with most inliers is saved. 200 iterations and 1e-4 tolerance was used for ball detection application. 
+
+\bigskip \noindent
+Local alignment is used to refine the pose of the object. Iterative Closes Point (ICP) during each iteration applies a transformation that minimizes the mean square error (MSE), which is the distance between nearest neighbour points between scene and object points cloud. K-d trees are often used to speed up the process of finding closest neighbouring points and Singular Value Decomposition (SVD) is used to solve the problem of finding the transformation matrix that minimises MSE. This process is typically repeated and MSE is sufficiently small or maximum number of iterations has been reached. Since the object we are trying to find is a round ball and often most of the ICP error is minimized with orientation alignments, ICP was not used as skipping local alignment results in sufficiently good object detection in this task and speeds up the whole detection process.
+
+\subsubsection{Ball Classification}
+A fully connected feedforward neural network has been trained in order to classify the ball in to the four categories based on it's stiffness. Neural networks have the ability to learn an arbitrary function given labeled data, which makes them ideal for this task. 5000 data points were generated where the robot squeezes a random soft ball with the gripper to 5 cm, 4 cm, 7 cm, and 6 cm gripper opening distances. The normal forces the gripper experiences are measured at each distance. The dataset was split into train and test sets with a ratio of 80\% to 20\%. The hyperparameters to train the network have been chosen as, batch size = 32, learning rate = 0.001, and epochs = 300. The network has an input size of 8 (4 gripper distances and 4 normal forces), one hidden layer of size 32, and 4 output neurons (representing ball type) and the ReLU activation function has been used. The choice of using multiple measurements instead of a sinle was made in hopes of increasing reliability against factors like measurement errors.
+
+\subsubsection{Trajectory generation}
+The trajectory is generated via points. The trajectory is a function of 3D position in Cartesian coordinates (P), quaternion orientation (Q), and gripper opening (G) in meters. 
+
+\begin{equation}
+\text{Trajectory}(t) = (\mathbf{P}(t), \mathbf{Q}(t), \mathbf{G}(t)),
+\end{equation}
+
+\noindent
+The trajectory for grabbing a ball consists of the following points: current end effector (ee) pose, point above the ball, point ready to grip the ball, point for closing the gripper and point for lifting the ball. The positions and gripper openings are interpolated linearly.
+
+\begin{equation}
+\mathbf{P}(t) = \mathbf{P}_\text{start} + \left(\mathbf{P}_\text{end} - \mathbf{P}_\text{start}\right) \cdot \frac{t}{\text{duration}}
+\label{eq:linear_interpolation}
+\end{equation}
+
+\noindent
+Linear interpolation has been chosen as it is the simplest form of interpolation to implement and there is no risk of demaging the robot due to high accelerations because it is simulated and not physical. PyBullet represents rotations as quaternions, a vector on a 4D unit sphere, SLERP (Spherical Linear Interpolation) is used instead of linear interpolation to interpolate between two rotations along the surface of the sphere. This way, two rotations are interpolated in a way that maintains constant angular velocity.
+
+\begin{align*}
+\cos\theta &= \frac{\mathbf{Q}_1 \cdot \mathbf{Q}_2}{\|\mathbf{Q}_1\| \|\mathbf{Q}_2\|} &
+\theta &= \arccos(\cos\theta) & 
+p &= \frac{t}{\text{duration}}
+\end{align*}
+
+\begin{equation}
+\mathbf{Q}(t) = 
+\begin{cases} 
+\mathbf{Q}_2 & \text{if } \theta \approx 0, \\
+\frac{\sin((1 - p) \theta)}{\sin(\theta)} \mathbf{Q}_1 + \frac{\sin(p \theta)}{\sin(\theta)} \mathbf{Q}_2 & \text{otherwise},
+\end{cases}
+\end{equation}
+
+\noindent
+After the ball has been classified another trajectory is generated via points: a point to raise the ball, a point to move above the goal box, a point to lower the ball, and a point to open the gripper. The trajectory is followed using inverse kinematics.
+
+\subsection{Reinforcement Learning}
