@@ -9,7 +9,7 @@ The simulator provides the precise position and orientation of the ball in world
 The PyBullet uses OpenGL, when the scene is rendered, the OpenGL stores depth values as a part of rendering pipeline. It is important to understand the camera model and the order of transformations used to obtain the depth buffer in order to inverse this process to obtain the point cloud of the scene.
 
 \bigskip \noindent
-The first transformation is performed by the view matrix. This matrix is used to transform the vertixes of the scene in the world space to the scene in the camera's view space, as it is desired to render the scene from the view of the camera. In other words, a view matrix is such a matrix that will transfrom the camera object to the center of origin in the world coordinates. Since the PyBullet uses right-hand coordinate system, the transformed camera's object Z-axis must be inverted, it must look down instead of up.
+The first transformation is performed by the view matrix. This matrix is used to transform the vertixes of the scene in the world space to the scene in the camera's view space, as it is desired to render the scene from the view of the camera. In other words, a view matrix is such a matrix that will transfrom the camera object to the center of origin in the world coordinates. Since the PyBullet uses right-hand coordinate system, as per OpenGL convention, the transformed camera's object Z-axis must be inverted.
 
 \bigskip \noindent
 The OpenGL uses look-at camera method. This method describes the camera by it's position in world coordinates (called eye-position, denoted as E), target point (the point the camera looks at, denoted as C) and up vector (usually $[0, 1, 0]$, denoted as U). The camera has following rotation and translation matrices defining it's position and orientation Eq. \ref{eq:cam_t_r}
@@ -38,11 +38,11 @@ The right, up and forward basis vectors can be calculated from look-at camera pa
 \begin{align}
   F &= \frac{C - E}{\|C - E\|}, \\
   R &= \frac{F \times U}{\|F \times U\|}, \\
-  U' &= R \times Z
+  U' &= R \times F
 \end{align}
 
 \noindent
-The view matrix is a matrix that would align the camera to the origin of the world (with negative z axis for right hand coordinate system)
+The view matrix is a matrix that would align the camera to the origin of the world (with negative z axis)
 
 \begin{equation}
   \begin{aligned}
@@ -200,3 +200,140 @@ p &= \frac{t}{\text{duration}}
 After the ball has been classified another trajectory is generated via points: a point to raise the ball, a point to move above the goal box, a point to lower the ball, and a point to open the gripper. The trajectory is followed using inverse kinematics.
 
 \subsection{Reinforcement Learning}
+In order to make RL implementation easier, the environment has been put in a wrapper that aligns with OpenAI gym environment standards. The wrapper consists of four main functions: initialization, step, reset and render. The render function is left empty, as it is handled by Bullet engine during initialization.
+
+\begin{lstlisting}[language=Python, caption=Bullet Physics Choice of Rendering]
+  import pybullet as p
+  physicsClient = p.connect(p.GUI if vis else p.DIRECT)
+\end{lstlisting}
+
+\bigskip \noindent
+The reset function is called before initiating a new episode. The efficient way to reset environment would be to reset the pose of robot and the soft ball, but as soft body simulation tends to go unstable sometimes, the choice has been made to reset the environment by closing the physics engine connection and starting a new one.
+
+\begin{lstlisting}[language=Python, caption=Gym Wrapper Reset Function, breaklines=true]
+def reset(self):
+    try:
+      self.env.baseEnv.close()
+    except:
+      pass
+    robot = UR5Robot(urdf_path=os.path.join(os.getcwd(), "assets/objects/UR5/urdf/ur5.urdf"), use_fixed_base=True)
+    self.env = SortBallsEnv(robot, camera=None, self.vis, debug=False, VR=False)
+
+    self.state = self.env.state_to_gym_state(self.env.get_state())
+    return self.state  
+\end{lstlisting}
+
+\bigskip \noindent
+The initialization function sets up observation space and action space.
+\begin{table}[ht]
+  \setlength{\abovecaptionskip}{6pt}
+  \centering
+  \begin{tabular}{|c|l|c|l|c|l|}
+  \hline
+\textbf{Index} & \textbf{Observation}            & \textbf{Index} & \textbf{Observation}            & \textbf{Index} & \textbf{Observation}            \\ \hline
+                 0              & gripper\_pos\_x                 & 7             & relative\_ball\_pos\_x          & 14             & goal\_pos\_2\_z                 \\ \hline
+               1              & gripper\_pos\_y                 & 8             & relative\_ball\_pos\_y          & 15             & goal\_pos\_3\_x                 \\ \hline
+                 2              & gripper\_pos\_z                 & 9             & goal\_pos\_1\_x                 & 16             & goal\_pos\_3\_y                 \\ \hline
+               3             & gripper\_open\_length           & 10             & goal\_pos\_1\_y                 & 17             & goal\_pos\_3\_z                 \\ \hline
+                 4             & left\_pad\_normal\_force        & 11             & goal\_pos\_1\_z                 & 18             & goal\_pos\_4\_x                 \\ \hline
+                5             & right\_pad\_normal\_force       & 12             & goal\_pos\_2\_x                 & 19             & goal\_pos\_4\_y                 \\ \hline
+ 6             & relative\_ball\_pos\_z          & 13             & goal\_pos\_2\_y                 & 20             & goal\_pos\_4\_z                 \\ \hline
+  \end{tabular}
+  \caption{Observation Space}
+  \end{table}
+
+  \begin{table}[ht]
+    \setlength{\abovecaptionskip}{6pt}
+    \centering
+    \begin{tabular}{|c|l|c|c|}
+    \hline
+    \textbf{Index} & \textbf{Action}                  & \textbf{Min} & \textbf{Max} \\ \hline
+    0              & ee\_pos\_delta\_x               & -0.02        & 0.02         \\ \hline
+    1              & ee\_pos\_delta\_y               & -0.02        & 0.02         \\ \hline
+    2              & ee\_pos\_delta\_z               & -0.02        & 0.02         \\ \hline
+    3              & gripper\_open\_length           & 0            & 0.127        \\ \hline
+    \end{tabular}
+    \caption{Action Space}
+    \end{table}
+
+\bigskip \noindent
+The gripper position is the middle of the ray connecting centers of the gripper pads. The ball position is relative to the gripper position: $relative\_ball\_pos = ball\_pos - gripper\_pos$. This representation was chosen as ball position changes at the start of each episode. The goal positions were kept in world coordinates as they are static. The actions were chosen as a small change in end effector position and desired gripper opening length. Although RL is capable of learning the movement of ee by observing and setting the angles of the robot joint directly, the chosen representation simplifies the problem and reduces the dimensionality.
+
+\bigskip \noindent
+Finally the step function performs action, calculates the reward and gets the environment state after the action was taken.
+
+\begin{lstlisting}[language=Python, caption=Gym Wrapper Step Function, breaklines=true]
+  def step(self, action):
+    info = {}
+    self._perform_action(action)
+    self.state = self.env.main_loop(gym_state = True)
+    reward = self._get_reward()
+    self.step_counter += 1
+    
+    done = self.env.terminal_state or self.env.restart_episode or self.step_counter > self.max_episode_steps
+    
+    return self.state, reward, done, info 
+\end{lstlisting}
+
+\bigskip \noindent
+The action is performed by calculating inverse kinematics to obtain robot joints for the desired position and applying them. The orientation of the end effector is kept static in order to reduce dimentionality.
+
+\begin{lstlisting}[language=Python, caption=Perform Action Function, breaklines=true]
+  def _perform_action(self, action):
+    robot_pos, robot_ori = self.env.robot.get_ee_link_pose()
+    target_position = robot_pos + action[:3]
+    joint_positions = p.calculateInverseKinematics(self.env.robot.robot_id, self.env.robot.eef_id, target_position, targetOrientation=np.array([ 0.5,  0.5, -0.5,  0.5]))
+
+    p.setJointMotorControlArray(bodyIndex=self.env.robot.robot_id, jointIndices=[1, 2, 3, 4, 5, 6], controlMode=p.POSITION_CONTROL, targetPositions=joint_positions[:6])
+    self.env.robot.move_gripper_length(action[3])
+\end{lstlisting}
+
+\bigskip \noindent
+Reward shaping is interesting yet challenging part of RL. The reward for this task is calculated in an intuitive way that encourages the agent to move towards the ball, pick it up and move towards the goal Alg. \ref{alg:rewards}.
+
+\begin{algorithm}[ht]
+  \caption{Reward Computation Algorithm}
+  \begin{algorithmic}[1]
+  \State $\text{reward} \gets 0.5 - \|\text{state}[6:9]\|$ \Comment{Reward for gripper being close to the ball}
+  
+  \If{$\text{is\_touching\_ball(left\_pad\_force, right\_pad\_force)}$}
+      \State $\text{reward} \gets \text{reward} + 0.5$ \Comment{Reward for holding the ball}
+      \State $\text{reward} \gets \text{reward} + \max(2 - \|\text{goal\_pos} - \text{ball\_pos}\|, 0)$ \Comment{Moving towards goal}
+  \EndIf
+  
+  \If{$\text{env.robot.non\_ball\_contact}$}
+      \State $\text{reward} \gets \text{reward} - 1$ \Comment{Penalty for collision with non-ball objects}
+  \EndIf
+  
+  \If{$\text{env.ball.is\_in\_box(env.get\_corresponding\_ball\_box\_id())}$}
+      \State $\text{reward} \gets \text{reward} + 500$ \Comment{Reward for placing the ball in the correct box}
+  \EndIf
+  
+  \State \textbf{Return:} $\textnormal{reward}$
+  
+  \end{algorithmic}
+  \label{alg:rewards}
+  \end{algorithm}
+
+
+\bigskip \noindent
+Soft Actor-Critic (SAC) \cite{haarnoja2018softactorcriticoffpolicymaximum} network has been chosen to train the agent. The SAC implementation is provided by stable baselines 3 \cite{stable-baselines3}. SAC has been proven to be a well-performing network for continuous action spaces. It uses an entropy regularization term in its objective function, which encourages exploration. The network for both actor and critic was chosen to have only one hidden layer 256 neurons deep, as there are no complex relationships between inputs and outputs. The buffer size and the batch sizes were increased, as the episodes are quite long; they take up to 10000 iterations. The gamma was reduced; this encourages the network to focus more on short-term rewards rather than long-term planning. The soft update coefficient, tau, which is used in the Polyak update, was kept at the default value. The entropy regularization coefficient that is responsible for controlling the exploration/exploitation trade-off was kept at "auto"; the network learns the parameter based on target entropy (desired level of randomness).
+
+\begin{table}[ht]
+  \centering
+  \renewcommand{\arraystretch}{1.5}
+  \begin{tabular}{|>{\raggedright\arraybackslash}m{5cm}|>{\raggedright\arraybackslash}m{5cm}|>{\raggedright\arraybackslash}m{5cm}|}
+  \hline
+  \textbf{Parameter} & \textbf{Chosen Value} & \textbf{Default Value} \\ \hline
+  \texttt{policy\_kwargs} & \texttt{dict(net\_arch=[256])} & \texttt{dict(net\_arch=[256, 256])} \\ \hline
+  \texttt{learning\_rate} & 0.0007 & 0.0003 \\ \hline
+  \texttt{buffer\_size} & 100,000,000 & 1,000,000 \\ \hline
+  \texttt{batch\_size} & 8192 & 256 \\ \hline
+  \texttt{gamma} & 0.9 & 0.99 \\ \hline
+  \texttt{tau} & 0.005 & 0.005 \\ \hline
+  \end{tabular}
+  \caption{Comparison of Chosen and Default Parameters for SAC}
+  \label{tab:sac_params}
+\end{table}
+
+\subsection{Learning From Demonstration}

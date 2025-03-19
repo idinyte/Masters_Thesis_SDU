@@ -1,5 +1,5 @@
 k-d trees
 SVD
 trajectory following other than IK?
-
+polyak update
 test if multiple measurements increase the reliability of the NN
