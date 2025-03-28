@@ -3,7 +3,6 @@ import os
 import numpy as np
 from collections import namedtuple
 import matplotlib.pyplot as plt
-from scripts.objects.gripper_motors import GripperMotors
 from enum import Enum
 import time
 
@@ -12,7 +11,7 @@ class ControlType(Enum):
     Current = 1
 
 class Gripper:
-  def __init__(self, SIMULATION_STEP, exosceleton_on = False):
+  def __init__(self, SIMULATION_STEP, exosceleton_on = False, gripper_motors = None):
     self.LEFT_PAD_GRIPPER_INDEX = 3
     self.RIGHT_PAD_GRIPPER_INDEX = 8
     self.gripper_range = [0, 0.127]
@@ -21,7 +20,7 @@ class Gripper:
     self.right_forces = []
     self.exosceleton_on = exosceleton_on
     if exosceleton_on:
-      self.gripper_motors = GripperMotors()
+      self.gripper_motors = gripper_motors
       self.plot_i = 0
       self.plot_start_time = None
       self.target_left_pad_currents, self.target_right_pad_currents, self.present_left_pad_currents, self.present_right_pad_currents, self.present_left_pwm, self.present_right_pwm = [], [], [], [], [], []

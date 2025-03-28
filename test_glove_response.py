@@ -5,6 +5,7 @@ from scripts.environments.VREnv import VREnv
 from scripts.environments.sortBallsEnv import SortBallsEnv
 from scripts.ANN.sortBallsANN import SortBallsANN
 from scripts.objects.gripper import Gripper, ControlType
+from scripts.objects.gripper_motors import GripperMotors
 import keyboard
 import numpy as np
 import os
@@ -30,7 +31,7 @@ env = SortBallsEnv(robot, camera, vis, realtime, debug, VR, VRCameraPos, VRCamer
 
 gripper_target_position = [0, 0.17, 1.045]
 gripper_target_orientation = p.getQuaternionFromEuler(np.radians([90, 90, 0]))
-gripper = Gripper(1/1000, exosceleton_on=True)
+gripper = Gripper(1/1000, exosceleton_on=True, gripper_motors=GripperMotors())
 gripper.initialize_gripper_controller(gripper_target_position, gripper_target_orientation)
 
 

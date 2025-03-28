@@ -1,0 +1,34 @@
+\newpage
+\section{Analysis and Design 2}
+
+The design \nameone is fully funcitonal, the aim of the second design \nametwo is to improve upon it. There are a few issues with the first design, to begin with, it is not portable. It is impossible to collect trajectories if the exoskeleton is not wearable. Secondly, the movement of finger pads of the exoskeleton is circular, it does not capture the trajectory or normal forces of the robot gripper very well, a more apropriate solution would be gripper like exoskeleton \cite{dai2023gripper} as discussed in the background, but with force feedback for virtual objects. Lastly, the exoskeleton should be lighter. The two motor design is heavy and would be uncomfortable to wear. Using jamming method would make the glove light, but the thumb has many degrees of freedom, making the distance calculation for pinching difficult. The motor could be put outside the exoskeleton on the table and the glove could be operated by using series elastic actuators, but that comes with it's own set of disadvantages of increased complexity, limited distance based on bowden cable length and errors due to the inner wire in a bowden cable moving slightly when the cable is bent. The proposed alternative is to use only one motor instead of two as pinching is linear motion with one degree of freedom. That would save on costs and weight. Also a smaller motor could be utilized. With these goals in mind the ideation phase began, many ideas were brainstormed, for examples see appendix \ref{appendix:gripper-ideation-phase}. The final design is inspired how some of the robotic grippers work using only one motor implementing the principle of double rack and pinion. The global position tracking is achieved with the use of standard VR controller in order to minimize costs. The controller holder was designed in Blender by using boolean operator to subtract the shape of the hand and the controller from a cuboid mesh. Then it was 3d printed and hot glued to a glove. The controller is secured using velcro straps. The local position tracking is obtained from the positional data of the motor. All of the remaining parts for 3d printing were designed using Autodesk Invetor. The hole for the thumb is rotated at 45 degrees to better match the shape. The side is extruded to rest against the palm of the hand and the exoskeleton is secured using another velcro strap. A linear guide with rails is used to reduce the friction and stabilize the linear movement. All of this put together results in simple, lightweight and affordable exoskeleton design. The \nametwo parts and prices can be seen in the Table \ref{table:exoskeleton-2-parts}.
+
+\begin{table}[ht]
+  \setlength{\abovecaptionskip}{6pt}
+  \centering
+  \begin{tabular}{|l|c|c|}
+  \hline
+  \multicolumn{1}{|c|}{\textbf{Description}} & \textbf{Quantity}                  & \textbf{Toal Price} \\ \hline
+  \multicolumn{3}{|l|}{\textbf{Screws}} \\ \hline
+  M2 x 8mm              & 8               & 7.5 DKK        \\ \hline
+  M2.5 x 14mm              & 4               & 15 DKK        \\ \hline
+  M2.5 x 8mm              & 4               & 7.5 DKK        \\ \hline
+  M3 x 8mm              & 16               & 15 DKK       \\ \hline
+  \multicolumn{3}{|l|}{\textbf{Brass Inserts}} \\ \hline
+  M3 x 5mm, OD 4.5mm              & 16               & 20 DKK        \\ \hline
+  \multicolumn{3}{|l|}{\textbf{Mechanical Parts}} \\ \hline
+  100mm linear guide & 1 & 24 DKK  \\ \hline
+  MGN7C slider & 2 & 120 DKK  \\ \hline
+  Half finger gloves & 1 & 20 DKK \\ \hline
+  5M hook and loop fastener & 1 & 22 DKK \\ \hline
+  \multicolumn{3}{|l|}{\textbf{Electronics}} \\ \hline
+  Dynamixel XM430-W350-R & 1 & 2140 DKK \\ \hline
+  SMPS2Dynamixel Power Adapter & 1 & 50 DKK \\ \hline
+  U2D2 & 1 & 280 DKK \\ \hline
+  \multicolumn{3}{|l|}{\textbf{3D Print}} \\ \hline
+  Polylactic Acid (PLA) filament & 300g & 60 DKK \\ \hline
+  & & \textbf{2781 DKK (372.76 €)} \\ \hline
+  \end{tabular}
+  \caption{\nametwo Exoskeleton Parts}
+  \label{table:exoskeleton-2-parts}
+\end{table}

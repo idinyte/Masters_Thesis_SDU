@@ -8,8 +8,8 @@ subprocess.run("pdftotext -layout main.pdf output.txt", shell=True)
 with open('output.txt', 'r', encoding='utf-8') as file:
     text = file.read()
 
-start_pattern = r"Introduction\n\n1.1       Background\n\nRecent"
-end_pattern = r"Appendix"
+start_pattern = r"Recent advancements in computer hardware and software have enabled"
+end_pattern = r"Appendix - Gripper Ideation"
 
 start_match = re.search(start_pattern, text)
 end_matches = list(re.finditer(end_pattern, text))
@@ -18,6 +18,8 @@ end_match = end_matches[-1] if end_matches else None
 if start_match and end_match:
     trimmed_text = text[start_match.start():end_match.end()]
 else:
+    print(start_match)
+    print(end_match)
     print("Specified patterns not found in the text")
     exit(1)
 

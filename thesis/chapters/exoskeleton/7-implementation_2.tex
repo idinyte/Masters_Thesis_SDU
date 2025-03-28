@@ -1,0 +1,20 @@
+\section{Implementation 2}
+
+The gripper opening in simulation is controlled based on position of the motor of the exoskeleton. The motor position when the exoskeleton is closed is 5$^{\circ}$ and when the exoskeleton is fully open, 205$^{\circ}$. The rack and pinnion mechanism is designed in a way that less than a full rotation is needed to fully open the gripper, so there is no ambiguity betweent the positions. The gripper opening in simulation is calculated by multiplying normalized exoskeleton opening with the range of the gripper in simulation.
+
+\begin{equation}
+  d_{\text{gripper}} = \frac{p_{\text{motor}} - p_{\text{min}}}{p_{\text{max}} - p_{\text{min}}} \cdot R_{\text{gripper}}
+\end{equation}
+
+\noindent
+where:  
+\begin{itemize}
+\item \( R_{\text{gripper}} = 0.127 \) is the maximum gripper opening range (simulation distance units),  
+\item \( p_{\text{min}} = 5 \) and \( p_{\text{max}} = 205 \) are the motor position limits (degrees),  
+\item \( p_{\text{motor}} \) is the current motor position,  
+\item \( d_{\text{gripper}} \) is the computed gripper opening. 
+\end{itemize}
+
+%calibration factor = (reading)/(known weight)
+
+%350000/180=1944.44
