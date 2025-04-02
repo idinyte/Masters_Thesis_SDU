@@ -1,3 +1,4 @@
+\newpage
 \section{Implementation 2}
 
 The gripper opening in simulation is controlled based on position of the motor of the exoskeleton. The motor position when the exoskeleton is closed is 5$^{\circ}$ and when the exoskeleton is fully open, 205$^{\circ}$. The rack and pinnion mechanism is designed in a way that less than a full rotation is needed to fully open the gripper, so there is no ambiguity betweent the positions. The gripper opening in simulation is calculated by multiplying normalized exoskeleton opening with the range of the gripper in simulation.
@@ -15,6 +16,54 @@ where:
 \item \( d_{\text{gripper}} \) is the computed gripper opening. 
 \end{itemize}
 
+\noindent
+When the gripper closes around the soft ball, the soft ball provides normal reaction forces $R_l$ and $R_r$ Fig. \ref{fig:pybullet_getContactPoints}. The process to calculate the goal current for the mottor has multiple steps. Firstly, the forces are summed to obtain the total force.
+
+\begin{equation}
+  F_{\text{total}} = R_l + R_r
+\end{equation}
+
+\noindent
+Then rearranging Eq. \ref{eq:rack_and_pinnion_force}, theoretical torque is obtained Eq. \ref{eq:rack_and_pinnion_theoretical_torque}.
+
+\begin{equation}
+  \tau_m = F_{\text{total}} \cdot r_p
+  \label{eq:rack_and_pinnion_theoretical_torque}
+\end{equation}
+
+\noindent
+By taking into the account the efficiency of the system, the final torque is obtained.
+
+\begin{equation}
+  \tau_{\text{applied}} = \frac{\tau_m}{0.5693}
+  \label{eq:applied_torque_final}
+\end{equation}
+
+\noindent
+Exponential smoothing with window size 10 is applied to it, same as with \nameone to obtain the goal torque. Then this goal torque is converted to the motor's goal currect Eq. \ref{eq:applied_goal_current_2}.
+
+\begin{equation}
+  I_{\text{goal}} = \frac{\tau_{\text{goal}}}{k_t}
+  \label{eq:applied_goal_current_2}
+\end{equation}
+
+\noindent
+The motor's goal current registry accept an integer. The final transformation is to quantize the goal current using the motor's current unit of 2.69 [mA] Eq. \ref{eq:applied_goal_current_quantized}.
+
+\begin{equation}
+  I_{\text{quantized}} = \operatorname{round} \left( \frac{I_{\text{goal}}}{2.69e^{-3}} \right)
+  \label{eq:applied_goal_current_quantized}
+\end{equation}
+
+\noindent
+Using these equations in the soft ball squeezing testing environment Fig. \ref{fig:pybullet_env_design_one} a force graph is obtained Fig. \ref{fig:force_graph_results_ball_squeezing_design_2}.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.8\linewidth]{chapters/exoskeleton/images/implementation2/squeeze_test_results.png}
+  \caption{Squeezing soft virtual ball with target current smoothing window K=10 using \nametwo}
+  \label{fig:force_graph_results_ball_squeezing_design_2}
+\end{figure}
 %calibration factor = (reading)/(known weight)
 
 %350000/180=1944.44
