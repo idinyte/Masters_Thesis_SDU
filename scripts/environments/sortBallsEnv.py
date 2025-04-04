@@ -1,6 +1,8 @@
 from scripts.environments.commonEnv import CommonEnv
 from scripts.environments.VREnv import VREnv
 from scripts.objects.softBall import SoftBall
+from scripts.objects.gripper import Gripper
+from scripts.objects.gripper_motorsV2 import GripperMotors as gripper2
 import numpy as np
 import pybullet as p
 import random
@@ -15,15 +17,17 @@ BALL_TYPE_2 = "2"
 BALL_TYPE_3 = "3"
 BALL_TYPE_4 = "4"
 
+
+multiplier = 7
 BALLS_MAP = {
-            BALL_TYPE_1: (900, 1100),
-            BALL_TYPE_2: (1400, 1600),
-            BALL_TYPE_3: (1900, 2100),
-            BALL_TYPE_4: (2400, 2600),
+            BALL_TYPE_1: (900*multiplier, 1100*multiplier),
+            BALL_TYPE_2: (1400*multiplier, 1600*multiplier),
+            BALL_TYPE_3: (1900*multiplier, 2100*multiplier),
+            BALL_TYPE_4: (2400*multiplier, 2600*multiplier),
         }
 
 class SortBallsEnv():
-    def __init__(self, robot, camera=None, vis=False, realtime=False, debug=False, VR=False, VRCameraPos=[0,-3, 1], VRCameraRot=[0,0,0], robot_base_position = [0, 0, 1], robot_base_orientation = [0, 0, 0, 1], softBallPos = None, softBallYoungsModulus = None, softBallName = None, ball_class_name = None):
+    def __init__(self, robot, camera=None, vis=False, realtime=False, debug=False, VR=False, VRCameraPos=[0,-3, 1], VRCameraRot=[0,0,0], robot_base_position = [0, 0, 1], robot_base_orientation = [0, 0, 0, 1], softBallPos = None, softBallYoungsModulus = None, softBallName = None, ball_class_name = None, ball_idx = None, fixed_gripper_ori = False):
         self.robot = robot
         self.robot.base_position = robot_base_position
         self.robot.base_orientation=robot_base_orientation
@@ -36,6 +40,7 @@ class SortBallsEnv():
         self.baseEnv = None
         self.restart_episode = False
         self.terminal_state = False
+        self.ball_idx = ball_idx
         
         self.softBallPos = softBallPos
         self.softBallYoungsModulus = softBallYoungsModulus
@@ -45,7 +50,8 @@ class SortBallsEnv():
 
         if self.VR:
             self.SIMULATION_STEP = 1/1000
-            self.baseEnv = VREnv(self.robot, camera=self.camera, vis=self.vis, realtime=self.realtime, debug=self.debug, VR=self.VR, SIMULATION_STEP=self.SIMULATION_STEP, VRCameraPos=VRCameraPos, VRCameraRot=VRCameraRot, gripper_controller=True)
+            gripper = Gripper(self.SIMULATION_STEP, gripper_motors=gripper2(), exosceleton_on=True)
+            self.baseEnv = VREnv(self.robot, camera=self.camera, vis=self.vis, realtime=self.realtime, debug=self.debug, VR=self.VR, SIMULATION_STEP=self.SIMULATION_STEP, VRCameraPos=VRCameraPos, VRCameraRot=VRCameraRot, gripper_controller=True, gripper=gripper, fixed_gripper_ori=fixed_gripper_ori)
         else:
             self.SIMULATION_STEP = 1/1000
             self.baseEnv = CommonEnv(self.robot, camera=self.camera, vis=self.vis, realtime=self.realtime, debug=self.debug, VR=self.VR, SIMULATION_STEP=self.SIMULATION_STEP)
@@ -96,9 +102,16 @@ class SortBallsEnv():
             posx = random.randint(int(self.ball_pos_aabb_min[0] * 1000), int(self.ball_pos_aabb_max[0] * 1000)) / 1000
             posy = random.randint(int(self.ball_pos_aabb_min[1] * 1000), int(self.ball_pos_aabb_max[1] * 1000)) / 1000
             posz = random.randint(int(self.ball_pos_aabb_min[2] * 1000), int(self.ball_pos_aabb_max[2] * 1000)) / 1000
-            self.ball = self.create_random_ball([posx, posy, posz])
+            
+            if self.ball_idx != None:
+                self.ball = self.create_specific_ball([posx, posy, posz], self.ball_idx)
+            else:
+                self.ball = self.create_random_ball([posx, posy, posz])
         else:
-            self.ball = self.create_random_ball(self.softBallPos)
+            if self.ball_idx != None:
+                self.ball = self.create_specific_ball(self.softBallPos, self.ball_idx)
+            else:
+                self.ball = self.create_random_ball(self.softBallPos)
 
     def get_corresponding_ball_box_id(self):
         if self.ball.name == "1":
@@ -131,13 +144,11 @@ class SortBallsEnv():
         ball = SoftBall(youngs_modulus, POISSON_RATIO, self.ball_radius, DENSITY, name, self.robot.base_position)
         return ball
     
-    def create_random_ball(self, pos):
+    def create_specific_ball(self, pos, idx):
         if self.ball_class_name == None:
-            self.ball_class_name = random.choice(list(BALLS_MAP.keys()))
+            self.ball_class_name = list(BALLS_MAP.keys())[idx]
         min_youngs_modulus, max_youngs_modulus = BALLS_MAP[self.ball_class_name]
         ball_obj = self.create_ball(min_youngs_modulus, max_youngs_modulus, self.ball_class_name)
-        # for debugging
-        # pos = [0, -0.5, 1.045]
         ball_obj.instantiate(pos)
 
         return ball_obj
@@ -150,11 +161,10 @@ class SortBallsEnv():
         return self.baseEnv.is_connected()
 
     def step_simulation(self):
-        if self.VR:
-            if self.baseEnv.gripper != None:
-                print(self.baseEnv.gripper.get_contact_forces(self.ball.id))
-
-        self.baseEnv.step_simulation()
+        if self.VR and self.ball != None: 
+            self.baseEnv.step_simulation(self.ball.id)
+        else:
+            self.baseEnv.step_simulation()
 
     def read_debug_parameter(self):
         return self.baseEnv.read_debug_parameter()
@@ -170,7 +180,7 @@ class SortBallsEnv():
             
         relative_ball_pos = ball_pos - gripper_pos
 
-        return (ee_pos, ee_ori, gripper_pos, robot_gripper_open_length, left_pad_force, right_pad_force, relative_ball_pos, self.ball_1_goal_pose, self.ball_2_goal_pose, self.ball_3_goal_pose, self.ball_4_goal_pose)
+        return (ee_pos, gripper_pos, robot_gripper_open_length, left_pad_force, right_pad_force, relative_ball_pos, self.ball_1_goal_pose, self.ball_2_goal_pose, self.ball_3_goal_pose, self.ball_4_goal_pose)
     
     def state_to_gym_state(self, state):
         return np.concatenate([np.ravel(x) if isinstance(x, (np.ndarray, list, tuple)) else np.array([x]) for x in state])

@@ -28,12 +28,10 @@ softBallName = "1"
 robot_base_position = [1, -1, 1]
 env = SortBallsEnv(robot, camera, vis, realtime, debug, VR, VRCameraPos, VRCameraRot, robot_base_position = robot_base_position, softBallPos=softBallPos, softBallYoungsModulus=softBallYoungsModulus, softBallName=softBallName)
 
-
 gripper_target_position = [0, 0.17, 1.045]
 gripper_target_orientation = p.getQuaternionFromEuler(np.radians([90, 90, 0]))
 gripper = Gripper(1/1000, exosceleton_on=True, gripper_motors=GripperMotors())
 gripper.initialize_gripper_controller(gripper_target_position, gripper_target_orientation)
-
 
 gripper_opening = 0.06
 

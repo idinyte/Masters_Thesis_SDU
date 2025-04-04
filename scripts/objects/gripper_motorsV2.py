@@ -41,21 +41,18 @@ class GripperMotors():
             quit()
         self.portHandler.setPacketTimeoutMillis(1000)
     
-        self.right_motor_id = 1
-        self.left_motor_id = 2
-
-        self.motor_ids = [self.right_motor_id] 
+        self.motor_ids = [2] 
         self.positions = [0]
         self.currents = [0]
 
         # Constants for XM540-W270-R
-        self.torque_constant = 10.6 / 4.4  # Stall torque divided by stall current
+        self.torque_constant = 1.783  # Stall torque divided by stall current
         self.current_unit = 0.00269  # 1 unit = 2.69 mA
         
         self.torque_limit = None # None to disable
         self.PWM_limit = 100 # software controller limit
         self.PWM_safety_limit = 150 # hardware limit, affects current control as well
-        self.current_limit = 0.1
+        self.current_limit = 0.05
         
         self.script_public = True
         
@@ -86,6 +83,8 @@ class GripperMotors():
         self.smoothed_curves = {}
         
         self._set_motor_limits()
+        
+        self.max_current_temp = 0
         
         atexit.register(self.cleanup_on_exit)
         
@@ -188,7 +187,10 @@ class GripperMotors():
         if self.operating_mode != OPERATING_MODE_CURRENT_CONTROL:
             self.reset_operating_mode_current()
 
-        current = max(min(current, self.current_limit), -self.current_limit)
+        if self.current_limit is not None:
+            current = max(min(current, self.current_limit), -self.current_limit)
+            
+        self.max_current_temp = max(abs(current), self.max_current_temp)
         current_quantized = int(current / self.current_unit)
         try:
             result, error = self.packetHandler.write2ByteTxRx(self.portHandler, motor_id, ADDR_GOAL_CURRENT, current_quantized)
@@ -206,19 +208,6 @@ class GripperMotors():
         # Convert torque to current
         current = torque_nm / self.torque_constant
         self.set_current(motor_id, current, script_accesed_from_outside)
-        
-    def set_goal_torques(self, torque_left_nm, torque_right_nm, script_accesed_from_outside = True):
-        if self.torque_limit != None and self.torque_limit > 0:
-            torque_left_nm = max(min(torque_left_nm, self.torque_limit), -self.torque_limit)
-            torque_right_nm = max(min(torque_right_nm, self.torque_limit), -self.torque_limit)
-
-        # Convert torque to current
-        current_left = torque_left_nm / self.torque_constant
-        self.set_current(self.left_motor_id, current_left, script_accesed_from_outside)
-        
-        current_right = torque_right_nm / self.torque_constant
-        # print(f"L {current_left} R {current_right}")
-        self.set_current(self.right_motor_id, current_right, script_accesed_from_outside)
         
             
     def get_present_current(self, motor_id, script_accesed_from_outside = True):
@@ -353,27 +342,19 @@ class GripperMotors():
             quit()
 
         if verbose:
-            print(f"Motor ID {self.motor_ids[0]} position: {self.positions[0]} deg: {self.pos_to_deg(self.positions[0])} Motor ID {self.motor_ids[1]} position: {self.positions[1]} deg: {self.pos_to_deg(self.positions[1])}")
-            
-        # if not self.positions_healthy():
-        #     quit()
-            
-            
-    def positions_healthy(self):
-        for position in self.positions:
-            if not (1500 <= position <= 2500):
-                return False
-
-        return True
+            for i, _ in enumerate(self.motor_ids):
+                print(f"Motor ID {self.motor_ids[i]} position: {self.positions[i]} deg: {self.pos_to_deg(self.positions[i])}")
       
-    def normal_forces_to_average_torque(self, left_motor_force, right_motor_force):
-        average_force = (left_motor_force + right_motor_force) / 2
-        return average_torque
+    def normal_forces_to_torque(self, left_motor_force, right_motor_force):
+        total_force = left_motor_force + right_motor_force
+        rp = 0.006
+        efficiency = 0.5693
+        torque = total_force * 0.006
+        real_torque = torque / efficiency
+        return real_torque
     
-    def torques_to_currents(self, left_motor_torque, right_motor_torque):
-        left_motor_current = left_motor_torque / self.torque_constant
-        right_motor_current = right_motor_torque / self.torque_constant
-        return left_motor_current, right_motor_current
+    def torque_to_current(self, torque_nm):
+        return torque_nm / self.torque_constant
     
     def pos_to_deg(self, pos):
         """ position is in thicks from 0 to 4095. 1 deg is 4095 / 360 = 11.375 """
@@ -535,12 +516,11 @@ class GripperMotors():
         
     def get_gripper_finger_distance(self):
         deg = self.get_present_position_deg(self.motor_ids[0])
-        deg = max(min(deg, 15), 200)
+        deg = max(min(deg, 200), 15)
         completion = (deg - 15) / (205 - 15)
-
         return completion
     
-    def get_scaled_finger_distance(self, scale_min, scale_max):        
+    def get_scaled_finger_distance(self, scale_min, scale_max):     
         return self.get_gripper_finger_distance() * scale_max
         
     
@@ -626,7 +606,7 @@ class GripperMotors():
         return sum_absolute_arror
     
     def test_delays_direct_current_control(self, left_pad_normal_force, right_pad_normal_force):
-        average_torque = self.normal_forces_to_average_torque(left_pad_normal_force, right_pad_normal_force)
+        average_torque = self.normal_forces_to_torque(left_pad_normal_force, right_pad_normal_force)
 
         for window in [5, 10, 15, 20, 30, 50]:
             alpha = 2 / (window + 1)
@@ -638,21 +618,20 @@ class GripperMotors():
             self.smoothed_curves[window] = (alpha * average_current +
                                     (1 - alpha) * self.smoothed_curves[window])
 
-        left_pad_torque, right_pad_torque = average_torque, -average_torque
         if left_pad_normal_force + right_pad_normal_force < 0.01:
             if self.torque_enable == TORQUE_ENABLE:
                 self.disable_torques()
         else:
             if self.torque_enable == TORQUE_DISABLE:
                 self.enable_torques()
-            self.set_goal_torques(left_pad_torque, right_pad_torque)
+            self.set_goal_torque(left_pad_torque, right_pad_torque)
             
         # for plotting
-        left_pad_current, right_pad_current = self.torques_to_currents(left_pad_torque, right_pad_torque)
+        left_pad_current, right_pad_current = self.torque_to_current(left_pad_torque, right_pad_torque)
         return self.smoothed_curves, left_pad_current, right_pad_current, self.get_present_current(self.left_motor_id), self.get_present_current(self.right_motor_id)
     
     def direct_current_control(self, left_pad_normal_force, right_pad_normal_force, exponential_smoothing = False, window = 10):
-        average_torque = self.normal_forces_to_average_torque(left_pad_normal_force, right_pad_normal_force)
+        average_torque = self.normal_forces_to_torque(left_pad_normal_force, right_pad_normal_force)
         if exponential_smoothing:
             if window != self.window_size:
                 self.window_size = window
@@ -660,22 +639,23 @@ class GripperMotors():
             self.smoothed_average_torque = (self.alpha * average_torque +
                                         (1 - self.alpha) * self.smoothed_average_torque)
             average_torque = self.smoothed_average_torque
-        left_pad_torque, right_pad_torque = average_torque, -average_torque
-        average_current, _ = self.torques_to_currents(average_torque, average_torque)
-        if average_current < 0.001:
+            
+        current = self.torque_to_current(average_torque)
+        if current < 0.001:
             if self.torque_enable == TORQUE_ENABLE:
                 self.disable_torques()
         else:
             if self.torque_enable == TORQUE_DISABLE:
                 self.enable_torques()
-            self.set_goal_torques(left_pad_torque, right_pad_torque)
+        
+        self.set_goal_torque(self.motor_ids[0], average_torque)
             
         # for plotting
-        left_pad_current, right_pad_current = self.torques_to_currents(left_pad_torque, right_pad_torque)
-        return left_pad_current, right_pad_current, self.get_present_current(self.left_motor_id), self.get_present_current(self.right_motor_id)
+        
+        return current, current, self.get_present_current(self.motor_ids[0]), self.get_present_current(self.motor_ids[0])
 
     def pwm_control(self, left_pad_normal_force, right_pad_normal_force, kp, ki, kd, update_state):
-        average_torque = self.normal_forces_to_average_torque(left_pad_normal_force, right_pad_normal_force)
+        average_torque = self.normal_forces_to_torque(left_pad_normal_force, right_pad_normal_force)
         left_pad_torque, right_pad_torque = average_torque, -average_torque
         left_pad_current, right_pad_current = self.torques_to_currents(left_pad_torque, right_pad_torque)
         if left_pad_normal_force + right_pad_normal_force < 0.01:

@@ -5,6 +5,8 @@ from collections import namedtuple
 import matplotlib.pyplot as plt
 from enum import Enum
 import time
+from scripts.objects.gripper_motors import GripperMotors as gripper1
+from scripts.objects.gripper_motorsV2 import GripperMotors as gripper2
 
 class ControlType(Enum):
     PWM = 0
@@ -19,6 +21,7 @@ class Gripper:
     self.left_forces = []
     self.right_forces = []
     self.exosceleton_on = exosceleton_on
+    self.id = None
     if exosceleton_on:
       self.gripper_motors = gripper_motors
       self.plot_i = 0
@@ -98,8 +101,14 @@ class Gripper:
         return left_pad_force, right_pad_force
 
   def track_pose(self, target_position, target_orientation):
+    if self.id == None:
+      return
     # Calculate velocity based on error between gripper and desired positions
-    current_position, current_orientation = p.getBasePositionAndOrientation(self.id)
+    try:
+      current_position, current_orientation = p.getBasePositionAndOrientation(self.id)
+    except:
+      return
+  
     position_gain = 1 / self.SIMULATION_STEP
     orientation_gain = 2 / self.SIMULATION_STEP
     max_linear_velocity = 50
@@ -144,10 +153,13 @@ class Gripper:
         if control_type == ControlType.PWM:
           self.present_left_pwm.append(pwm_value_left)
           self.present_right_pwm.append(pwm_value_right)
-        iterations = 400
+        iterations = 300
         if self.plot_i == iterations:
           print(f"iteration time is {1000 * (time.time() - self.plot_start_time) / iterations} ms")
-          self.plot()
+          if isinstance(self.gripper_motors, gripper2):
+            self.plot_single()
+          else:
+            self.plot()
           if control_type == ControlType.PWM:
             self.plot_pwm()
           #self.plot_smoothed_curves()
@@ -191,6 +203,20 @@ class Gripper:
     plt.tight_layout()
     plt.show()
     
+  def plot_single(self):
+    fig, ax = plt.subplots(figsize=(8, 6))
+
+    ax.plot(self.present_left_pad_currents, label='Present Current', color='b')
+    ax.plot(self.target_left_pad_currents, label='Target Current', color='r')
+    ax.set_title('Motor')
+    ax.set_xlabel('Iterations')
+    ax.set_ylabel('Current (A)')
+    ax.legend()
+    ax.grid(True)
+
+    plt.tight_layout()
+    plt.show()
+    
   def plot_pwm(self):
     fig, axs = plt.subplots(2, 1, figsize=(8, 6), sharex=True)
 
@@ -229,7 +255,10 @@ class Gripper:
     return 0
   
   def move_gripper_angle(self, angle):
-    p.setJointMotorControl2(self.id, self.gripper_id, p.POSITION_CONTROL, targetPosition=angle)
+    try:
+      p.setJointMotorControl2(self.id, self.gripper_id, p.POSITION_CONTROL, targetPosition=angle)
+    except:
+      pass
     
   def open_gripper(self):
     self.move_gripper_length(self.gripper_range[1])

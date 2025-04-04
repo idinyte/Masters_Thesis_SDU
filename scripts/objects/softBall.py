@@ -32,11 +32,11 @@ class SoftBall():
                           useNeoHookean=1, 
                           NeoHookeanMu=neo_mu, 
                           NeoHookeanLambda=neo_lambda,
-                          NeoHookeanDamping=0.001,
+                          NeoHookeanDamping=0.01,
                           useSelfCollision=1,
                           repulsionStiffness=800,
-                          frictionCoeff=1, 
-                          collisionMargin=0.0001)
+                          frictionCoeff=10, 
+                          collisionMargin=0.001)
         
         p.stepSimulation()
 

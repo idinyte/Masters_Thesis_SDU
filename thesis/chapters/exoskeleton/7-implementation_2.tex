@@ -1,6 +1,6 @@
 \newpage
 \section{Implementation 2}
-
+\subsection{Opening Distance}
 The gripper opening in simulation is controlled based on position of the motor of the exoskeleton. The motor position when the exoskeleton is closed is 5$^{\circ}$ and when the exoskeleton is fully open, 205$^{\circ}$. The rack and pinnion mechanism is designed in a way that less than a full rotation is needed to fully open the gripper, so there is no ambiguity betweent the positions. The gripper opening in simulation is calculated by multiplying normalized exoskeleton opening with the range of the gripper in simulation.
 
 \begin{equation}
@@ -16,8 +16,9 @@ where:
 \item \( d_{\text{gripper}} \) is the computed gripper opening. 
 \end{itemize}
 
+\subsection{Force}
 \noindent
-When the gripper closes around the soft ball, the soft ball provides normal reaction forces $R_l$ and $R_r$ Fig. \ref{fig:pybullet_getContactPoints}. The process to calculate the goal current for the mottor has multiple steps. Firstly, the forces are summed to obtain the total force.
+When the gripper closes around the soft ball, the soft ball provides normal reaction forces $R_l$ and $R_r$ Fig. \ref{fig:pybullet_getContactPoints}. the motor is driven using current control, the process to calculate the goal current has multiple steps. Firstly, the forces are summed to obtain the total force.
 
 \begin{equation}
   F_{\text{total}} = R_l + R_r
@@ -32,7 +33,7 @@ Then rearranging Eq. \ref{eq:rack_and_pinnion_force}, theoretical torque is obta
 \end{equation}
 
 \noindent
-By taking into the account the efficiency of the system, the final torque is obtained.
+By taking into the account the efficiency of the system, the required torque is obtained.
 
 \begin{equation}
   \tau_{\text{applied}} = \frac{\tau_m}{0.5693}
@@ -40,7 +41,7 @@ By taking into the account the efficiency of the system, the final torque is obt
 \end{equation}
 
 \noindent
-Exponential smoothing with window size 10 is applied to it, same as with \nameone to obtain the goal torque. Then this goal torque is converted to the motor's goal currect Eq. \ref{eq:applied_goal_current_2}.
+Exponential smoothing with window size 10 is applied, same as with \nameone to obtain the goal torque. Then this goal torque is converted to the motor's goal currect Eq. \ref{eq:applied_goal_current_2}.
 
 \begin{equation}
   I_{\text{goal}} = \frac{\tau_{\text{goal}}}{k_t}
@@ -64,6 +65,26 @@ Using these equations in the soft ball squeezing testing environment Fig. \ref{f
   \caption{Squeezing soft virtual ball with target current smoothing window K=10 using \nametwo}
   \label{fig:force_graph_results_ball_squeezing_design_2}
 \end{figure}
-%calibration factor = (reading)/(known weight)
 
-%350000/180=1944.44
+\subsection{Tracking}
+The goal position for the tracking is obtained by taking the position of VR controller and applying pose transfomation. This is needed because the controller rests on the back of the hand and the exoskeleton rests in the palm. An issue arises when setting the goal position directly in the simulation every frame, the gripper passes through the virtual objects without being able to interact with them. To overcome this, the positional (Eq. \ref{eq:pos_error_gripper_2}) and orientation (Eq. \ref{eq:or_error_gripper_2}) errors are used in P controller to obtain target linear (Eq. \ref{eq:v_linear_gripper_2}) and angular velocities (Eq. \ref{eq:v_angular_gripper_2}). The gripper is controlled with velocities instead of position, this way the gripper is able to collide with the environment.
+
+\begin{equation}
+e_p = p_{target} - p_{current}
+\label{eq:pos_error_gripper_2}
+\end{equation}
+
+\begin{equation}
+v_{linear} = K_p \cdot e_p, \quad
+\label{eq:v_linear_gripper_2}
+\end{equation}
+
+\begin{equation}
+e_o = q_{target} \cdot q_{current}^{-1}
+\label{eq:or_error_gripper_2}
+\end{equation}
+
+\begin{equation}
+v_{angular} = K_o \cdot (e_{o,x}, e_{o,y}, e_{o,z})
+\label{eq:v_angular_gripper_2}
+\end{equation}

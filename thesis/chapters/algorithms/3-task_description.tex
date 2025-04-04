@@ -4,8 +4,8 @@ A custom simulated environment has been created in order to test the algorithms 
 
 \begin{align}
   \mathbf{p}_{\text{ball}} &\sim \text{Uniform}(\mathbf{p}_{\min}, \mathbf{p}_{\max}) \label{eq:ball_init} \\
-  \mathbf{p}_{\min} &= \begin{bmatrix} -0.38 \\ -0.55 \\ 1 + r_{\text{ball}} \end{bmatrix}, \quad
-  \mathbf{p}_{\max} = \begin{bmatrix} 0.38 \\ -0.38 \\ 1 + r_{\text{ball}} \end{bmatrix}
+  \mathbf{p}_{\min} &= \begin{bmatrix} -0.38 \\ -0.55 \\ h_{\text{table}} + r_{\text{ball}} \end{bmatrix}, \quad
+  \mathbf{p}_{\max} = \begin{bmatrix} 0.38 \\ -0.38 \\ h_{\text{table}} + r_{\text{ball}} \end{bmatrix}
 \end{align}
 
 \begin{figure}[ht]
