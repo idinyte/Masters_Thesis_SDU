@@ -99,13 +99,20 @@ class Gripper:
                 right_pad_force += contact[9]
         
         return left_pad_force, right_pad_force
+      
+  def get_gripper_middle_pad_pos(self):
+    left_pad_pos = np.array(p.getLinkState(self.id, self.LEFT_PAD_GRIPPER_INDEX)[0])
+    right_pad_pos = np.array(p.getLinkState(self.id, self.RIGHT_PAD_GRIPPER_INDEX)[0])
+    
+    middle_point = (left_pad_pos + right_pad_pos) / 2
+    return middle_point
 
   def track_pose(self, target_position, target_orientation):
     if self.id == None:
       return
     # Calculate velocity based on error between gripper and desired positions
     try:
-      current_position, current_orientation = p.getBasePositionAndOrientation(self.id)
+      self.current_position, current_orientation = p.getBasePositionAndOrientation(self.id)
     except:
       return
   
@@ -113,7 +120,7 @@ class Gripper:
     orientation_gain = 2 / self.SIMULATION_STEP
     max_linear_velocity = 50
 
-    position_error = np.array(target_position) - np.array(current_position)
+    position_error = np.array(target_position) - np.array(self.current_position)
     linear_velocity = position_gain * position_error
     linear_velocity = np.clip(linear_velocity, -max_linear_velocity, max_linear_velocity)
     
@@ -126,14 +133,14 @@ class Gripper:
   def exosceleton_update(self, ball_id, control_type, verbose = False, plot = False):
     if self.exosceleton_on:
       self.gripper_motors.update_state(verbose)
-      gripper_distance = self.gripper_motors.get_scaled_finger_distance(*self.gripper_range)
-      self.move_gripper_length(gripper_distance)
-      left_pad_force, right_pad_force = self.get_contact_forces(ball_id)
+      self.gripper_distance = self.gripper_motors.get_scaled_finger_distance(*self.gripper_range)
+      self.move_gripper_length(self.gripper_distance)
+      self.left_pad_force, self.right_pad_force = self.get_contact_forces(ball_id)
 
       if control_type == ControlType.PWM:
-        target_left_pad_current, target_right_pad_current, present_left_pad_current, present_right_pad_current, pwm_value_left, pwm_value_right = self.gripper_motors.pwm_control(left_pad_force, right_pad_force, 28.809, 503.211, 0.191, False)
+        target_left_pad_current, target_right_pad_current, present_left_pad_current, present_right_pad_current, pwm_value_left, pwm_value_right = self.gripper_motors.pwm_control(self.left_pad_force, self.right_pad_force, 28.809, 503.211, 0.191, False)
       elif control_type == ControlType.Current:
-        target_left_pad_current, target_right_pad_current, present_left_pad_current, present_right_pad_current = self.gripper_motors.direct_current_control(left_pad_force, right_pad_force, True, 10)
+        target_left_pad_current, target_right_pad_current, present_left_pad_current, present_right_pad_current = self.gripper_motors.direct_current_control(self.left_pad_force, self.right_pad_force, True, 10)
         
         # smoothed_curves, target_left_pad_current, target_right_pad_current, present_left_pad_current, present_right_pad_current = self.gripper_motors.test_delays_direct_current_control(left_pad_force, right_pad_force)
         # if plot:

@@ -50,8 +50,8 @@ class SortBallsEnv():
 
         if self.VR:
             self.SIMULATION_STEP = 1/1000
-            gripper = Gripper(self.SIMULATION_STEP, gripper_motors=gripper2(), exosceleton_on=True)
-            self.baseEnv = VREnv(self.robot, camera=self.camera, vis=self.vis, realtime=self.realtime, debug=self.debug, VR=self.VR, SIMULATION_STEP=self.SIMULATION_STEP, VRCameraPos=VRCameraPos, VRCameraRot=VRCameraRot, gripper_controller=True, gripper=gripper, fixed_gripper_ori=fixed_gripper_ori)
+            self.gripper = Gripper(self.SIMULATION_STEP, gripper_motors=gripper2(), exosceleton_on=True)
+            self.baseEnv = VREnv(self.robot, camera=self.camera, vis=self.vis, realtime=self.realtime, debug=self.debug, VR=self.VR, SIMULATION_STEP=self.SIMULATION_STEP, VRCameraPos=VRCameraPos, VRCameraRot=VRCameraRot, gripper_controller=True, gripper=self.gripper, fixed_gripper_ori=fixed_gripper_ori)
         else:
             self.SIMULATION_STEP = 1/1000
             self.baseEnv = CommonEnv(self.robot, camera=self.camera, vis=self.vis, realtime=self.realtime, debug=self.debug, VR=self.VR, SIMULATION_STEP=self.SIMULATION_STEP)
@@ -170,7 +170,12 @@ class SortBallsEnv():
         return self.baseEnv.read_debug_parameter()
     
     def get_state(self):
-        ee_pos, ee_ori, robot_gripper_open_length, gripper_pos, left_pad_force, right_pad_force = self.robot.get_robot_state(self.ball.id)
+        if self.VR:
+            robot_gripper_open_length = self.gripper.gripper_distance
+            gripper_pos = self.gripper.get_gripper_middle_pad_pos()
+            left_pad_force, right_pad_force = self.gripper.left_pad_force, self.gripper.right_pad_force
+        else:
+            ee_pos, ee_ori, robot_gripper_open_length, gripper_pos, left_pad_force, right_pad_force = self.robot.get_robot_state(self.ball.id)
 
         try: 
             ball_pos = self.ball.ball_position
@@ -180,7 +185,7 @@ class SortBallsEnv():
             
         relative_ball_pos = ball_pos - gripper_pos
 
-        return (ee_pos, gripper_pos, robot_gripper_open_length, left_pad_force, right_pad_force, relative_ball_pos, self.ball_1_goal_pose, self.ball_2_goal_pose, self.ball_3_goal_pose, self.ball_4_goal_pose)
+        return (gripper_pos, robot_gripper_open_length, left_pad_force, right_pad_force, relative_ball_pos, self.ball_1_goal_pose, self.ball_2_goal_pose, self.ball_3_goal_pose, self.ball_4_goal_pose)
     
     def state_to_gym_state(self, state):
         return np.concatenate([np.ravel(x) if isinstance(x, (np.ndarray, list, tuple)) else np.array([x]) for x in state])
