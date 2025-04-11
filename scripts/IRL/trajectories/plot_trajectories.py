@@ -20,9 +20,9 @@ for class_idx in range(4):
         if data.shape[0] < 2 or data.shape[1] < 6:
             continue
 
-        all_first_diffs.extend(np.abs(data[1:, 0] - data[:-1, 0]))
-        all_second_diffs.extend(np.abs(data[1:, 1] - data[:-1, 1]))
-        all_third_diffs.extend(np.abs(data[1:, 2] - data[:-1, 2]))
+        all_first_diffs.extend(data[1:, 0] - data[:-1, 0])
+        all_second_diffs.extend(data[1:, 1] - data[:-1, 1])
+        all_third_diffs.extend(data[1:, 2] - data[:-1, 2])
         all_fourth_diffs.extend(data[:, 3])
 
 # Convert to numpy arrays
@@ -36,7 +36,7 @@ plt.figure(figsize=(15, 10))
 sns.set(style="whitegrid")
 
 titles = [
-    "|Pos ΔX|", "|Pos ΔY|", "|Pos ΔZ|",
+    "Pos ΔX", "Pos ΔY", "Pos ΔZ",
     "Gripper Openings"
 ]
 diffs = [
