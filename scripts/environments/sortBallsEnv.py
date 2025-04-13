@@ -144,6 +144,13 @@ class SortBallsEnv():
         ball = SoftBall(youngs_modulus, POISSON_RATIO, self.ball_radius, DENSITY, name, self.robot.base_position)
         return ball
     
+    def create_random_ball(self, pos):
+        self.ball_class_name = random.choice(list(BALLS_MAP.keys()))
+        min_youngs_modulus, max_youngs_modulus = BALLS_MAP[self.ball_class_name]
+        ball_obj = self.create_ball(min_youngs_modulus, max_youngs_modulus, self.ball_class_name)
+        ball_obj.instantiate(pos)
+        return ball_obj
+    
     def create_specific_ball(self, pos, idx):
         if self.ball_class_name == None:
             self.ball_class_name = list(BALLS_MAP.keys())[idx]

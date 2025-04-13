@@ -5,7 +5,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')
 from scripts.RL.environment import GymWrapper as Env
 from stable_baselines3 import SAC
 
-checkpoint_path = os.path.join(os.getcwd(), "scripts/RL/checkpoints/training3/sac_model_39750000_steps.zip")
+checkpoint_path = os.path.join(os.getcwd(), "scripts/IRL/logs_gail/checkpoints/checkpoint_250.zip")
 
 env = Env(vis=True)
 
