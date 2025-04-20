@@ -202,10 +202,10 @@ After the ball has been classified another trajectory is generated via points: a
 \subsection{Reinforcement Learning}
 In order to make RL implementation easier, the environment has been put in a wrapper that aligns with OpenAI gym environment standards. The wrapper consists of four main functions: initialization, step, reset and render. The render function is left empty, as it is handled by Bullet engine during initialization.
 
-\begin{lstlisting}[language=Python, caption=Bullet Physics Choice of Rendering]
-  import pybullet as p
-  physicsClient = p.connect(p.GUI if vis else p.DIRECT)
-\end{lstlisting}
+% \begin{lstlisting}[language=Python, caption=Bullet Physics Choice of Rendering]
+%   import pybullet as p
+%   physicsClient = p.connect(p.GUI if vis else p.DIRECT)
+% \end{lstlisting}
 
 \bigskip \noindent
 The reset function is called before initiating a new episode. The efficient way to reset environment would be to reset the pose of robot and the soft ball, but as soft body simulation tends to go unstable sometimes, the choice has been made to reset the environment by closing the physics engine connection and starting a new one.
@@ -289,7 +289,7 @@ The action is performed by calculating inverse kinematics to obtain robot joints
 \end{lstlisting}
 
 \bigskip \noindent
-Reward shaping is interesting yet challenging part of RL. The reward for this task is calculated in an intuitive way that encourages the agent to move towards the ball, pick it up and move towards the goal Alg. \ref{alg:rewards}.
+Reward shaping is interesting yet challenging part of RL. The reward for this task is calculated in a way that encourages the agent to move towards the ball, pick it up and move towards the goal Alg. \ref{alg:rewards}.
 
 \begin{algorithm}[ht]
   \caption{Reward Computation Algorithm}
@@ -317,7 +317,17 @@ Reward shaping is interesting yet challenging part of RL. The reward for this ta
 
 
 \bigskip \noindent
-Soft Actor-Critic (SAC) \cite{haarnoja2018softactorcriticoffpolicymaximum} network has been chosen to train the agent. The SAC implementation is provided by stable baselines 3 \cite{stable-baselines3}. SAC has been proven to be a well-performing network for continuous action spaces. It uses an entropy regularization term in its objective function, which encourages exploration. The network for both actor and critic was chosen to have only one hidden layer 256 neurons deep, as there are no complex relationships between inputs and outputs. The buffer size and the batch sizes were increased, as the episodes are quite long; they take up to 10000 iterations. The gamma was reduced; this encourages the network to focus more on short-term rewards rather than long-term planning. The soft update coefficient, tau, which is used in the Polyak update, was kept at the default value. The entropy regularization coefficient that is responsible for controlling the exploration/exploitation trade-off was kept at "auto"; the network learns the parameter based on target entropy (desired level of randomness).
+Soft Actor-Critic (SAC) \cite{haarnoja2018softactorcriticoffpolicymaximum} network has been chosen to train the agent. Actor-Critic Network (ACN) overcomes the limitation of the value-based methods by being able to operate in continuous action spaces. Policy gradient methods can also operate in continuous action spaces, but they often suffer from high instability and variance in training. Actor critic networks reduce this variance by having two separate networks, an actor which learns the policy and a critic which learns the value function and guides the actor. The basic ACN architecture can be seen in Fig. \ref{fig:acn_architecture} (Sutton and Barto 2018 \cite{sutton2018reinforcement}).
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.6\textwidth]{chapters/algorithms/images/RL/actor-critic.png}
+  \caption{ACN arcitecture}
+  \label{fig:acn_architecture}
+\end{figure}
+
+\noindent
+The SAC algorithm is a type of ACN. It tries to maximize not only expected rewards, but also the entropy of the policy. The entropy term encourages exploration and prevents premature convergence to suboptimal policies. The implementation used is provided by stable baselines 3 \cite{stable-baselines3}. The network for both actor and critic was chosen to have only one hidden layer 256 neurons deep, as there are no complex relationships between inputs and outputs. The buffer size and the batch sizes were increased, as the episodes are quite long; they take up to 10000 iterations. The gamma was reduced; this encourages the network to focus more on short-term rewards rather than long-term planning. The soft update coefficient, tau, which is used in the Polyak update, was kept at the default value. The entropy regularization coefficient that is responsible for controlling the exploration/exploitation trade-off was kept at "auto"; the network learns the parameter based on target entropy (desired level of randomness).
 
 \begin{table}[ht]
   \centering
@@ -340,7 +350,7 @@ Soft Actor-Critic (SAC) \cite{haarnoja2018softactorcriticoffpolicymaximum} netwo
 The first step for learning from the demonstrations, is to acquire the demonstrations.
 
 \subsubsection{Trajectory Acquisition}
-A VR environemnt was setup in PyBullet. Exoskeleton \nametwo was used with the formula implementations as described in section \ref{implementation_2}. The UR robot was moved to the opposite corner of the table. The person is placed in the robot's position instead. The target position is defined as the VR controller's position with a position offset given by the vector:
+A VR environemnt was setup in PyBullet. Exoskeleton \nametwo was used with the implementation as described in section \ref{implementation_2}. The UR5 robot was moved to the opposite corner of the table. The person is placed in the robot's position instead. The target position for virtual gripper is defined as the VR controller's position with a position offset given by the vector:
 \[
 \Delta \mathbf{p} = 
 \begin{bmatrix}
@@ -389,14 +399,14 @@ The trajectory is acquisition starts when the environment is fully initialized. 
 \end{align}
 
 \noindent
-The trajectory acquisition stops when the person in VR presses a button on the VR controller with the other hand. The trajectory is saved as an .npy object on the computer's disk. This process is repeated ten times for each ball typed.
+The trajectory acquisition stops when the person in VR presses a button on the VR controller with the other hand. The trajectory is saved as an .npy object on the computer's disk. This process is repeated ten times for each ball type, in total resulting in 40 trajectories.
 
 \begin{align}
   D &= (\tau_1, \tau_2, \dots, \tau_{40})
 \end{align}
 
 \noindent
-During trajectory acquisition two problems were noticed immediately. Firstly, the framerate. One second in the simulation is set to equal 1000 steps in order to ensure soft body simulation stability. The computer that was used to collect trajectories was not powerful enough provide such a high framerate while using VR, it provided only around 100 Frames Per Second (FPS). This made the simulation around 10 times slower than it was supposed to be making the user feel as if everything around him is moving very slowly (the ball falling slowly for example). The second problem is ball slippage. From the simulation's perspective it's the user that is moving very quickly. When the ball is grabbed and moved suddenly, it resists this rapid motion due to inertia which might cause it to slip. One way to solve this problem would be to use a gripper that is specifically designed to grap round object. The solution used that was implemented instead was to make the balls stiffer by multiplying their Young's Modulus by a factor of 5. This will have to be kept in mind, when comparing the algorithms as the comparison will not be directly equivalent.
+During trajectory acquisition a problem was noticed immediately. One second in the simulation is set to be equal to 1000 steps, in order to ensure soft body simulation stability. The computer that was used to collect trajectories was not powerful enough to provide such a high framerate, while using VR, it provided only around 100 Frames Per Second (FPS). This made the simulation around 10 times slower than real time making the user feel as if everything around him is moving slowly (the ball falling slowly for example). The agent will be trained in a way that when action is performed 10 simulation steps will take place in order to account for the discrepancy. This disrepancy could also be mitigated by interpolating the experts trajectories to add more states in between the frames, but the first approach is preffered as small actions in second approach could lead to numerical instability.
 
 \bigskip \noindent
 The obtained trajectories were inspected visually by plotting the graphs and printing the arrays to check for anomalies. A mistake was made where the states were collected from the robot's gripper instead of the one controlled by a person, so they needed to be recollected. A second attempt looked correct. Then the demonstrations were processed in order to obtain actions. 

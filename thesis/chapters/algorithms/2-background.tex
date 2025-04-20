@@ -96,7 +96,7 @@ During beginning of the training $\epsilon \in [0,1]$ is initialized to a high v
 \end{equation}
 
 \bigskip \noindent
-On-Policy and Off-Polict learning. These are two ways the policies can be categorized. On-Policy learning refers to a process when the agent continuously updates the same policy it uses to interact with the environment. On-Policy learning often results in more stable, but much slower training compared to Off-Policy traing. Off-Policy training refers to a process when agent learns from experiences collected using different policy than the one it is currently improving. The agent saves a tuple $(s_t, a_t, r_t, s_{t+1}, done)$ to a replay buffer after each action it takes. during the training loop a number of random experiences is sampled from the replay buffer and used to update agent's policy. This parallelism of using many experiences at each iteration loop allow's the agent to learn quickly, but the learning may be less stable.
+On-Policy and Off-Polict learning. These are two ways the policies can be categorized. On-Policy learning refers to a process when the agent continuously updates the same policy it uses to interact with the environment. On-Policy learning often results in more stable, but much slower training compared to Off-Policy traing. Off-Policy training refers to a process when agent learns from experiences collected using different policy than the one it is currently improving. The agent saves a tuple $(s_t, a_t, r_t, s_{t+1}, done)$ to a replay buffer after each action it takes. During the training loop a number of random experiences is sampled from the replay buffer and used to update agent's policy. This parallelism of using many experiences at each iteration loop allow's the agent to learn quickly, but the learning may be less stable.
 
 \bigskip \noindent
 Model-Based and Model-Free Learning. Approaches to RL differ depending if we have a model of the environment (transition probabilities $ P(s_{t+1} | s, a)$ and rewards $r_t$). Tasks where the model is known are less common and usually applicable to smaller problems. The Model-Free learning is a more general case, it is more suitable for large state spaces and continuous action spaces. In this case the agent learns purely through trial and error.
@@ -136,18 +136,21 @@ Q^*(s, a) &= \mathbb{E} \left[ r_{t+1} + \gamma \max_{a'} Q^*(S_{t+1}, a') \mid 
 \end{align}
 
 \bigskip \noindent
-These describe the best possible values if the agent always acts optimally. The $\max_a$ and $\max_{a'}$ denote that the agent always picks the best action that maximizes the expected future rewards. From these equations value function update methods can be derived. The On-Policy method SARSA has the following Q-function update equation:
+These describe the best possible values if the agent always acts optimally. The $\max_a$ and $\max_{a'}$ denote that the agent always picks the best action that maximizes the expected future rewards. From these equations value function update methods can be derived. 
 
-\begin{align}
-Q(s_t, a_t) &\leftarrow Q(s_t, a_t) + \alpha \left( r_{t+1} + \gamma Q(s_{t+1}, a_{t+1}) - Q(s_t, a_t) \right)
-\end{align}
 
-\noindent
-$\alpha \in [0,1]$ is a learning rate. The Off-Policy method Q-Learning has the following Q-function update equation:
+% The On-Policy method SARSA has the following Q-function update equation:
 
-\begin{align}
-Q(s_t, a_t) &\leftarrow Q(s_t, a_t) + \alpha \left( r_{t+1} + \gamma \max_{a'} Q(s_{t+1}, a') - Q(s_t, a_t) \right)
-\end{align}
+% \begin{align}
+% Q(s_t, a_t) &\leftarrow Q(s_t, a_t) + \alpha \left( r_{t+1} + \gamma Q(s_{t+1}, a_{t+1}) - Q(s_t, a_t) \right)
+% \end{align}
+
+% \noindent
+% $\alpha \in [0,1]$ is a learning rate. The Off-Policy method Q-Learning has the following Q-function update equation:
+
+% \begin{align}
+% Q(s_t, a_t) &\leftarrow Q(s_t, a_t) + \alpha \left( r_{t+1} + \gamma \max_{a'} Q(s_{t+1}, a') - Q(s_t, a_t) \right)
+% \end{align}
 
 \subsection{Learning from Demonstration}
 In the previous section reinforcement learning was discussed. It is an interesting area of machine learning that generalizes to many applications requiring decision making. RL depends on agent maximizing reward function, more often than not the reward function is not clear and manually designing a reward function that satisfies the desired behaviour can be extremely challenging. A feasible solution to this problem is Learning from Demonstration (LfD), also known as imitation learning. In LfD, instead of specifying reward function, expert provides a set of demonstrations on how the task should be acomplished and the agent tries to learn the policy that best matches what the expert attempted to do. The environment in imitation learning, as well as in majority in RL tasks, is defined as a Markov Decision Process. The environment has a set of states and actions, transition probabilities between the states and an unknown reward function. The expert demonstrations, also known as trajectories, are defined as an array of state action pairs. 
