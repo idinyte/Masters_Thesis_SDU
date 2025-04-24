@@ -6,11 +6,11 @@ from imitation.data import serialize        # Import the serialize module
 
 in_base = 'scripts/IRL/trajectories/ball-class-{}'
 # Output path for the serialized data (can be a directory)
-processed_all_path = 'scripts/IRL/trajectories/processed_for_imitation_serialized'
+processed_all_path = 'scripts/IRL/trajectories/processed_for_imitation_2_serialized'
 os.makedirs(processed_all_path, exist_ok=True) # serialize.save often expects a directory
 
 ACTION_CLAMP = 0.02
-GRIPPER_MIN, GRIPPER_MAX = 0.0, 0.127
+#GRIPPER_MIN, GRIPPER_MAX = 0.0, 0.127
 NOISE_STD = 0.05
 
 all_trajectories = [] # List to hold Trajectory objects
@@ -39,7 +39,7 @@ for class_idx in range(4):
             noise = np.random.normal(0.0, np.abs(delta_pos) * NOISE_STD)
             noisy_delta_pos = delta_pos + noise
             noisy_delta_pos = np.clip(noisy_delta_pos, -ACTION_CLAMP, ACTION_CLAMP)
-            gripper = np.clip(next_state[3], GRIPPER_MIN, GRIPPER_MAX)
+            gripper = np.clip( next_state[3] - state[3],  -ACTION_CLAMP, ACTION_CLAMP)
             action = np.concatenate([noisy_delta_pos, [gripper]]).astype(np.float32)
 
             traj_obs.append(state)

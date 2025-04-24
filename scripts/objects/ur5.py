@@ -334,7 +334,6 @@ class UR5Robot:
         # joint_angles = [state[0] for state in joint_states]
         ee_pos, ee_ori = self.get_ee_link_pose()
         gripper_open_length = self.get_gripper_open_length()
-        
         gripper_pos = self.get_gripper_middle_pad_pos()
         left_pad_force, right_pad_force = self.get_gripper_contact_forces(ballId)
         

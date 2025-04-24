@@ -24,3 +24,6 @@ thesis/robot.png
 thesis/sdu_logo.pdf
 thesis/template_chapters_example
 thesis/resources/artificial_intelligence.pdf
+raw
+sacred_runs
+progress*.csv

@@ -1,5 +1,23 @@
 \section{Analysis and Design 1}
 
+The hard requirements for the choice of the simulator for this thesis are simple, it must have:
+\begin{enumerate}
+  \item VR support. Users should be able to interact with the environment.
+  \item Support of the soft-body physics.
+\end{enumerate}
+\noindent
+A great to have features for the simulator are the following:
+\begin{enumerate}
+  \item Free and open-source, so the research in this thesis could be easily accesible and replicated.
+  \item Fast, so the development would go smoothly on an affordable computer.
+  \item Popular, it is easier to fix problems if we can find people in forums who already had them.
+  \item Easy to learn, it would be great to have more time on research and implementation than learning the engine.
+  \item Used in robotics applications.
+\end{enumerate}
+
+\bigskip \noindent
+From the examined physics engines only MuJoCo and PyBullet support deformable objects and virtual reality. PyBullet was chosen as the physics engine for this thesis as it has a well documented VR section and broader VR support. Teleoperation with MuJuCo is only avaialble through the use of MuJoCo HAPTIX \cite{7363441} whereas PyBullet support a variety of VR controllers.
+
 A design using magnetic friction brakes is not an ideal solution as it provides feedback primarilly during the squeezing of virtual object, during releasing the brakes are disengaged and no resistance is felt. This may be a good solution for VR simulations consisting of only rigid objects, but since this thesis is focused on soft objects an exoskeleton with servo motors will be used. The purpose of the first design is to get a good idea of the scope of the project, make a working prototype quickly and detect the possible issues with the project early on. The prototype, which from now on will be refered to as \nameone, consists of two Dynamixel XM540-W270-R servo motors connected in daisy-chain using single line of RS-485 communication. The Dynamixel XM540-W270-R is a high-performance and precision servo motor from Robotis, this motor can provide 10.6 Nm of torque at 12V. The SMPS2Dynamixel is a power converter for the motors and U2D2 is a USB communication converter that enables to control and operate DYNAMIXEL motors using a personal computer (PC) Fig \ref{fig:design_prototype_one}. 
 
 \begin{figure}[!h!t]

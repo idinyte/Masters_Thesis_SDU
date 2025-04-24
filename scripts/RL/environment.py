@@ -8,6 +8,8 @@ import pybullet as p
 from scripts.objects.ur5 import UR5Robot
 from scripts.environments.sortBallsEnv import SortBallsEnv
 
+GRIPPER_MIN, GRIPPER_MAX = 0.0, 0.127
+
 class GymWrapper(Env):
   def __init__(self, max_episode_steps = 10000, vis = False):
     self.vis = vis
@@ -16,15 +18,15 @@ class GymWrapper(Env):
     self.max_reward = -np.inf
     self.reset()
     self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=self.state.shape, dtype=np.float32)
-    self.action_space = spaces.Box(low=np.array([-0.02, -0.02, -0.02, 0]),
-                               high=np.array([0.02, 0.02, 0.02, 0.127]),
+    self.action_space = spaces.Box(low=np.array([-0.02, -0.02, -0.02, -0.02]),
+                               high=np.array([0.02, 0.02, 0.02, 0.02]),
                                dtype=np.float32)
 
   def step(self, action):
     info = {}
     self._perform_action(action)
-    new_state = self.env.main_loop(gym_state = True)
-    self.state = new_state
+    for _ in range(20):
+      self.state = self.env.main_loop(gym_state = True)
     reward = self._get_reward()
     self.cumulative_reward += reward
     self.step_counter += 1
@@ -61,11 +63,11 @@ class GymWrapper(Env):
   
   def _perform_action(self, action):
     robot_pos, robot_ori = self.env.robot.get_ee_link_pose()
-    target_position_delta = action[:3]
-    target_position = robot_pos + target_position_delta
+    target_position = robot_pos + action[:3]
     target_orientation = np.array([ 0.49769387,  0.49769387, -0.50189555,  0.50269538])
-    target_gripper = action[3]
-    
+
+    target_gripper = min(max(self.state[3] + action[3], GRIPPER_MIN), GRIPPER_MAX)
+
     joint_positions = p.calculateInverseKinematics(self.env.robot.robot_id, self.env.robot.eef_id, target_position, targetOrientation=target_orientation)
 
     p.setJointMotorControlArray(bodyIndex=self.env.robot.robot_id, jointIndices=[1, 2, 3, 4, 5, 6], controlMode=p.POSITION_CONTROL, targetPositions=joint_positions[:6])

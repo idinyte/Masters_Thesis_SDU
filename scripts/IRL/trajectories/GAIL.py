@@ -7,17 +7,23 @@ from stable_baselines3 import SAC
 from stable_baselines3.common.vec_env import DummyVecEnv
 from imitation.algorithms.adversarial.gail import GAIL
 from imitation.rewards import reward_nets
+from imitation.rewards.reward_nets import NormalizedRewardNet
 from imitation.data import serialize
 from imitation.util import logger as imitation_logger
+from imitation.util.networks import RunningNorm
 from sacred import Experiment
 from sacred.observers import FileStorageObserver
 import shutil
 import time
+import numpy as np
+import torch
+from stable_baselines3.sac.policies import SACPolicy
+from gym import spaces
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 from scripts.RL.environment import GymWrapper as Env
 
-DEMONSTRATIONS_PATH = 'scripts/IRL/trajectories/processed_for_imitation_serialized'
+DEMONSTRATIONS_PATH = 'scripts/IRL/trajectories/processed_for_imitation_2_serialized'
 
 # --- Sacred Experiment Setup ---
 ex = Experiment("gail_experiment")
@@ -25,7 +31,7 @@ ex.observers.append(FileStorageObserver('scripts/IRL/logs_gail/sacred_runs'))
 
 @ex.config
 def my_config():
-    log_format_strs = ["tensorboard", "csv"]
+    log_format_strs = ["csv"]
     source = "file"
     path = None
     checkpoint_path = None
@@ -34,19 +40,17 @@ def my_config():
 def run(_run, checkpoint_path):
     # Configuration
     SEED = 1111
-    TOTAL_TIMESTEPS = 10_000_000
+    TOTAL_TIMESTEPS = 40_000_000
     CHECKPOINT_INTERVAL = 50_000
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Paths
     LOG_DIR = os.path.abspath("scripts/IRL/logs_gail/")
     CHECKPOINT_DIR = os.path.join(LOG_DIR, "checkpoints")
-    TENSORBOARD_DIR = os.path.join(LOG_DIR, "tensorboard")
-    CSV_DIR = os.path.join(LOG_DIR, "csv")
     FINAL_MODEL_PATH = os.path.abspath("scripts/IRL/trained_policy_gail/gail_sac_final_model")
 
     # Create directories
-    for d in [LOG_DIR, CHECKPOINT_DIR, TENSORBOARD_DIR, CSV_DIR, os.path.dirname(FINAL_MODEL_PATH)]:
+    for d in [LOG_DIR, CHECKPOINT_DIR,os.path.dirname(FINAL_MODEL_PATH)]:
         os.makedirs(d, exist_ok=True)
 
     # Configure Logging for imitation
@@ -69,9 +73,9 @@ def run(_run, checkpoint_path):
         env.seed(SEED)
         return env
     venv = DummyVecEnv([make_env])
+    
 
     # SAC Generator
-    policy_kwargs = dict(net_arch=[256, 256])
     gen_algo = SAC(
         "MlpPolicy",
         venv,
@@ -79,11 +83,7 @@ def run(_run, checkpoint_path):
         seed=SEED,
         learning_rate=0.0003,
         buffer_size=1_000_000,
-        batch_size=2048,
-        gamma=0.99,
-        tau=0.005,
-        ent_coef="auto",
-        policy_kwargs=policy_kwargs,
+        batch_size=256,
         device=DEVICE,
     )
 
@@ -91,8 +91,13 @@ def run(_run, checkpoint_path):
     reward_net = reward_nets.BasicRewardNet(
         observation_space=venv.observation_space,
         action_space=venv.action_space,
-        hid_sizes=[64, 64],
-    ).to(DEVICE)
+    )
+    
+    reward_net = NormalizedRewardNet(
+    reward_net,
+    normalize_output_layer=RunningNorm,
+).to(DEVICE)
+    
 
     # Check for Checkpoint to Resume
     initial_step = 0
@@ -126,9 +131,9 @@ def run(_run, checkpoint_path):
     # GAIL Trainer
     gail_trainer = GAIL(
         demonstrations=demonstrations,
-        demo_batch_size=1024,
+        demo_batch_size=128,
         gen_replay_buffer_capacity=gen_algo.buffer_size,
-        n_disc_updates_per_round=2,
+        n_disc_updates_per_round=1,
         venv=venv,
         gen_algo=gen_algo,
         reward_net=reward_net,
@@ -138,17 +143,18 @@ def run(_run, checkpoint_path):
 
     # Combined Callback for Checkpointing and SAC Logging
     class CombinedCallback:
-        def __init__(self, gen_algo, reward_net, logger, checkpoint_dir, checkpoint_interval, initial_step):
+        def __init__(self, gen_algo, reward_net, logger, checkpoint_dir, checkpoint_interval, initial_step, gail_trainer):
             self.gen_algo = gen_algo
             self.reward_net = reward_net
             self.logger = logger
             self.checkpoint_dir = checkpoint_dir
             self.checkpoint_interval = checkpoint_interval
             self.initial_step = initial_step
+            self.gail_trainer = gail_trainer
 
         def __call__(self, n_steps):
-            # Adjust step count with initial step
             adjusted_step = n_steps + self.initial_step
+
             # Checkpointing
             if adjusted_step % self.checkpoint_interval == 0 and adjusted_step > 0:
                 self.gen_algo.save(os.path.join(self.checkpoint_dir, f"checkpoint_{adjusted_step}"))
@@ -181,6 +187,7 @@ def run(_run, checkpoint_path):
                 checkpoint_dir=CHECKPOINT_DIR,
                 checkpoint_interval=CHECKPOINT_INTERVAL,
                 initial_step=initial_step,
+                gail_trainer=gail_trainer,
             ),
         )
     except KeyboardInterrupt:
