@@ -1,5 +1,5 @@
 \section{Experiment}
-The theoretical and practical force transmission of the rack and pinnion mechanism will differ due to losses in the system. In theory, without taking any losses into account the force produced by this mechanism is equal to the torque divided by the pitch radius Eq. \ref{eq:rack_and_pinnion_force}.
+The theoretical and practical force transmission of the rack and pinion mechanism will differ due to losses in the system. Therefore, an experiment was devised in order to calculate the efficiency of the system. In theory, without taking any losses into account, the linear force produced by the rack and pinion is equal to the applied torque divided by the pitch radius of the spur gear, Eq. \ref{eq:rack_and_pinnion_force}.
 
 \begin{equation}
   F_{\text{theo}} = \frac{\tau_m}{r_p}
@@ -7,7 +7,7 @@ The theoretical and practical force transmission of the rack and pinnion mechani
 \end{equation}
 
 \noindent
-The spur gear was designed in Autodesk Inventor with the following parameters:
+The designed spur gear has the following parameters:
 
 \begin{table}[ht]
   \setlength{\abovecaptionskip}{6pt}
@@ -24,7 +24,7 @@ The spur gear was designed in Autodesk Inventor with the following parameters:
 \end{table}
 
 \noindent
-The pitch radius can be calculated using spur gear parameters Eq. \ref{eq:pitch_radius}
+From these parameters the pitch radius can be calculated Eq. \ref{eq:pitch_radius}
 
 \begin{equation}
   r_{p} = \frac{m \cdot Z}{2} = 6mm = 0.006m
@@ -32,24 +32,24 @@ The pitch radius can be calculated using spur gear parameters Eq. \ref{eq:pitch_
 \end{equation}
 
 \noindent
-In order to find practical force values an experiment has been devised, the picture of it can be seen in Fig. \ref{fig:experimental_setup_load_cell_connection_diagram}. The experiment is setup to measure the actual torque provided by the motor and force exerted by the pinnion. The dynamixel motor is controlled using current control. Positive current opens the grippr and negative current closes it. The current for this motor can be controlled in 2.69 [mA] intervals. The currect is converted to the torque using the Eq. \ref{eq:current}. The stall torque obtained from the motors data sheet is 4.1 [Nm] (at 12.0 [V], 2.3 [A]). The torque constant can be calculated as $k_t = \tau / I = 4.1 / 2.3 = 1.783 $. The force is measured using a 1kg load cell. The load cell was calibrated against a known weight object (a smartphone). As with all measurement devices there can be some measurement errors. The zero balance uncertainty is $\pm$0.1\% Rated Output (RO), the temperature effect on zero is $0.02\% \text{RO}/^\circ\text{C}$, the creep is $0.1\% \text{Full Scale (FS)}/5\text{min}$, repeatability error $0.03\% \text{FS}$ and deviation from an ideal linear response $0.05\% \text{FS}$.
+The experimental setup can be seen in Fig. \ref{fig:experimental_setup_load_cell_connection_diagram}. The experiment aims to measure the actual torque provided by the motor and the transmitted linear force. The Dynamixel motor is controlled using a computer and U2D2 communication converter. It is controlled using current control operation mode. Positive current opens the gripper, and negative current closes it. The goal current for this motor can only be incremented in 2.69 [mA] intervals. The current is converted to the torque using Eq. \ref{eq:current}. The stall torque obtained from this motor's data sheet is 4.1 [Nm] (at 12.0 [V], 2.3 [A]). The torque constant can be calculated as $k_t = \tau / I = 4.1 / 2.3 = 1.783 $. The force is measured using a 1kg load cell placed in one of the finger holes of the exoskeleton. The load cell sensor data is being read by the Aduino Uno and transmited to the computer. The load cell was calibrated against a known weight object (a smartphone). As with all measurement devices, there can be some measurement errors. The zero balance uncertainty is $\pm $0.1\% rated output (RO), the temperature effect on zero is $0.02\% \text{RO}/^\circ\text{C}$, the creep is $0.1\% \text{full scale (FS)}/5\text{min}$, repeatability error is $0.03\% \text{FS}$, and deviation from an ideal linear response is $0.05\% \text{FS}$.
 
 \begin{figure}[!h]
   \centering
   \includegraphics[width=0.7\linewidth]{chapters/exoskeleton/images/experiment/experiment_connection_diagram.png}
   \caption{Connection Diagram}
-  \label{fig:experimental_setup_load_cell}
+  \label{fig:experimental_setup_load_cell_connection_diagram}
 \end{figure}
 
 \begin{figure}[!h]
     \centering
     \includegraphics[width=0.7\linewidth]{chapters/exoskeleton/images/experiment/experiment_photo.jpg}
   \caption{Experimental Setup}
-  \label{fig:experimental_setup_load_cell_connection_diagram}
+  \label{fig:experimental_setup_load_cell}
 \end{figure}
 
 \bigskip \noindent
-The obtained values and theoretical values are plotted in Fig. \ref{fig:experiment_results}. To be able to read the plot left to right, instead of right to left as all of the values are negative, the x-axis and y-axis in the plot are inverted. Using this data the efficiency of the exoskeleton can be calculated Eq. \ref{eq:efficiency}. The efficiency was calculated as an average over the values starting from the point where the exoskeleton exhibits non-zero force Eq. \ref{eq:efficiency_average}.
+The obtained experimental values and theoretical values are plotted in Fig. \ref{fig:experiment_results}. In order to be able to read the plot left to right instead of right to left, as all of the values are negative, the x-axis and y-axis in the plot are inverted. Using this data, the efficiency of the exoskeleton can be calculated using Eq. \ref{eq:efficiency}. The efficiency was calculated as an average over the values starting from the point where the exoskeleton exhibits non-zero force Eq. \ref{eq:efficiency_average}.
 
 \begin{equation}
   \eta = \frac{F_{\text{exp}}}{F_{\text{theo}}} \times 100\%
