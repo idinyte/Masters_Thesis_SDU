@@ -1,22 +1,21 @@
 \section{Task Description}
-
-A custom simulated environment has been created in order to test the algorithms and the exoskeleton. The simulated environment consists of UR5 robot equiped with robotiq 140 gripper, placed on a table Fig. \ref{fig:environment_setup}. The robot is initialized with the home pose of $\mathbf{q}_0 = \begin{bmatrix} -1.57 & -1.55 & 1.34 & -1.37 & -1.57 & 0 \end{bmatrix}^T$ at coordinates $(x, y, z) = (0, 0, 1)$. The position of the ball is initialized randomly by sampling from an uniform distribution Eq. \ref{eq:ball_init}.
+A custom simulated environment has been created in order to test the algorithms and the exoskeleton. The simulated environment consists of a UR5 robot equipped with a Robotiq 140 gripper, placed on a table (Fig. \ref{fig:environment_setup}). The robot is initialized with the home pose of $\mathbf{q}_0 = \begin{bmatrix} -1.57 & -1.55 & 1.34 & -1.37 & -1.57 & 0 \end{bmatrix}^T$ at coordinates $(x, y, z) = (0, 0, 1)$. The position of the ball is initialized randomly by sampling from a uniform distribution (Eq. \ref{eq:ball_init}).
 
 \begin{align}
-  \mathbf{p}_{\text{ball}} &\sim \text{Uniform}(\mathbf{p}_{\min}, \mathbf{p}_{\max}) \label{eq:ball_init} \\
-  \mathbf{p}_{\min} &= \begin{bmatrix} -0.38 \\ -0.55 \\ h_{\text{table}} + r_{\text{ball}} \end{bmatrix}, \quad
-  \mathbf{p}_{\max} = \begin{bmatrix} 0.38 \\ -0.38 \\ h_{\text{table}} + r_{\text{ball}} \end{bmatrix}
+\mathbf{p}_{\text{ball}} &\sim \text{Uniform}(\mathbf{p}_{\min}, \mathbf{p}_{\max}) \label{eq:ball_init} \\
+\mathbf{p}_{\min} &= \begin{bmatrix} -0.38 \\ -0.55 \\ h_{\text{table}} + r_{\text{ball}} \end{bmatrix}, \quad
+\mathbf{p}_{\max} = \begin{bmatrix} 0.38 \\ -0.38 \\ h_{\text{table}} + r_{\text{ball}} \end{bmatrix}
 \end{align}
 
 \begin{figure}[ht]
-  \centering
-  \includegraphics[width=1\textwidth]{chapters/algorithms/images/Environment_setup.png}
-  \caption{Environment setup.}
-  \label{fig:environment_setup}
+\centering
+\includegraphics[width=1\textwidth]{chapters/algorithms/images/Environment_setup.png}
+\caption{Environment setup.}
+\label{fig:environment_setup}
 \end{figure}
 
 \noindent
-During the initialization, the soft ball is assigned one of the four possible types Tab. \ref{tab:ball_classes}, the stiffness of each type varies based on the Young's Modulus. There are four boxes: $\mathbf{p}_{\text{goal},1} = (0.70, -0.16, 1), \mathbf{p}_{\text{goal},2} = (0.70, -0.50, 1), \mathbf{p}_{\text{goal},3} = (-0.70, -0.50, 1), \mathbf{p}_{\text{goal},4} = (-0.70, -0.16, 1)$. The boxes dimensions are 30x30x25cm and the walls are 2cm thick. The goal of the robot is to pick the ball and sort it according to it's type to the appropriate box. 
+During the initialization, the soft ball is assigned one of the four possible types (Tab. \ref{tab:ball_classes}); the stiffness of each type varies based on the Young's Modulus. There are four boxes: $\mathbf{p}_{\text{goal},1} = (0.70, -0.16, 1), \mathbf{p}_{\text{goal},2} = (0.70, -0.50, 1), \mathbf{p}_{\text{goal},3} = (-0.70, -0.50, 1), \mathbf{p}_{\text{goal},4} = (-0.70, -0.16, 1)$. The dimensions of the boxes are 30x30x25 cm, and the walls are 2cm thick. The goal of the robot is to pick the ball and sort it according to its type into the appropriate box. 
 
 \begin{table}[ht]
   \centering

@@ -72,12 +72,12 @@ Using these equations in the softball squeezing testing environment (Fig. \ref{f
 The goal position for the tracking is obtained by capturing the VR controller's pose and applying a fixed transformation to account for the physical offset between the controller (located on the back of the hand) and the exoskeleton. An issue arises when setting the goal position directly in the simulation every frame: the gripper passes through the virtual objects, and the user is not able to interact with them.
 
 \noindent
-To overcome this issue, a proportional (P) controller is employed based on positional and orientational errors. Controlling the gripper through linear and angular velocities instead of direct setting the position allows the gripper to interact and collide with virtual objects. The positional error definition is shown in Eq. \ref{eq:pos_error_gripper_2}. 
+To overcome this issue, a proportional (P) controller is employed based on positional and orientational errors. Controlling the gripper through linear and angular velocities instead of directly setting the position allows the gripper to interact and collide with virtual objects. The positional error definition is shown in Eq. \ref{eq:pos_error_gripper_2}. 
 
 \begin{equation} e_p = p_{target} - p_{current} \label{eq:pos_error_gripper_2} \end{equation}
 
 \noindent
-From this error, the corresponding target linear velocity is computed Eq. \ref{eq:v_linear_gripper_2}.
+From this error, the corresponding target linear velocity is computed using Eq. \ref{eq:v_linear_gripper_2}.
 
 \begin{equation} v_{linear} = K_p \cdot e_p \label{eq:v_linear_gripper_2} \end{equation}
 
@@ -87,44 +87,46 @@ For orientation control, the orientational error is computed using the quaternio
 \begin{equation} e_o = q_{target} \cdot q_{current}^{-1} \label{eq:or_error_gripper_2} \end{equation}
 
 \noindent
-The quaternion error $e_o$ represents the relative rotation needed to align the current orientation with the target. Quaternion consists of a scalar part and a vector part \cite{siciliano2010robotics}. The target angular velocity is then obtained by scaling the vector part with a proportional gain Eq. \ref{eq:v_angular_gripper_2}.
+The quaternion error $e_o$ represents the relative rotation needed to align the current orientation with the target. A quaternion consists of a scalar part and a vector part \cite{siciliano2010robotics}. The target angular velocity is then obtained by scaling the vector part with a proportional gain (Eq. \ref{eq:v_angular_gripper_2}).
 
 \begin{equation} v_{angular} = K_o \cdot (e_{o,x}, e_{o,y}, e_{o,z}) \label{eq:v_angular_gripper_2} \end{equation}
 
 \noindent
-The Eq. \ref{eq:v_angular_gripper_2} is just an approximation and a deeper explanation is needed in order to understand why it works. The quaternion can be written as (Eq. \ref{eq:expanded_quaternion_form}):
+Eq. \ref{eq:v_angular_gripper_2} is just an approximation, and a deeper explanation is needed in order to understand why it works. The quaternion can be written as (Eq. \ref{eq:expanded_quaternion_form}):
 
 \begin{equation} q = [w, x, y, z] = \left[ \cos\left(\frac{\theta}{2}\right), \sin\left(\frac{\theta}{2}\right) n \right] \label{eq:expanded_quaternion_form} \end{equation}
-where:  
+
+where:
 \begin{itemize}
-    \item \( \theta \) is the angle of rotation
-    \item \( n \)  is the unit vector along axis of rotation
+\item \( \theta \) is the angle of rotation.
+\item \( n \) is the unit vector along the axis of rotation.
 \end{itemize}
 
 \noindent
-Ideally the angular velocity using proportional (P) controller would be calculated based on this axis-angle representation (Eq. \ref{eq:ideal_v_angular_gripper_2}).
+Ideally the angular velocity using a proportional (P) controller would be calculated based on this axis-angle representation (Eq. \ref{eq:ideal_v_angular_gripper_2}).
 
 \begin{equation} v_{angular} = K_o \cdot \theta n \label{eq:ideal_v_angular_gripper_2} \end{equation}
 
 \noindent
 The axis and angle can be calculated from the quaternion directly (Eq. \ref{eq:axis_and_angle_calculation}).
+
 \begin{equation}
-  \label{eq:axis_and_angle_calculation}
-  \begin{aligned}
-  n &= \frac{[x, y, z]}{\sin(\theta/2)} \\
-  \theta &= 2 \cos^{-1}(w)
-  \end{aligned}
+\label{eq:axis_and_angle_calculation}
+\begin{aligned}
+n &= \frac{[x, y, z]}{\sin(\theta/2)} \\
+\theta &= 2 \cos^{-1}(w)
+\end{aligned}
 \end{equation}
 
 \noindent
-The problem with this approach (besides requiring more computation) is that if the rotational error is small, the axis is be undefined. This does not work for the desired case, as the goal of the proportional controller is to minimize the error to zero. That's why small angle approximation is used (Eq. \ref{eq:small_angle_approximation}).
+The problem with this approach (besides requiring more computation) is that if the rotational error is small, the axis will be undefined. This does not work for the desired case, as the goal of the proportional controller is to minimize the error to zero. That's why small angle approximation is used (Eq. \ref{eq:small_angle_approximation}).
 
 \begin{equation} \sin\left(\frac{\theta}{2}\right) \approx \frac{\theta}{2} \label{eq:small_angle_approximation} \end{equation}
 
 \noindent
 Thus the Eq. \ref{eq:v_angular_gripper_2} using small angle approximation becomes Eq. \ref{eq:small_angle_approximation_angular_velocity}.
 
-\begin{equation} v_{angular} = K_o \cdot \sin\left(\frac{\theta}{2}\right)n \approx  K_o \cdot \frac{\theta}{2}n \label{eq:small_angle_approximation_angular_velocity} \end{equation}
+\begin{equation} v_{angular} = K_o \cdot \sin\left(\frac{\theta}{2}\right)n \approx  K_o \cdot \frac{\theta}{2}n \label{eq:small_angle_approximation_angular_velocity} \end{equation}
 
 \noindent
-Now it should be clear how the implemented angular velocity controller Eq. \ref{eq:v_angular_gripper_2} and ideal Eq. \ref{eq:ideal_v_angular_gripper_2} are related. The implemented controller does need a higher gain $K_o$ as it has division by two implicitly absorbed into it. Due to the approximation the system is no longer linear. PyBullet implementation has high frequency updates, resulting in small orientation errors, this makes the error converge towards zero resulting in a system capable of tracking the pose of the exoskeleton in VR and enabling interaction with virtual objects.
+Now it should be clear how the implemented angular velocity controller Eq. \ref{eq:v_angular_gripper_2} and ideal Eq. \ref{eq:ideal_v_angular_gripper_2} are related. The implemented controller does need a higher gain $K_o$ as it has division by two implicitly absorbed into it. Due to the approximation, the system is no longer linear. The PyBullet implementation has high-frequency updates, resulting in small orientation errors. This allows the error to converge towards zero, resulting in a system capable of tracking the pose of the exoskeleton in VR and enabling interaction with virtual objects.
