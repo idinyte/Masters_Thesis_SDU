@@ -21,14 +21,40 @@
 \renewcommand{\ttdefault}{pcr} % nicer font for source code
 
 % an example configuration of the 'listings' package
-\lstset{basicstyle=\ttfamily, 
-        keywordstyle=\color{purple}\ttfamily,
-        commentstyle=\color{gray}\ttfamily,
-        stringstyle=\color{orange}\ttfamily,
-        captionpos=b,
-        float=tb,
-        upquote=true,
+% \lstset{basicstyle=\ttfamily, 
+%         keywordstyle=\color{purple}\ttfamily,
+%         commentstyle=\color{gray}\ttfamily,
+%         stringstyle=\color{orange}\ttfamily,
+%         captionpos=b,
+%         float=tb,
+%         upquote=true,
+% }
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.9921,0.9607,0.902}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
 }
+
+\lstset{style=mystyle}
 
 \chapterstyle{tandh} % configuration of the 'memoir' class
 

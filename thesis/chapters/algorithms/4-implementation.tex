@@ -5,44 +5,43 @@ The three algorithms: classical, reinforcement learning and inverse reinforcemen
 A classical algorithm consists of the following steps: ball detection, trajectory generation to pick up the ball, ball classification and trajectory generation to drop the ball off in correct box. Each of these will be discussed in a greater detail.
 
 \subsubsection{Ball Detection}
-The simulator provides the precise position and orientation of the ball in world coordinates, but in real use case this information would need to be acquired. In order to immitate the real world, the ball position will be found with the use of camera. One way robots can detect objects in the physical world is to extract depth information from the environment with the use of two or more regular cameras and perform triangulation. Similar to biological process of stereopsis. Depth cameras such as Intel Realsense make this an easy to implement solution. There are also different methods such as structured light or time of flight. There will be no need to manually perform triangulation in PyBullet as it has getCameraImage function which can return a depth image.
-The PyBullet uses OpenGL, when the scene is rendered, the OpenGL stores depth values as a part of rendering pipeline. It is important to understand the camera model and the order of transformations used to obtain the depth buffer in order to inverse this process to obtain the point cloud of the scene.
+The simulator provides the precise position and orientation of the ball in world coordinates, but in a real use case this information would need to be acquired; because of this, the ball position will be found with the use of a camera. One way to detect objects in the physical world is to extract depth information from the environment with the use of two or more regular cameras using triangulation. Similar to the biological process of stereopsis. Depth cameras such as Intel RealSense provide this as an out-of-the-box solution. There will be no need to perform triangulation in PyBullet, as the getCameraImage function provides a depth image. PyBullet uses OpenGL for scene rendering. OpenGL stores depth values as a part of the rendering pipeline. It is important to understand the camera model and the order of transformations used to obtain the depth buffer in order to reverse this process to obtain the point cloud of the scene.
 
 \bigskip \noindent
-The first transformation is performed by the view matrix. This matrix is used to transform the vertixes of the scene in the world space to the scene in the camera's view space, as it is desired to render the scene from the view of the camera. In other words, a view matrix is such a matrix that will transfrom the camera object to the center of origin in the world coordinates. Since the PyBullet uses right-hand coordinate system, as per OpenGL convention, the transformed camera's object Z-axis must be inverted.
+The first transformation is performed by the view matrix. This matrix is used to transform the vertices of the scene in the world space to the scene in the camera's view space, as it is desired to render the scene from the view of the camera. In other words, a view matrix is such a matrix that will transform the camera object to the center of origin in the world coordinates. Since PyBullet uses a right-hand coordinate system, as per OpenGL convention, the transformed camera's object Z-axis must be inverted.
 
 \bigskip \noindent
-The OpenGL uses look-at camera method. This method describes the camera by it's position in world coordinates (called eye-position, denoted as E), target point (the point the camera looks at, denoted as C) and up vector (usually $[0, 1, 0]$, denoted as U). The camera has following rotation and translation matrices defining it's position and orientation Eq. \ref{eq:cam_t_r}
+OpenGL uses the look-at camera method. This method describes the camera by its position in world coordinates (called eye position, denoted as E), target point (the point the camera looks at, denoted as C), and up vector (usually $[0, 1, 0]$, denoted as U). The camera has the following rotation and translation matrices defining its position and orientation (Eq. \ref{eq:cam_t_r}).
 
 \begin{align}
-  R =
-  \begin{bmatrix}
-  R_x & U'_x & F_x & 0 \\
-  R_y & U'_y & F_y & 0 \\
-  R_z & U'_z & F_z & 0 \\
-  0   & 0   & 0   & 1
-  \end{bmatrix}, \quad
-  T =
-  \begin{bmatrix}
-  1 & 0 & 0 & E_x \\
-  0 & 1 & 0 & E_y \\
-  0 & 0 & 1 & E_z \\
-  0   & 0   & 0   & 1
-  \end{bmatrix}
-  \label{eq:cam_t_r}
+R =
+\begin{bmatrix}
+R_x & U'_x & F_x & 0 \\
+R_y & U'_y & F_y & 0 \\
+R_z & U'_z & F_z & 0 \\
+0   & 0   & 0   & 1
+\end{bmatrix}, \quad
+T =
+\begin{bmatrix}
+1 & 0 & 0 & E_x \\
+0 & 1 & 0 & E_y \\
+0 & 0 & 1 & E_z \\
+0   & 0   & 0   & 1
+\end{bmatrix}
+\label{eq:cam_t_r}
 \end{align}
 
 \noindent
-The right, up and forward basis vectors can be calculated from look-at camera parameters \cite{3dgep_view_matrix}
+The right, up, and forward basis vectors can be calculated from look-at camera parameters \cite{3dgep_view_matrix}
 
 \begin{align}
-  F &= \frac{C - E}{\|C - E\|}, \\
-  R &= \frac{F \times U}{\|F \times U\|}, \\
-  U' &= R \times F
+F &= \frac{C - E}{\|C - E\|}, \\
+R &= \frac{F \times U}{\|F \times U\|}, \\
+U' &= R \times F
 \end{align}
 
 \noindent
-The view matrix is a matrix that would align the camera to the origin of the world (with negative z axis)
+The view matrix is a matrix that would align the camera to the origin of the world (with a negative z-axis).
 
 \begin{equation}
   \begin{aligned}
@@ -95,8 +94,8 @@ The view matrix is a matrix that would align the camera to the origin of the wor
   \end{aligned}
   \end{equation}
 
-\noindent
-The second transformation is performed by the projection matrix \cite{songho_opengl_transform} Eq. \ref{eq:M_proj}, where r,l,t,b is the distance from the center if the near place, to the right, left, top and bottom bounds respectively. The n and f are near and far plane distance. Thr projection matrix projects points from camera's frustum to Normalized Device Coordinates (NDC) Fig \ref{fig:projection_matrix}. The clip space is an intermediate step in this process, where vertexes outside the clip space are clipped and discarded before the homogeneous division is performed. 
+  \noindent
+  The second transformation is performed by the projection matrix \cite{songho_opengl_transform} (Eq. \ref{eq:M_proj}), where r, l, t, and b are the distances from the center of the near plane to the right, left, top, and bottom bounds, respectively. The n and f are near and far plane distances. The projection matrix projects points from the camera's frustum to Normalized Device Coordinates (NDC) (Fig. \ref{fig:projection_matrix}). The clip space is an intermediate step in this process, where vertices outside the clip space are clipped and discarded before the homogeneous division is performed. 
 
 \begin{figure}[ht]
   \centering
@@ -116,7 +115,7 @@ The second transformation is performed by the projection matrix \cite{songho_ope
 \end{equation}
 
 \noindent
-Now, with this knowledge it is possible to reverse this process to obtain a scene pointcloud in world coordinates from the depth image. The depth image pixels, ranges from 0 (near plane) to 1 (far plane). The first step is to convert the depth image to NDC space.
+In order to obtain a scene point cloud in world coordinates from the depth image, the order of transformations needs to be reversed. The depth image consists of pixels with values ranging from 0 (near plane) to 1 (far plane). The first step is to convert the depth image to NDC space.
 
 \begin{algorithm}[H]
   \caption{Converting depth image to homogeneous NDC space}
@@ -143,7 +142,7 @@ Now the NDC space can be converted to a point cloud by pre-multiplying it with t
 \end{equation}
 
 \noindent
-The point cloud of a scene, when a camera is placed a meter above the table and the robot arm is moved out of view can be seen in Fig. \ref{fig:pointcloud}.
+The obtained point cloud of a scene, when a camera is placed a meter above the table and the robot arm is moved out of view is seen in Fig. \ref{fig:pointcloud}.
 
 \begin{figure}[h!]
     \centering
@@ -153,16 +152,16 @@ The point cloud of a scene, when a camera is placed a meter above the table and 
 \end{figure}
 
 \noindent
-The accuracy and speed of object detection from point cloud can be improved by pre-processing a point cloud. The density of the point cloud can be reduced by applying voxel grid filtering and the noise can be removed by methods like statistical outlier removal. As the density of the point cloud is not high and there is no noise due to point cloud obtained in simulation these methods were not applied. What was aplied was AABB crop. Since we know the area where the ball will be initialized the rest of the points in the point cloud can be discarded. Object detection from pointcloud can be categorized in to two methods, global alignmnent and local alignment.
+The accuracy and speed of object detection from the point cloud can be improved by pre-processing it. The density of the point cloud can be reduced by applying voxel grid filtering, and the noise can be removed by methods like statistical outlier removal. As the density of the point cloud is not high and there is no noise due to the point cloud being obtained in the simulation, these methods were not used. Since the area where the ball will be initialized is known, the rest of the points in the point cloud can be discarded using AABB crop. This greatly increases the speed and accuracy of object detection. Object detection from point cloud is a two-step process consisting of global alignment and local alignment.
 
 \bigskip \noindent
-Global alignment provides a pose of the object. The steps for the global alignment are: feature extraction, feature matching and Random Sample Consensus (RANSAC). There are many variants of feature descriptors, a lot of them are based on surface normals (vectors perpendicular to the surface) and curvature (rate of change of surface normals). This work uses Fast Point Feature Histograms (FPFH) \cite{rusu2009fast} as they are fast to compute, pose invariant with good discriminative power. The feature matching loops through the points in the object point cloud, compares it to all points in the scene point cloud and stores closes matches (having shortes euclidean distance). The RANSAC is an iterative method that estimates global alignment pose. The method samples three correspondances between object and scene features, calculates a pose transformation matrix that aligns the correspondences and counts the inliers (number of overlaping points between the scene and object with some tolerance). The pose of the transfomation with most inliers is saved. 200 iterations and 1e-4 tolerance was used for ball detection application. 
+The purpose of global alignment is to provide a rough pose of the object. The steps for the global alignment are feature extraction and feature matching. Feature extraction uses feature descriptors, which are often based on surface normals (vectors perpendicular to the surface) and curvature (rate of change of surface normals). This work uses Fast Point Feature Histograms (FPFH) \cite{rusu2009fast} as they are fast to compute, pose invariant, and have good discriminative power. The feature matching is performed by looping through the points in the object point cloud, comparing it to all of the points in the scene point cloud, and storing the closest matches (having the shortest Euclidean distance) in memory. The random sample consensus (RANSAC) is an iterative method that can aid in feature matching. The method samples three random correspondences between object and scene features, calculates a pose transformation matrix that aligns the correspondences, and counts the inliers (number of overlapping points between the scene and object with some tolerance). This process is repeated many times while keeping track of the pose with the most inliers. 200 RANSAC iterations and a 1e-4 inlier threshold tolerance were used for the ball detection application. 
 
 \bigskip \noindent
-Local alignment is used to refine the pose of the object. Iterative Closes Point (ICP) during each iteration applies a transformation that minimizes the mean square error (MSE), which is the distance between nearest neighbour points between scene and object points cloud. K-d trees are often used to speed up the process of finding closest neighbouring points and Singular Value Decomposition (SVD) is used to solve the problem of finding the transformation matrix that minimises MSE. This process is typically repeated and MSE is sufficiently small or maximum number of iterations has been reached. Since the object we are trying to find is a round ball and often most of the ICP error is minimized with orientation alignments, ICP was not used as skipping local alignment results in sufficiently good object detection in this task and speeds up the whole detection process.
+Local alignment method Iterative Closest Point (ICP) can be used to refine the pose of the object. During each iteration, this method applies a transformation that minimizes the mean square error (MSE) of the distances between nearest neighbor points between scene and object point clouds. K-d trees are often used to speed up the process of finding closest neighboring points, and Singular Value Decomposition (SVD) is used to solve the problem of finding the transformation matrix that minimizes the MSE. This process is typically repeated until MSE is sufficiently small or the maximum number of iterations has been reached. Since the object that is being detected in this task is a round ball, the orientation alignment does not hold a lot of value. The ICP was not used, as global alignment provided sufficiently close object pose estimation.
 
 \subsubsection{Ball Classification}
-A fully connected feedforward neural network has been trained in order to classify the ball in to the four categories based on it's stiffness. Neural networks have the ability to learn an arbitrary function given labeled data, which makes them ideal for this task. 5000 data points were generated where the robot squeezes a random soft ball with the gripper to 5 cm, 4 cm, 7 cm, and 6 cm gripper opening distances. The normal forces the gripper experiences are measured at each distance. The dataset was split into train and test sets with a ratio of 80\% to 20\%. The hyperparameters to train the network have been chosen as, batch size = 32, learning rate = 0.001, and epochs = 300. The network has an input size of 8 (4 gripper distances and 4 normal forces), one hidden layer of size 32, and 4 output neurons (representing ball type) and the ReLU activation function has been used. The choice of using multiple measurements instead of a sinle was made in hopes of increasing reliability against factors like measurement errors.
+A fully connected feedforward neural network has been trained in order to classify the ball into the four categories based on its stiffness. 5000 data points were generated where the robot squeezes a random soft ball with the gripper to 5 cm, 4 cm, 7 cm, and 6 cm gripper opening distances. The normal forces the gripper experiences are measured at each distance. The dataset was split into train and test sets with a ratio of 80\% to 20\%. The hyperparameters to train the network have been chosen as batch size = 32, learning rate = 0.001, and epochs = 300. The network has an input size of 8 (4 gripper distances and 4 normal forces), one hidden layer of size 32, and 4 output neurons (representing ball type). The ReLU activation function has been used. The choice of using multiple measurements instead of a single one was made in an attempt to increase reliability.
 
 \subsubsection{Trajectory generation}
 The trajectory is generated via points. The trajectory is a function of 3D position in Cartesian coordinates (P), quaternion orientation (Q), and gripper opening (G) in meters. 
@@ -172,15 +171,12 @@ The trajectory is generated via points. The trajectory is a function of 3D posit
 \end{equation}
 
 \noindent
-The trajectory for grabbing a ball consists of the following points: current end effector (ee) pose, point above the ball, point ready to grip the ball, point for closing the gripper and point for lifting the ball. The positions and gripper openings are interpolated linearly.
+The trajectory for grabbing a ball consists of the following points: current end effector pose, point above the ball, point ready to grip the ball, point for closing the gripper, and point for lifting the ball. The positions and gripper openings are interpolated using linear interpolation, and orientations are interpolated using SLERP.
 
 \begin{equation}
 \mathbf{P}(t) = \mathbf{P}_\text{start} + \left(\mathbf{P}_\text{end} - \mathbf{P}_\text{start}\right) \cdot \frac{t}{\text{duration}}
 \label{eq:linear_interpolation}
 \end{equation}
-
-\noindent
-Linear interpolation has been chosen as it is the simplest form of interpolation to implement and there is no risk of demaging the robot due to high accelerations because it is simulated and not physical. PyBullet represents rotations as quaternions, a vector on a 4D unit sphere, SLERP (Spherical Linear Interpolation) is used instead of linear interpolation to interpolate between two rotations along the surface of the sphere. This way, two rotations are interpolated in a way that maintains constant angular velocity.
 
 \begin{align*}
 \cos\theta &= \frac{\mathbf{Q}_1 \cdot \mathbf{Q}_2}{\|\mathbf{Q}_1\| \|\mathbf{Q}_2\|} &
@@ -197,18 +193,15 @@ p &= \frac{t}{\text{duration}}
 \end{equation}
 
 \noindent
-After the ball has been classified another trajectory is generated via points: a point to raise the ball, a point to move above the goal box, a point to lower the ball, and a point to open the gripper. The trajectory is followed using inverse kinematics.
+After executing the trajectory for grabbing the ball, measurements are made for gripper opening distance and normal forces and are passed to the neural network classifier; then another trajectory is generated via points: a point to raise the ball higher, a point to move above the goal box, a point to lower the ball, and a point to open the gripper.
 
 \subsection{Reinforcement Learning}
-In order to make RL implementation easier, the environment has been put in a wrapper that aligns with OpenAI gym environment standards. The wrapper consists of four main functions: initialization, step, reset and render. The render function is left empty, as it is handled by Bullet engine during initialization.
-
-% \begin{lstlisting}[language=Python, caption=Bullet Physics Choice of Rendering]
-%   import pybullet as p
-%   physicsClient = p.connect(p.GUI if vis else p.DIRECT)
-% \end{lstlisting}
+The environment has been put in a wrapper that aligns with OpenAI gym environment standards. 
+\subsubsection{Environment Wrapper}
+The wrapper consists of four main functions: initialization, step, reset, and render. The render function is left empty, as it is handled by the Bullet engine.
 
 \bigskip \noindent
-The reset function is called before initiating a new episode. The efficient way to reset environment would be to reset the pose of robot and the soft ball, but as soft body simulation tends to go unstable sometimes, the choice has been made to reset the environment by closing the physics engine connection and starting a new one.
+The reset function is called before initiating a new episode. The efficient way to reset the environment would be to reset the pose of the robot and the soft ball, but as soft body simulation tends to go unstable sometimes, and the destroy function for soft body objects does not work in the latest Bullet engine version as of this writing (v3.2.6), the choice has been made to reset the environment by closing the physics engine connection and starting a new one. This method is not efficient because starting a new connection makes the environment initialize from scratch, which takes a significant amount of time, slowing down the training process.
 
 \begin{lstlisting}[language=Python, caption=Gym Wrapper Reset Function, breaklines=true]
 def reset(self):
@@ -223,20 +216,26 @@ def reset(self):
     return self.state  
 \end{lstlisting}
 
+\begin{lstlisting}[language=Python, caption=State to Gym State Function, breaklines=true]
+def state_to_gym_state(self, state):
+    return np.concatenate([np.ravel(x) if isinstance(x, (np.ndarray, list, tuple)) else np.array([x]) for x in state])
+\end{lstlisting}
+
 \bigskip \noindent
 The initialization function sets up observation space and action space.
 \begin{table}[ht]
   \setlength{\abovecaptionskip}{6pt}
   \centering
+  \small
   \begin{tabular}{|c|l|c|l|c|l|}
   \hline
-\textbf{Index} & \textbf{Observation}            & \textbf{Index} & \textbf{Observation}            & \textbf{Index} & \textbf{Observation}            \\ \hline
+\textbf{Idx} & \textbf{Observation}            & \textbf{Idx} & \textbf{Observation}            & \textbf{Idx} & \textbf{Observation}            \\ \hline
                  0              & gripper\_pos\_x                 & 7             & relative\_ball\_pos\_x          & 14             & goal\_pos\_2\_z                 \\ \hline
                1              & gripper\_pos\_y                 & 8             & relative\_ball\_pos\_y          & 15             & goal\_pos\_3\_x                 \\ \hline
                  2              & gripper\_pos\_z                 & 9             & goal\_pos\_1\_x                 & 16             & goal\_pos\_3\_y                 \\ \hline
                3             & gripper\_open\_length           & 10             & goal\_pos\_1\_y                 & 17             & goal\_pos\_3\_z                 \\ \hline
-                 4             & left\_pad\_normal\_force        & 11             & goal\_pos\_1\_z                 & 18             & goal\_pos\_4\_x                 \\ \hline
-                5             & right\_pad\_normal\_force       & 12             & goal\_pos\_2\_x                 & 19             & goal\_pos\_4\_y                 \\ \hline
+                 4             & left\_pad\_normal\_f        & 11             & goal\_pos\_1\_z                 & 18             & goal\_pos\_4\_x                 \\ \hline
+                5             & right\_pad\_normal\_f       & 12             & goal\_pos\_2\_x                 & 19             & goal\_pos\_4\_y                 \\ \hline
  6             & relative\_ball\_pos\_z          & 13             & goal\_pos\_2\_y                 & 20             & goal\_pos\_4\_z                 \\ \hline
   \end{tabular}
   \caption{Observation Space}
@@ -257,13 +256,13 @@ The initialization function sets up observation space and action space.
     \end{table}
 
 \bigskip \noindent
-The gripper position is the middle of the ray connecting centers of the gripper pads. The ball position is relative to the gripper position: $relative\_ball\_pos = ball\_pos - gripper\_pos$. This representation was chosen as ball position changes at the start of each episode. The goal positions were kept in world coordinates as they are static. The actions were chosen as a small change in end effector position and desired gripper opening length. Although RL is capable of learning the movement of ee by observing and setting the angles of the robot joint directly, the chosen representation simplifies the problem and reduces the dimensionality.
-
+The gripper position is the middle of the ray connecting the centers of the gripper pads. The ball position is relative to the gripper position: $relative\_ball\_pos = ball\_pos - gripper\_pos$. This representation was chosen as ball position changes at the start of each episode. The goal positions were kept in world coordinates as they are static. The actions were chosen as a small change in end effector position and desired gripper opening length. Although RL is capable of learning the movement of the end effector by observing and setting the angles of the robot joint directly, the chosen representation simplifies the problem by reducing the dimensionality.
+    
 \bigskip \noindent
-Finally the step function performs action, calculates the reward and gets the environment state after the action was taken.
+Finally, the step function performs the action, calculates the reward, and gets the environment state after the action was taken.
 
 \begin{lstlisting}[language=Python, caption=Gym Wrapper Step Function, breaklines=true]
-  def step(self, action):
+def step(self, action):
     info = {}
     self._perform_action(action)
     self.state = self.env.main_loop(gym_state = True)
@@ -276,10 +275,10 @@ Finally the step function performs action, calculates the reward and gets the en
 \end{lstlisting}
 
 \bigskip \noindent
-The action is performed by calculating inverse kinematics to obtain robot joints for the desired position and applying them. The orientation of the end effector is kept static in order to reduce dimentionality.
+The action is performed by calculating inverse kinematics to obtain robot joints for the desired position and applying them. The orientation of the end effector is kept static in order to simplify thr problem.
 
 \begin{lstlisting}[language=Python, caption=Perform Action Function, breaklines=true]
-  def _perform_action(self, action):
+def _perform_action(self, action):
     robot_pos, robot_ori = self.env.robot.get_ee_link_pose()
     target_position = robot_pos + action[:3]
     joint_positions = p.calculateInverseKinematics(self.env.robot.robot_id, self.env.robot.eef_id, target_position, targetOrientation=np.array([ 0.5,  0.5, -0.5,  0.5]))
@@ -289,7 +288,7 @@ The action is performed by calculating inverse kinematics to obtain robot joints
 \end{lstlisting}
 
 \bigskip \noindent
-Reward shaping is interesting yet challenging part of RL. The reward for this task is calculated in a way that encourages the agent to move towards the ball, pick it up and move towards the goal Alg. \ref{alg:rewards}.
+Reward shaping is a challenging part of RL. The reward for this task is calculated in a way that encourages the agent to move towards the ball, pick it up, and move towards the goal while penalizing collisions with the environment (Alg. \ref{alg:rewards}).
 
 \begin{algorithm}[ht]
   \caption{Reward Computation Algorithm}
@@ -315,27 +314,26 @@ Reward shaping is interesting yet challenging part of RL. The reward for this ta
   \label{alg:rewards}
   \end{algorithm}
 
-
-\bigskip \noindent
-Soft Actor-Critic (SAC) \cite{haarnoja2018softactorcriticoffpolicymaximum} network has been chosen to train the agent. Actor-Critic Network (ACN) overcomes the limitation of the value-based methods by being able to operate in continuous action spaces. Policy gradient methods can also operate in continuous action spaces, but they often suffer from high instability and variance in training. Actor critic networks reduce this variance by having two separate networks, an actor which learns the policy and a critic which learns the value function and guides the actor. The basic ACN architecture can be seen in Fig. \ref{fig:acn_architecture} (Sutton and Barto 2018 \cite{sutton2018reinforcement}).
+\subsubsection{Chosen Algorithm}
+Soft Actor-Critic (SAC) \cite{haarnoja2018softactorcriticoffpolicymaximum} network has been chosen to train the agent. Actor-Critic Network (ACN) overcomes the limitation of the value-based methods by being able to operate in continuous action spaces. Policy gradient methods can also operate in continuous action spaces, but they often suffer from high instability and variance in training. Actor-critic networks reduce this variance by having two separate networks, an actor that learns the policy and a critic that learns the value function and guides the actor. The basic ACN architecture can be seen in Fig. \ref{fig:acn_architecture} (Sutton and Barto 2018 \cite{sutton2018reinforcement}).
 
 \begin{figure}[h!]
-  \centering
-  \includegraphics[width=0.6\textwidth]{chapters/algorithms/images/RL/actor-critic.png}
-  \caption{ACN arcitecture}
-  \label{fig:acn_architecture}
+\centering
+\includegraphics[width=0.6\textwidth]{chapters/algorithms/images/RL/actor-critic.png}
+\caption{ACN arcitecture}
+\label{fig:acn_architecture}
 \end{figure}
 
-\noindent
-The SAC algorithm is a type of ACN. It tries to maximize not only expected rewards, but also the entropy of the policy. The entropy term encourages exploration and prevents premature convergence to suboptimal policies. The implementation used is provided by stable baselines 3 \cite{stable-baselines3}. The network for both actor and critic was chosen to have only one hidden layer 256 neurons deep, as there are no complex relationships between inputs and outputs. The buffer size and the batch sizes were increased, as the episodes are quite long; they take up to 10000 iterations. The gamma was reduced; this encourages the network to focus more on short-term rewards rather than long-term planning. The soft update coefficient, tau, which is used in the Polyak update, was kept at the default value. The entropy regularization coefficient that is responsible for controlling the exploration/exploitation trade-off was kept at "auto"; the network learns the parameter based on target entropy (desired level of randomness).
+\bigskip \noindent
+The SAC algorithm is a type of ACN. It tries to maximize not only expected rewards but also the entropy of the policy. The entropy term encourages exploration and prevents premature convergence to suboptimal policies. SAC is a standard algorithm; it has an implementation provided by Stable Baselines 3 \cite{stable-baselines3}. This implementation is used with the wrapped environment to train the agent. The network for both actor and critic was chosen to have only one hidden layer 256 neurons deep, as there are no complex relationships between inputs and outputs. The buffer size and the batch sizes were increased, as the episodes are quite long; they take up to 10000 iterations. The gamma was reduced; this encourages the network to focus more on short-term rewards rather than long-term planning. The soft update coefficient, tau, which is used in the Polyak update, was kept at the default value. The entropy regularization coefficient that is responsible for controlling the exploration/exploitation trade-off was kept at "auto"; the network learns the parameter based on target entropy (desired level of randomness).
 
 \begin{table}[ht]
   \centering
-  \renewcommand{\arraystretch}{1.5}
-  \begin{tabular}{|>{\raggedright\arraybackslash}m{5cm}|>{\raggedright\arraybackslash}m{5cm}|>{\raggedright\arraybackslash}m{5cm}|}
+  \setlength{\tabcolsep}{0.5em}
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabular}{|l|l|l|}
   \hline
   \textbf{Parameter} & \textbf{Chosen Value} & \textbf{Default Value} \\ \hline
-  \texttt{policy\_kwargs} & \texttt{dict(net\_arch=[256])} & \texttt{dict(net\_arch=[256, 256])} \\ \hline
   \texttt{learning\_rate} & 0.0007 & 0.0003 \\ \hline
   \texttt{buffer\_size} & 100,000,000 & 1,000,000 \\ \hline
   \texttt{batch\_size} & 8192 & 256 \\ \hline
@@ -347,10 +345,11 @@ The SAC algorithm is a type of ACN. It tries to maximize not only expected rewar
 \end{table}
 
 \subsection{Learning From Demonstration}
-The first step for learning from the demonstrations, is to acquire the demonstrations.
+The first step for learning from the demonstrations is to acquire them.
 
 \subsubsection{Trajectory Acquisition}
-A VR environemnt was setup in PyBullet. Exoskeleton \nametwo was used with the implementation as described in section \ref{implementation_2}. The UR5 robot was moved to the opposite corner of the table. The person is placed in the robot's position instead. The target position for virtual gripper is defined as the VR controller's position with a position offset given by the vector:
+A VR was enabled for the task environment, with the only differences being the UR5 robot moved to the opposite corner of the table and the user's starting position being placed in the old robot's position instead. Exoskeleton \nametwo was used with the implementation as described in section \ref{implementation_2}. The target position for the virtual gripper is defined as the VR controller's position with a position offset given by the vector:
+
 \[
 \Delta \mathbf{p} = 
 \begin{bmatrix}
@@ -359,7 +358,9 @@ A VR environemnt was setup in PyBullet. Exoskeleton \nametwo was used with the i
 -0.04
 \end{bmatrix}
 \]
-and a quaternion offset given by:
+
+and a quaternion offset given by
+
 \[
 \Delta \mathbf{q} = 
 \begin{bmatrix}
@@ -369,18 +370,20 @@ and a quaternion offset given by:
 0.452
 \end{bmatrix}
 \]
+
 \noindent
-This offset brings the target pose from the back of the hand, where the controller rests, to the pose of the exoskeleton. This setup is show in Fig. \ref{fig:exoskeleton_2_vr_env}
+This offset brings the target pose from the back of the hand, where the controller rests, to the pose of the exoskeleton. This setup is shown in Fig. \ref{fig:exoskeleton_2_vr_env}.
 
 \begin{figure}[h!]
-  \centering
-  \includegraphics[width=0.6\textwidth]{chapters/algorithms/images/IRL/OculusScreenshot1743757509.jpeg}
-  \caption{Wearing exoskeleton \nametwo in VR environment.}
-  \label{fig:exoskeleton_2_vr_env}
+\centering
+\includegraphics[width=0.6\textwidth]{chapters/algorithms/images/IRL/OculusScreenshot1743757509.jpeg}
+\caption{Wearing exoskeleton \nametwo in VR environment.}
+\label{fig:exoskeleton_2_vr_env}
 \end{figure}
 
 \noindent
-The observation space and action space is kept identical to the one chosen for reinforcement learning. For this reason the orientation of gripper in VR is fixed so it is facing downwards.
+The observation space and action space are kept identical to the ones chosen for reinforcement learning. For this reason the target orientation of the gripper in VR is fixed.
+
 \[
 \mathbf{q_{\text{fixed}}} = 
 \begin{bmatrix}
@@ -392,27 +395,27 @@ The observation space and action space is kept identical to the one chosen for r
 \]
 
 \noindent
-The trajectory is acquisition starts when the environment is fully initialized. As the actions are hard to acquire in real time, the initial trajectory only contains the states (observations).
+The trajectory acquisition starts when the environment is fully initialized. The initial trajectory only contains the states (observations).
 
 \begin{align}
-  \tau &= (s_0, s_1,\dots)
+\tau &= (s_0, s_1,\dots)
 \end{align}
 
 \noindent
-The trajectory acquisition stops when the person in VR presses a button on the VR controller with the other hand. The trajectory is saved as an .npy object on the computer's disk. This process is repeated ten times for each ball type, in total resulting in 40 trajectories.
+The trajectory acquisition stops when the person in VR presses a button on the VR controller with the other hand. The trajectory is saved as an .npy object. This process is repeated ten times for each ball type, resulting in a total of 40 trajectories.
 
 \begin{align}
-  D &= (\tau_1, \tau_2, \dots, \tau_{40})
+D &= (\tau_1, \tau_2, \dots, \tau_{40})
 \end{align}
 
 \noindent
-During trajectory acquisition a problem was noticed immediately. One second in the simulation is set to be equal to 1000 steps, in order to ensure soft body simulation stability. The computer that was used to collect trajectories was not powerful enough to provide such a high framerate, while using VR, it provided only around 100 Frames Per Second (FPS). This made the simulation around 10 times slower than real time making the user feel as if everything around him is moving slowly (the ball falling slowly for example). The agent will be trained in a way that when action is performed 10 simulation steps will take place in order to account for the discrepancy. This disrepancy could also be mitigated by interpolating the experts trajectories to add more states in between the frames, but the first approach is preffered as small actions in second approach could lead to numerical instability.
+During trajectory acquisition, a problem was noticed immediately. One second in the simulation is set to be equal to 1000 steps. This was done in order to ensure soft body simulation stability. The computer that was used to collect trajectories was not powerful enough to provide such a high frame rate; while using VR, it provided only around 100 frames per second (FPS). This made the simulation around 10 times slower than real time, making the user feel as if everything around him is moving slowly (gravity affecting the ball in this case). The agent will be trained in a way that when action is performed, 10 simulation steps will take place in order to account for the discrepancy. This discrepancy could also be mitigated by interpolating the experts' trajectories to add more states in between the frames, but the first approach is preferred for increased numerical instability and training times.
 
 \bigskip \noindent
-The obtained trajectories were inspected visually by plotting the graphs and printing the arrays to check for anomalies. A mistake was made where the states were collected from the robot's gripper instead of the one controlled by a person, so they needed to be recollected. A second attempt looked correct. Then the demonstrations were processed in order to obtain actions. 
+The obtained trajectories were inspected visually by plotting the graphs (Fig. \ref{fig:action_frequency_distribution_irl}) and printing the arrays to check for anomalies. This way, after the first collection attempt, a mistake was spotted. The states were collected from the robot's gripper instead of the user's, so the trajectories needed to be recollected. A second collection attempt was successful. The obtained demonstrations were processed in order to acquire actions. 
 
 \bigskip \noindent
-The action $\mathbf{a}_t \in \mathbb{R}^4$ at time step $t$ is obtained from the state $\mathbf{s}_t \in \mathbb{R}^{21}$ as:
+The action $\mathbf{a}_t \in \mathbb{R}^4$ at time step $t$ is obtained from the state $\mathbf{s}_t \in \mathbb{R}^{21}$ as
 
 \[
 \mathbf{a}_t = 
@@ -427,21 +430,21 @@ The action $\mathbf{a}_t \in \mathbb{R}^4$ at time step $t$ is obtained from the
 \]
 
 \noindent
-Because the gripper's orientation is locked an assumption can be made that the translational movement of the robot's end effector and the gripper are equivalent. The zero-mean Gaussian noise with standard deviation proportional to $|\Delta   \mathbf{p}_t|$ is applied element-wise to the first three actions. This is done in order to regularize the data, as to account for the fact that moving the robot's end-effector will likely not yield a perfectly accurate position in the following time step. The gripper opening value is taken directly from the next state. The resulting action is clamped to allowed range:
+Because the gripper's orientation is fixed, an assumption can be made that the translational movement of the robot's end effector and the gripper are equivalent. The zero-mean Gaussian noise with standard deviation proportional to $|\Delta   \mathbf{p}_t|$ is applied element-wise to the first three actions. This is done in order to regularize the data, as to account for the fact that moving the robot's end-effector does not guarantee that it will end up in the exact position. The gripper opening value is taken directly from the next state. The resulting action is clamped to the allowed range.
 
 \[
 \Delta \mathbf{p}_t + \boldsymbol{\epsilon}_t \leftarrow \text{clip}(\Delta \mathbf{p}_t + \boldsymbol{\epsilon}_t,\ -0.02,\ 0.02)
 \]
 
 \bigskip \noindent
-The obtained actions for each trajectory are appended to them.
+The obtained actions for each trajectory are appended to their respective states.
 
 \begin{align}
-  \tau &= ([s_0, a_0], [s_1, a_1] ,\dots)
+\tau &= ([s_0, a_0], [s_1, a_1] ,\dots)
 \end{align}
 
 \noindent
-These trajectories are now ready to be used for training. The action frequency distribution can be seen in Fig. \ref{fig:action_frequency_distribution_irl}.
+These trajectories are now ready to be used for training.
 
 \begin{figure}[h!]
   \centering
@@ -449,3 +452,5 @@ These trajectories are now ready to be used for training. The action frequency d
   \caption{The frequency distribution of actions over all collected trajectories.}
   \label{fig:action_frequency_distribution_irl}
 \end{figure}
+
+\subsubsection{Training}
