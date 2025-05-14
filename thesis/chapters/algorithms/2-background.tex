@@ -19,16 +19,16 @@ The B-splines have a method for where to place an anchor point for fitting a Bez
 Quintic splines, unlike B-splines, are an interpolation method. Quintic splines do come with several disadvantages, such as lack of local control and computational complexity, so the choice of splines used would depend on the use case scenario. Often interpolation methods are chosen for manually defined trajectories where precision is needed and approximation methods in recorded or noisy trajectories.
 
 
-\bigskip \noindent
-When moving between two points, it is not always clear if the robot will be able to move between them without collision. This is especially true with high-degree-of-freedom robotic arms, as even if the path for the end effector is clear, other robot parts may be in collision due to the configuration of the robot. It is a difficult problem to address efficiently due to the high dimensionality of the problem. Many modern robotics incorporate Rapidly-exploring Random Tree (RRT) \cite{lavalle1998rapidly} or RRT* \cite{karaman2011sampling} into their path planning algorithms to address this problem. RRT explores the robot's configuration space, which is a high-dimensional space that represents every possible configuration the robot can be in. C-Space can be divided into two sets: C-Free, a space with valid robot configurations, and C-Obs, a space where robot configuration would be in a collision. 
+% \bigskip \noindent
+% When moving between two points, it is not always clear if the robot will be able to move between them without collision. This is especially true with high-degree-of-freedom robotic arms, as even if the path for the end effector is clear, other robot parts may be in collision due to the configuration of the robot. It is a difficult problem to address efficiently due to the high dimensionality of the problem. Many modern robotics incorporate Rapidly-exploring Random Tree (RRT) \cite{lavalle1998rapidly} or RRT* \cite{karaman2011sampling} into their path planning algorithms to address this problem. RRT explores the robot's configuration space, which is a high-dimensional space that represents every possible configuration the robot can be in. C-Space can be divided into two sets: C-Free, a space with valid robot configurations, and C-Obs, a space where robot configuration would be in a collision. 
 
-\begin{gather*}
-C = C_{\text{free}} \cup C_{\text{obs}} \\
-C_{\text{free}} \cap C_{\text{obs}} = \emptyset
-\end{gather*}
+% \begin{gather*}
+% C = C_{\text{free}} \cup C_{\text{obs}} \\
+% C_{\text{free}} \cap C_{\text{obs}} = \emptyset
+% \end{gather*}
 
-\noindent
-RRT can find a collision-free path between the two configurations in C-free space if one exists. The algorithm builds a tree-like structure by selecting a random point in a C-free space, connecting it to the closest node in a tree, and growing a branch from that tree towards the random point until it or the maximum step distance is reached. That point will be the new location for the node to be added into the tree if the shortest path between the node and the tree is obstacle-free. This process continues until a tree grows large enough so a path that connects the two points in configuration space is found. This method, however, does not yield the shortest path. RRT* addresses this issue by doing additional processing before placing a node in a tree. Within a specified search radius around the new point, RRT* checks if the nodes can be reconnected in a way that yields a shorter path. It has been proved that when the time goes to infinity, RRT* will yield the shortest path between two points by continuously rewiring the tree. 
+% \noindent
+% RRT can find a collision-free path between the two configurations in C-free space if one exists. The algorithm builds a tree-like structure by selecting a random point in a C-free space, connecting it to the closest node in a tree, and growing a branch from that tree towards the random point until it or the maximum step distance is reached. That point will be the new location for the node to be added into the tree if the shortest path between the node and the tree is obstacle-free. This process continues until a tree grows large enough so a path that connects the two points in configuration space is found. This method, however, does not yield the shortest path. RRT* addresses this issue by doing additional processing before placing a node in a tree. Within a specified search radius around the new point, RRT* checks if the nodes can be reconnected in a way that yields a shorter path. It has been proved that when the time goes to infinity, RRT* will yield the shortest path between two points by continuously rewiring the tree. 
 
 \subsection{Neural Networks}
 A neural network is a mathematical model inspired by biological neural network - the human brain (Fig. \ref{fig:artificial_and_human_neuron}). Neural networks are used in machine learning to achieve tasks that would be difficult or impossible by classical algorithms. The feedforward neural network \cite{lippmann1988introduction} was among the first types of neural networks. The information in such a network only flows forward from input to the output. Such a network is suitable for classification, regression, and pattern recognition tasks. Multilayer Perceptron (MLP) is the most common kind of feedforward neural network. It is divided into one-dimensional layers: an input layer, one or more hidden layers, and an output layer (Fig. \ref{fig:MLP}). If layers are fully connected, each neuron will be connected to every neuron in the previous layer. Modern networks can have millions and even billions of neurons; in such cases, weak connections are often pruned to optimize the network. The value of the neuron is calculated by multiplying inputs with weights and adding a bias Fig. \ref{fig:artificial_and_human_neuron}. As this operation is a linear function, the neurons need an additional activation function in order to learn non-linear patterns from the data.
@@ -253,7 +253,7 @@ The idea of behavior cloning \cite{bain1995framework} is relatively straightforw
 The paper "ChauffeurNet: Learning to Drive by Imitating the Best and Synthesizing the Worst" \cite{bansal2018chauffeurnet} proposes that the network is trained not only on the expert trajectories, but the dataset is augmented with simulated uncommon scenarios, such as collisions and off-road events in the case of training a car to drive autonomously. Another interesting proposition \cite{goecks2020integratingbehaviorcloningreinforcement} is the Cycle-of-Learning (CoL) framework, where behavior cloning and reinforcement learning are combined by pre-training the agent from expert demonstrations and fine-tuning it through RL.
 
 \subsubsection{Inverse Reinforcement Learning}
-The inverse reinforcement learning takes a different approach to imitation learning. The main idea of this method is to learn the reward function instead of the policy directly. This learned reward function then can be used to train the agent through the reinforcement learning. 
+The inverse reinforcement learning takes a different approach to imitation learning. The main goal of this method is to learn the reward function instead of the policy directly. IRL can be more accurate but it is also more expensive to train as it requires an inner loop of RL to train on the learned reward function. 
 
 \begin{algorithm}
 \caption{Inverse Reinforcement Learning (IRL)}
@@ -273,8 +273,8 @@ In model-based approaches, the reward function is often assumed to be a linear c
 \bigskip \noindent
 The inverse reinforcement learning has very good generalization, meaning, unlike the behavior cloning, IRL can better deal with scenarios that were not explicitly shown by the expert as the model learns the goal rather than state-action mappings. Sometimes the policy trained with IRL can even outperform the expert. It is a good choice for more complex scenarios requiring long-term planning or decision-making. On the other hand, the IRL has problems of its own. The biggest is ambiguity in the reward function. There can be many reward functions that explain the behavior of the expert. Different approaches have been proposed on which reward function to choose.
 
-\bigskip \noindent
-Maximum Margin Inverse Reinforcement Learning (MM-IRL) \cite{ratliff2006maximum} envisions the problem as structured prediction over the space of policies. The goal of MM-IRL is to learn a cost function, which is assumed to be a linear combination of features. The features are problem specific; for example, in a robot pick-and-place task, they could be the time taken to achieve a task, applied grasping force, smoothness of motion, etc. The cost function is just a negative reward function. The cost function is assumed to be linear in the features.
+\subsubsection{Maximum Margin Inverse Reinforcement Learning}
+Maximum Margin Inverse Reinforcement Learning (MM-IRL) \cite{ratliff2006maximum} envisions the problem as structured prediction over the space of policies. The goal of MM-IRL is to learn a cost function, which is assumed to be a linear combination of features. The features are problem specific; for example, in a robot pick-and-place task, they could be the time taken to achieve a task, applied grasping force, smoothness of motion, etc. The cost function is just a negative reward function. The cost function here is assumed to be linear in the features.
 
 \begin{align}
 R(s,a) &= -C(s,a) \\
@@ -291,6 +291,28 @@ where:
 
 \noindent
 Knowing the cost function is akin to knowing the reward function; using it, the policy can be learned. MM-IRL is a model-based method; solving the optimization requires access to environment dynamics. The problem can be viewed as a constrained optimization problem, where the goal is to find the set of weights $w$ that explain the expert trajectory. More specifically, the cost of the expert trajectory has to be smaller or equal to the cost of all the possible trajectories in MDP. This optimization problem can not be solved by a linear solver, as the trivial solution $w = 0$ would satisfy the constraint. To avoid this, MM-IRL introduces a margin: the cost of expert trajectories has to be smaller than the cost of all of the remaining trajectories by a fixed margin. In order to account for cases where the set of weights is very large (and thus the margin term becomes small), an additional constraint is added that maximizes the margin.
+
+\subsubsection{Generative Adversarial Imitation Learning}
+Generative Adversarial Imitation Learning (GAIL) \cite{ho2016generativeadversarialimitationlearning} is a model-free IRL algorithm. It frames the imitation learning problem as an adversarial game similar to generative adversarial networks (GANs). GAIL does not explicitly solve the IRL problem of uncovering the reward function; instead, its goal is to make the learner's policy indistinguishable from the expert trajectories through implicit rewards obtained from the discriminator. GAIL casts imitation learning as a minimax game between a policy (generator) and a discriminator (reward network). The discriminator $D\in(0,1)$ is a binary classifier that's trained to distinguish between expert and generator samples. It tries to maximize the expression for telling the expert and generator samples apart (Eq. \ref{eq:discriminator_GAIL}). High discriminator values mean that samples are expert-like.
+
+\begin{equation}
+\mathbb{E}_{(s,a) \sim \text{expert}}[\log D(s,a)] + \mathbb{E}_{(s,a) \sim \pi}[\log (1 - D(s,a))]
+\label{eq:discriminator_GAIL}
+\end{equation}
+
+\bigskip \noindent
+On the other hand, the goal of the generator is to minimize the same expression (Eq. \ref{eq:discriminator_GAIL}). It will be minimized when the generated samples are expert-like. From this expression, an implicit reward function that guides the generator to act expert-like (fool the generator) can be derived (Eq. \ref{eq:discriminator_GAIL_reward}).
+
+\begin{equation}
+R(s,a) = -\log (1 - D(s,a))
+\label{eq:discriminator_GAIL_reward}
+\end{equation}
+
+\bigskip \noindent
+The generator can be sensitive to reward magnitude and variance. As the reward is implicitly obtained from the discriminator network, which is also being trained, the scale of rewards can change dramatically during training. For this reason it is a good idea to normalize the rewards in order to stabilize the learning.
+
+\bigskip \noindent
+Since GAIL does not explicitly learn the reward function, imperfect human demonstrations can degrade its performance. One study in the paper Goal-Aware Generative Adversarial Imitation Learning (GA-GAIL) \cite{tsurumine2022goalawaregenerativeadversarialimitation} attemps to address this issue. They implement a second discriminator network in parallel to the standard imitation discriminator; it distinguishes between the goal states from the demonstrations and states coming from the environment. This network serves as an additional reward signal guiding the agent towards the goal state. Authors successfully applied GA-GAIL to a robot cloth-manipulation task using imperfect human demonstrations. The robot being able to fold intricate soft-body objects such as cloth showcases the GAIL's potential for complex, high-dimensional tasks.
 
 % \bigskip \noindent
 % Maximum Entropy Inverse Reinforcement Learning \cite{ziebart2008maximum} aims to find a reward function that explains expert behavior while being as unbiased as possible. It does that by choosing the reward function that produces a trajectory distribution with maximum entropy, subject to the constraint that the expected feature counts match those of the expert. The idea is built upon a moment-matching principle. This principle states that if the expected values of the feature counts (sum of feature values across a trajectory) between the learner and the expert match, then the expert cost will be equal to the learner cost, and the behavior of the agent will result in a similar behavior to the expert's, without explicitly observing the expert's actions.
