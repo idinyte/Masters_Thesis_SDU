@@ -18,7 +18,7 @@ BALL_TYPE_3 = "3"
 BALL_TYPE_4 = "4"
 
 
-multiplier = 7
+multiplier = 3 # 7
 BALLS_MAP = {
             BALL_TYPE_1: (900*multiplier, 1100*multiplier),
             BALL_TYPE_2: (1400*multiplier, 1600*multiplier),

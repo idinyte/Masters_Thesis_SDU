@@ -151,16 +151,16 @@ If the environment is only partially observable or depends on past states, the p
 This framework allows mathematical expression of reinforcement learning problems. The expected return of a policy \( \pi \) can be described using value functions, which satisfy the recursive Bellman equations. The Bellman equations for on-policy methods are:
 
 \begin{align}
-V^\pi(s) &= \mathbb{E}_\pi \left[ r_{t+1} + \gamma V^\pi(S_{t+1}) \mid S_t = s \right] \\
-Q^\pi(s, a) &= \mathbb{E}_\pi \left[ r_{t+1} + \gamma Q^\pi(S_{t+1}, A_{t+1}) \mid S_t = s, A_t = a \right]
+  V^\pi(s) &= \mathbb{E}_{a \sim \pi,\, s' \sim P} \left[ R(s, a, s') + \gamma V^\pi(s') \right] \\
+  Q^\pi(s, a) &= \mathbb{E}_{a \sim \pi,\, s' \sim P} \left[ R(s, a, s') + \gamma Q^\pi(s', a') \right]
 \end{align}
 
 \noindent
-These describe the expected return when following policy \( \pi \). Actions are sampled from the policy \( a \sim \pi(\cdot \mid s) \), and future states from the environment dynamics \( s_{t+1} \sim P(\cdot \mid s, a) \). The Bellman equations for optimal policy are:
+These describe the expected return when following policy \( \pi \). The Bellman equations for optimal policy are:
 
 \begin{align}
-V^*(s) &= \max_a \mathbb{E} \left[ r_{t+1} + \gamma V^*(S_{t+1}) \mid S_t = s, A_t = a \right] \\
-Q^*(s, a) &= \mathbb{E} \left[ r_{t+1} + \gamma \max_{a'} Q^*(S_{t+1}, a') \mid S_t = s, A_t = a \right]
+  V^*(s) &= \max_a \mathbb{E}_{s' \sim P} \left[ R(s, a, s') + \gamma V^*(s') \right] \\
+  Q^*(s, a) &= \mathbb{E}_{s' \sim P} \left[ R(s, a, s') + \gamma \max_{a'} Q^*(s', a') \right]
 \end{align}
 
 \noindent

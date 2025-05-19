@@ -33,7 +33,7 @@ ball_class = 3 # <-----------------------------
 robot_base_position = [1, -1, 1] if VR else [0, 0, 1]
 env = SortBallsEnv(robot, camera, vis, realtime, debug, VR, VRCameraPos, VRCameraRot, robot_base_position = robot_base_position, ball_idx=ball_class, fixed_gripper_ori=True)
 
-collect_trajectories = True
+collect_trajectories = False
 trajectory = []
 
 while env.is_connected() and not env.baseEnv.done:
