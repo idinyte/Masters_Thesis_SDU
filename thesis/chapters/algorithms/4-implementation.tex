@@ -428,10 +428,13 @@ The full training loop is described below:
 This training loop is repeated for a number of timesteps.
 
 \subsection{Learning From Demonstration}
-The first step for learning from the demonstrations is to acquire them.
+This section explains how learning from demonstration was implemented.
+
+\subsubsection{Environment Preparation}
+The VR needs to be enabled for the data collection. This step turned out to be more complicated than expected. Although technically PyBullet supports both VR and soft body physics, there is a lack of projects, examples, and research papers that implement both. The latest released PyBullet version as of the time of writing this is 3.2.5. By testing, it was discovered that the contact forces between the rigid bodies and soft bodies do not display accurate values in that version. As it turns out, this is a known issue, and the latest Bullet3 version in the GitHub master branch has it fixed. That means that you need to build the engine from source, edit the bat files, and enable the appropriate flags in order to have both VR and soft body support. After the VR and soft body support were enabled successfully, the same task environment was used, but with a couple of differences. The UR5 robot was moved to the opposite corner of the table, and the user's starting position was placed in the old robot's position instead.
 
 \subsubsection{Trajectory Acquisition}
-A VR was enabled for the task environment, with the only differences being the UR5 robot moved to the opposite corner of the table and the user's starting position being placed in the old robot's position instead. Exoskeleton \nametwo was used with the implementation as described in section \ref{implementation_2}. The target position for the virtual gripper is defined as the VR controller's position with a position offset given by the vector:
+ Exoskeleton \nametwo was used with the implementation as described in section \ref{implementation_2}. The target position for the virtual gripper is defined as the VR controller's position with a position offset given by the vector:
 
 \[
 \Delta \mathbf{p} = 
@@ -459,7 +462,7 @@ This offset brings the target pose from the back of the hand, where the controll
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=0.6\textwidth]{chapters/algorithms/images/IRL/OculusScreenshot1743757509.jpeg}
+\includegraphics[width=0.5\textwidth]{chapters/algorithms/images/IRL/OculusScreenshot1743757509.jpeg}
 \caption{Wearing exoskeleton \nametwo in VR environment.}
 \label{fig:exoskeleton_2_vr_env}
 \end{figure}
@@ -537,7 +540,7 @@ These trajectories are now ready to be used for training.
 \end{figure}
 
 \subsubsection{Training}
-The generative adversarial imitation learning from the imitation library was used. The generator was chosen as a SAC agent identical to the one used in RL section. The discriminator is a basic MLP with input size 25 (21 states and 4 actions), two hidden layers 32 neurons wide, and one output neuron. The $"n\_disc\_updates\_per\_round"$ is set to one, meaning descriminator will be trained only once after a single training update to the SAC agent. This choice was made after seeing that the discriminator becomes strong early. If the discriminator is too strong, the agent might stop learning as it does not get any rewards. The batch size was set to 128; other hyperparameters were kept identical to the ones used in RL. A checkpoint callback was made to save the agent weights every 50000 steps, and the training was run indefinitely until it was stopped manually. The training alternates between improving the policy and improving the discriminator. The process is as follows:
+The generative adversarial imitation learning from the imitation library was used. The generator was chosen as a SAC agent identical to the one used in the RL section. The discriminator is a basic MLP with input size 25 (21 states and 4 actions), two hidden layers 32 neurons wide, and one output neuron. The $"n\_disc\_updates\_per\_round"$ is set to one, meaning the discriminator will be trained only once after a single training update to the SAC agent. This choice was made after seeing that the discriminator becomes strong early. If the discriminator is too strong, the agent might stop learning as it does not get any rewards. The batch size was set to 128; other hyperparameters were kept identical to the ones used in RL. A checkpoint callback was made to save the agent weights every 50000 steps, and the training was run indefinitely until it was stopped manually. The training alternates between improving the policy and improving the discriminator. The process is as follows:
 
 \begin{enumerate}
   \item Data collection. The generator (actor in SAC in this case) is run for a set number of steps, and each transition (s, a, s', done) is stored in the replay buffer. There must be the same amount or more samples in the replay buffer than the batch size (128 in this case).
@@ -548,7 +551,7 @@ The generative adversarial imitation learning from the imitation library was use
 
 \section{Results}
 \subsection{Classical algorithm}
-The classical algorithm is able to complete all of the tasks (locating the ball, grabbing it, classifying and placing it in the apropriate container), but all of the tasks have varying success rates. In order to measure the success rate, the task was ran for 100 attempts for each soft ball class. The results are grouped in 10's and shown in Table \ref{tab:successes_grouped}.
+The classical algorithm is able to complete all of the tasks (locating the ball, grabbing it, classifying and placing it in the appropriate container), but all of the tasks have varying success rates. In order to measure the success rate, the task was run for 100 attempts for each softball class. The results are grouped in 10s and shown in Table \ref{tab:successes_grouped}.
 
 \begin{table}[ht]
 \centering
@@ -571,70 +574,74 @@ The classical algorithm is able to complete all of the tasks (locating the ball,
 The failure rates for each experiment are shown in Table \ref{tab:experiment}.
 
 \begin{table}[ht]
-  \centering
-  \setlength{\tabcolsep}{6pt}
-  \setlength{\abovecaptionskip}{6pt}
-  \begin{tabular}{|c|c|c|c|c|c|}
-  \hline
-  \multirow{2}{*}{\textbf{Ball Type}} & \multirow{2}{*}{\textbf{Success}} & \multicolumn{4}{|c|}{\textbf{Failed to}} \\ \cline{3-6}
-   &  & \textbf{Locate ball} & \textbf{Grab ball} & \textbf{Classify ball} & \textbf{Place ball} \\ \hline
-  1 & 75 & 1 & 13 & 0 & 11 \\ \hline
-  2 & 38 & 0 & 8 & 53 & 1 \\ \hline
-  3 & 44 & 0 & 1 & 52 & 3 \\ \hline
-  4 & 28 & 0 & 0 & 67 & 5 \\ \hline
-  \rowcolor[HTML]{EFEFEF} \textbf{Total} & 185 & 1 & 22 & 172 & 20 \\ \hline
-  \end{tabular}
-  \caption{Experiment Outcomes for Different Ball Types}
-  \label{tab:experiment}
+\centering
+\setlength{\tabcolsep}{6pt}
+\setlength{\abovecaptionskip}{6pt}
+\begin{tabular}{|c|c|c|c|c|c|}
+\hline
+\multirow{2}{*}{\textbf{Ball Type}} & \multirow{2}{*}{\textbf{Success}} &\multicolumn{4}{|c|}{\textbf{Failed to}} \\ \cline{3-6}
+&  & \textbf{Locate ball} & \textbf{Grab ball} & \textbf{Classify ball} &\textbf{Place ball} \\ \hline
+1 & 75 & 1 & 13 & 0 & 11 \\ \hline
+2 & 38 & 0 & 8 & 53 & 1 \\ \hline
+3 & 44 & 0 & 1 & 52 & 3 \\ \hline
+4 & 28 & 0 & 0 & 67 & 5 \\ \hline
+\rowcolor[HTML]{EFEFEF} \textbf{Total} & 185 & 1 & 22 & 172 & 20 \\ \hline
+\end{tabular}
+\caption{Experiment Outcomes for Different Ball Types}
+\label{tab:experiment}
 \end{table}
 
 \noindent
-Majority of failures occur during classification step. This is suprising as the neural network responsible for classifying achieved 0 loss during training (Fig. \ref{fig:NN_train}), and 100\% successful classification rate when tested using the test set.
+The majority of failures occur during the classification step. This is surprising, as the neural network responsible for classifying achieved 0 loss during training (Fig. \ref{fig:NN_train}) and a 100\% successful classification rate when tested using the test set.
 
 \begin{figure}[ht]
-  \centering
-  \includegraphics[width=0.9\textwidth]{chapters/algorithms/images/NN_Train.png}
-  \caption{Training NN Classifier}
-  \label{fig:NN_train}
+\centering
+\includegraphics[width=0.9\textwidth]{chapters/algorithms/images/NN_Train.png}
+\caption{Training NN Classifier}
+\label{fig:NN_train}
 \end{figure}
 
 \subsection{Reinforcement learning}
-The training was performed on research platform UCloud. The training was ran for one week on a single NVIDIA T4 GPU 16 GB. The mean episode reward, losses and elapsed time can be seen in Fig. \ref{fig:rl_training}. Despite the extensive training it was only partially successesful. The agent only learned to locate the ball. It autonomously navigates close to the ball, but does not attempt to grab it, exploiting the high reward for being close to the ball. Moving the ball manually while the simulation is running influences robot trajectory, indicating the potential for autonomous self correction in unexpected situations.
+The training was performed on the research platform UCloud. The training was run for one week on a single NVIDIA T4 GPU 16 GB. The mean episode reward, losses, and elapsed time can be seen in Fig. \ref{fig:rl_training}. Despite the extensive training, it was only partially successful. The agent only learned to locate the ball. It autonomously navigates close to the ball but does not attempt to grab it, exploiting the high reward for being close to the ball. Moving the ball manually while the simulation is running influences robot trajectory, indicating the potential for autonomous self-correction in unexpected situations.
 
 \begin{figure}[ht]
-  \centering
-  \includegraphics[width=\textwidth]{chapters/algorithms/images/Reinforcement_learning.png}
-  \caption{SAC Reinforcement Learning Training}
-  \label{fig:rl_training}
+\centering
+\includegraphics[width=\textwidth]{chapters/algorithms/images/Reinforcement_learning.png}
+\caption{SAC Reinforcement Learning Training}
+\label{fig:rl_training}
 \end{figure}
 
 \subsection{Inverse Reinforcement Learning}
-The training was performed on a personal laptop equiped with NVIDIA Geforce GTX 1660 Ti 6GB GPU. The training was ran for 4 days. The discriminator metrics: loss, accuracy, entropy and prediction proportion can be seen in Fig. \ref{fig:irl_disc_training}. Other important metrics: episode reward, actor/critic losses, entropy coefficient and entropy coefficient loss can be seen in Fig. \ref{fig:irl_training}. The training was also only a partial success. The robot mimics the expert trajectories, it is able to locate, grab and sometimes place the ball, but it is not able to complete the task reliably. Often the agressive handling of the soft ball causes instabilities and abrupt end of the episode.
+The training was performed on a personal laptop equipped with an NVIDIA GeForce GTX 1660 Ti 6GB GPU. The training was run for 4 days. The discriminator metrics - loss, accuracy, entropy, and prediction proportion - can be seen in Fig. \ref{fig:irl_disc_training}. Other important metrics - episode reward, actor/critic losses, entropy coefficient, and entropy coefficient loss - can be seen in Fig. \ref{fig:irl_training}. The training was also only a partial success. The robot mimics the expert trajectories; it is able to locate, grab, and sometimes place the ball, but it is not able to complete the task reliably. Often the aggressive handling of the softball causes instabilities and an abrupt end to the episode.
 
 \begin{figure}[ht]
-  \centering
-  \includegraphics[width=\textwidth]{chapters/algorithms/images/IRL/discriminator training.png}
-  \caption{GAIL Inverse Reinforcement Learning Training (Discriminator Metrics)}
-  \label{fig:irl_disc_training}
+\centering
+\includegraphics[width=\textwidth]{chapters/algorithms/images/IRL/discriminator training.png}
+\caption{GAIL Inverse Reinforcement Learning Training (Discriminator Metrics)}
+\label{fig:irl_disc_training}
 \end{figure}
 
 \begin{figure}[ht]
-  \centering
-  \includegraphics[width=\textwidth]{chapters/algorithms/images/IRL/other_gail_metrics.png}
-  \caption{GAIL Inverse Reinforcement Learning Training}
-  \label{fig:irl_training}
+\centering
+\includegraphics[width=\textwidth]{chapters/algorithms/images/IRL/other_gail_metrics.png}
+\caption{GAIL Inverse Reinforcement Learning Training}
+\label{fig:irl_training}
 \end{figure}
 
 \section{Analysis and Discussion}
-The results showing that the classical method struggles classifying the ball are intriguing. The suspected cause is that during data collection the soft ball was initialized in the same position between the pads, but the forces might vary depending on the exact position. Also rotation of the ball could play an effect, because instead of being a perfectly smooth ball it has a rugged shape due to having small number of vertices, which could lead to small numerical differences. Higher reliability might be achieved by varying the position and rotation of the ball during data collection and if needed this data could be included in neural network input layer.
+The results showing that the classical method struggles classifying the ball are intriguing. The suspected cause is that during data collection the softball was initialized in the same position between the pads, but the forces might vary depending on the exact position. Also, rotation of the ball could have an effect, because instead of being a perfectly smooth ball, it has a rugged shape due to having a small number of vertices, which could lead to small numerical differences. Higher reliability might be achieved by varying the position and rotation of the ball during data collection, and if needed, this ball pose data relative to the gripper could be included in the neural network input layer.
 
 \bigskip \noindent
-To test whether the success rates differed significantly across ball types, a Kruskal-Wallis test was conducted using data in Table \ref{tab:successes_grouped}. The results revealed a statistically significant difference in success rates among the four ball types, $H(3) = 22.16$, $p < 0.001$. But no significat difference between ball types 2, 3 and 4, was observed $H(2) = 3.71$, $p  = 0.157$. This suggests that the significant overall effect is likely due to ball type 1, where the agent performed better. The most likely reason why the NN successfully classifies the balls is because when the robot grabs the ball, it often grabs them only by the top of it, resulting in smaller normal forces due to less compression, resulting in NN thinking the balls are less stiff and giving them lower classification. 
+To test whether the success rates differed significantly across ball types, a Kruskal-Wallis test was conducted using data in Table \ref{tab:successes_grouped}. The results revealed a statistically significant difference in success rates among the four ball types, $H(3) = 22.16$, $p < 0.001$. But no significant difference between ball types 2, 3, and 4 was observed ($H(2) = 3.71$, $p = 0.157$). This suggests that the significant overall effect is likely due to ball type 1, where the agent performed better. The most likely reason why the NN successfully classifies the balls is because when the robot grabs the ball, it often grabs them only by the top of it, resulting in smaller normal forces due to less compression, resulting in the NN thinking the balls are less stiff. 
 
 \bigskip \noindent
-On the other hand, softer balls had more grabing failures. When observing the simulation it was seen that softer balls had tendancy to slip more often, likely due to lower normal forces acting on the robot gripper resulting in smaller friction forces. Using stiffer balls or gripper designed to specifically grab round objects would improve this problem.
+On the other hand, softer balls had more grabbing failures. When observing the simulation, it was seen that softer balls had a tendency to slip more often, likely due to lower normal forces acting on the robot gripper resulting in smaller friction forces. Using stiffer balls or grippers designed to specifically grab round objects would mitigate this problem.
 
 \bigskip \noindent
-Regarding RL, the Fig. \ref{fig:rl_training} is analysed. The decreasing actor loss shows that on average, the agent chooses more actions with higher Q-values, which is expected as agent begins to exploit the strategy. The critic loss is stable most of the time, with spikes possibly occuring when actor encounters unusual or hard-to-predict states. The entropy coefficient loss reflects how well the algorithm is learning the entropy coefficienty. The loss has a similar mean and variance throughout the majority of training indicating that it has likely stabilized. The increasing rewards indicate that the agent is still improving, but when tested the agent does not attempt to grab the ball, meaning that reward gains are likely due to the robot being able to navigate close to the ball quicker. This also showcases the reward shaping problem, it can be difficult  and require many attempts to get it right.
+Regarding RL, Fig. \ref{fig:rl_training} is analyzed. The decreasing actor loss shows that on average, the agent chooses more actions with higher Q-values, which is expected as the agent begins to exploit the strategy. The critic loss is stable most of the time, with spikes possibly occurring when the actor encounters unusual or hard-to-predict states. The entropy coefficient loss reflects how well the algorithm is learning the entropy coefficient. The loss has a similar mean and variance throughout the majority of training, indicating that it has likely stabilized. The increasing rewards indicate that the agent is still improving, but when tested, the agent does not attempt to grab the ball, meaning that reward gains are likely due to the robot being able to navigate close to the ball quicker.
 
 \bigskip \noindent
+The IRL training took significantly less time. It was trained for only ~5.2e6 episodes compared to RL's 4e7 episodes. Despite that, IRL understood the objective better by attempting to grab and place the ball, but more nuanced handling is still needed in order to successfully and reliably complete the task. Fig. \ref{fig:irl_disc_training} shows that discriminator loss is high and noisy early on, then stabilizes near zero; the entropy is low, indicating high confidence; the accuracy for distinguishing between expert and generator is almost 100\%; and the proportion of predicting expert is around 50\%. All these signals indicate that the discriminator became too strong. It is possible that the network has memorized the expert trajectories and is overfitting, but that is unlikely due to the small network size. Another possibility is that there is some fundamental difference that makes the trajectories easily distinguishable. For example, the beginning of the trajectory is easy to distinguish, as the expert's starting position varies slightly, whereas the robot starts from the same position. This overconfident discriminator prevents the actor from learning further, as there is no longer a meaningful reward signal.
+
+\bigskip \noindent
+The Fig. \ref{fig:irl_training} shows that rewards stagnate, meaning the policy fails to improve. Actor loss stabilizing near zero means that the updates are small and the training likely plateaued. This is due to a lack of meaningful rewards from overconfident critics. The critic loss is high and noisy early and stable later, indicating that the critic has converged. Decreasing entropy coefficient shows that there is less exploration over time, also indicating premature convergence.

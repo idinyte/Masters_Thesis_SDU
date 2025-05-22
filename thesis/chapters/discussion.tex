@@ -1,16 +1,6 @@
 \chapter{Discussion}
 \label{chap:discussion}
+Two exoskeletons for physical touch if virtual objects have been created. The second one is an improvement over the first one, as it uses one less motor, resulting in cost savings and weight reduction. The linear motion resembles that of a robotic gripper more accurately, and finally, the second exoskeleton allows for movement tracking in VR due to the presence of global position tracking provided by a VR controller attached to the back of the hand. Exponential smoothing on the force signal provides a more pleasant user experience. The smoothing window size of 10 is a personal preference; further studies could be conducted that test what setting the majority of users prefer. The second design of the exoskeleton does have a higher static friction. The low system efficiency is surprising, as linear guides are used and friction should be minimal. The friction could stem from printed moving parts touching slightly because the exoskeleton is not fully tightened, as seen in the gap in Fig. \ref{fig:second_exoskeleton}, top left image. This occurred because the holes for the brass inserts were designed on the side that has a palm rest, making it hard to hammer in the inserts without breaking the palm rest. A future design could swap the sides of the brass inserts, making them easier to insert, resulting in a tighter design. Another design improvement to increase the efficiency could be manufacturing the double rack and pinion from metal instead of 3D printing it. Lastly, making the system wireless for the final design might improve the user experience.
 
-Summing up all the main parts 1 to n conclusions.
-
-TODO human studies for choosing smoothing window size
-
-Experiment shows that exoskeleton has high static friction
-
-Results, controlling torque 0 and switching.
-
-comparing robo grip v1 vs v2 (2 more accurate, 1 less friction, room for improvement, future work)
-
-Difficulties with pybullet (setting up VR and soft body, soft body deletion bugs, soft body instability)
-
-(questions to learn, why projection matrix?)
+\bigskip \noindent
+Working with PyBullet is mostly a great experience, but quite a few issues were encountered. Enabling the VR with soft body support might be challenging for some, as it needs to be built from source in the right way, and for that, a researcher needs to read and understand the code used for building the engine, as it is not well documented. Other issues that were encountered are that it is not possible to delete soft bodies from the environment; only instantiating them is possible. And lastly, the soft bodies are not very stable; they have a tendency to explode if misconfigured or have high forces acting on them.
