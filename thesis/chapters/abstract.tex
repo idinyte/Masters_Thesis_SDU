@@ -1,4 +1,62 @@
 % abstract / resume
 \begin{abstract}
-  Many companies are struggling to combine Robotics and Machine Learning\dots   
+\noindent
+The VR and AR technologies are rapidly improving, but most of these devices only immerse two senses—sight and hearing. Humans have five senses, leaving lots of room for improvements for fully immersive virtual experiences. This thesis is about incorporating the sense of touch of virtual objects through the use of a wearable exoskeleton. Two prototypes have been developed: the first one with the purpose of quickly setting up and testing the engine and feasibility of the task and a second one with the purpose of being simple, affordable, and fully functional. It has been built specifically for the task of training robots in simulation by enabling the collection of expert trajectories. The common methods for controlling the robot for pick-and-place tasks are compared: the classical method of designing trajectories via points, reinforcement learning, and inverse reinforcement learning. The choice of the physics engine is Bullet3 with PyBullet bindings, as it enables the necessary parts for this thesis: the use of VR, soft body physics, and training of the robots. The exoskeleton has been successfully developed and tested in a VR environment. The IRL algorithm was trained using expert trajectories; it performed better than the plain RL, but the most successful algorithm was the classical one, indicating that the complex AI solution might not always be the best, especially in cases where the simpler solution suffices.
 \end{abstract}
+
+\newpage
+\subsection{List of Abbreviations}
+\bigskip
+\begin{acronym}
+  \acro{A3C}{Asynchronous Advantage Actor-Critic}
+  \acro{ACN}{Actor-Critic Network}
+  \acro{ADAM}{Adaptive Momentum Estimation}
+  \acro{AI}{Artificial Intelligence}
+  \acro{AR}{Augmented Reality}
+  \acro{BC}{Behavior Cloning}
+  \acro{CCW}{Counter-Clockwise}
+  \acro{CW}{Clockwise}
+  \acro{DC}{Direct Current}
+  \acro{DDPG}{Deep Deterministic Policy Gradient}
+  \acro{DOF}{Degree of Freedom}
+  \acro{DP}{Dynamic Programming}
+  \acro{DQN}{Deep Q-Network}
+  \acro{EA}{Evolutionary Algorithm}
+  \acro{FPS}{Frames Per Second}
+  \acro{FPFH}{Fast Point Feature Histograms}
+  \acro{FS}{Full Scale}
+  \acro{GA}{Genetic Algorithm}
+  \acro{GA-GAIL}{Goal-Aware Generative Adversarial Imitation Learning}
+  \acro{GAIL}{Generative Adversarial Imitation Learning}
+  \acro{GAN}{Generative Adversarial Network}
+  \acro{GPU}{Graphics Processing Unit}
+  \acro{GUI}{Graphical User Interface}
+  \acro{HER}{Hindsight Experience Replay}
+  \acro{ICP}{Iterative Closest Point}
+  \acro{IMU}{Inertial Measurement Unit}
+  \acro{IRL}{Inverse Reinforcement Learning}
+  \acro{LfD}{Learning from Demonstration}
+  \acro{MDP}{Markov Decision Process}
+  \acro{MLP}{Multilayer Perceptron}
+  \acro{MM-IRL}{Maximum Margin Inverse Reinforcement Learnin}
+  \acro{MSE}{Mean Square Error}
+  \acro{MuJoCo}{Multi-Joint dynamics with Contact}
+  \acro{NDC}{Normalized Device Coordinates}
+  \acro{NN}{Neural Network}
+  \acro{PC}{Personal Computer}
+  \acro{PPO}{Proximal Policy Optimization}
+  \acro{PWM}{Pulse Width Modulation}
+  \acro{RANSAC}{Random Sample Consensus}
+  \acro{RC}{Radio Controlled}
+  \acro{RL}{Reinforcement Learning}
+  \acro{RO}{Rated Output}
+  \acro{ROS}{Robotics Operating System}
+  \acro{SAC}{Soft Actor-Critic}
+  \acro{SEA}{Series Elastic Actuator}
+  \acro{SLERP}{Spherical Linear Interpolation}
+  \acro{SVD}{Singular Value Decomposition}
+  \acro{TD}{Temporal Difference}
+  \acro{TRPO}{Trust Region Policy Optimization}
+  \acro{URDF}{Unified Robot Description Format}
+  \acro{VR}{Virtual Reality}
+\end{acronym}
