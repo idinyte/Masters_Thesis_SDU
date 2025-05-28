@@ -1,6 +1,4 @@
 \section{Implementation 1}
-
-
 A PyBullet environment has been created; it consists of a table, a softball, and a Robotiq 140 gripper (Fig. \ref{fig:pybullet_env_design_one}). The table and gripper were imported using a Unified Robot Description Format (URDF), an XML-based file format used to describe the physical and kinematic properties of a robot. The softball was created using open-source 3D modeling software - Blender. The blender file exported as .obj provides only the surface mesh. To obtain the volumetric mesh needed to simulate the soft body, open-source software - GMSH was used. 
 
 \begin{figure}[ht]
@@ -11,7 +9,7 @@ A PyBullet environment has been created; it consists of a table, a softball, and
 \end{figure}
 
 \bigskip \noindent
-The gripper is controlled by a single motor using position control. The stroke range of the gripper was calculated by measuring the distance of a fully closed and fully open gripper. The stroke range turned out to be from 0 to 0.127 simulation distance units. A function that controls the Robotiq gripper based on distance instead of a motor angle was created by linearly spacing 100 points of the gripper's stroke range, measuring the angle of the motor and the distance between the fingerpads in simulation, and fitting this data using a polynomial (Fig. \ref{fig:robotiq_polynomial_fit}).
+The virtual gripper is controlled by a single motor using position control. The stroke range of the gripper was calculated by measuring the distance between the finger pads of a fully closed and fully open gripper. The stroke range turned out to be from 0 to 0.127 simulation distance units. A function that controls the Robotiq gripper based on distance instead of a motor angle was created by linearly spacing 100 points of the gripper's stroke range, measuring the angle of the motor and the distance between the fingerpads in simulation, and fitting this data using a polynomial (Fig. \ref{fig:robotiq_polynomial_fit}).
 
 \begin{figure}[ht]
 \centering
@@ -21,7 +19,7 @@ The gripper is controlled by a single motor using position control. The stroke r
 \end{figure}
 
 \bigskip \noindent
-In order to control the gripper opening in the simulation, an equivalent function needs to be created for the exoskeleton. Then the calculated exoskeleton gripper opening distance could be sent and applied directly to the simulation in real time. The distance between exoskeleton finger pads can be calculated using simple trigonometry (Eq. \ref{eq:trigonometry_distance_prototype1}, Fig. \ref{fig:trigonometry_distance_prototype1}). This distance calculated from the motor positions is normalized and then scaled to the gripper's stroke range in the simulation before being applied.
+In order to control the gripper opening in the simulation, an equivalent function needs to be created for the exoskeleton. This way the calculated exoskeleton gripper opening distance could be sent and applied directly to the simulation in real time. The distance between exoskeleton finger pads can be calculated using simple trigonometry (Eq. \ref{eq:trigonometry_distance_prototype1}, Fig. \ref{fig:trigonometry_distance_prototype1}). This distance calculated from the motor positions is normalized and then scaled to the gripper's stroke range in the simulation before being applied.
 
 \begin{equation}
 \label{eq:trigonometry_distance_prototype1}
@@ -146,7 +144,7 @@ The motor measures the supplied current internally and provides a value for it i
 \end{figure}
 
 \bigskip \noindent
-The PID controller has positional, integral, and derivative gains Kp, Ki, and Kd that need to be tuned. When the transfer function is known, analytical methods such as root locus can be used to systematically tune a closed-loop system's pole locations as a function of PID gains to meet performance and stability requirements. Model-free systems are often tuned manually. Heuristic approaches like Ziegler–Nichols can be used to obtain initial controller parameters. Manual tuning proved to be difficult and time-consuming. It was easy to get stuck in a local minimum, and drastic changes in gains require restarting the tuning process. During this trial-and-error phase, a thought occurred to me. Could an evolutionary algorithm (EA) be employed to automatically tune a PID controller of a model-free system? EA algorithms are inspired by biology and the process of natural selection, where the fittest individuals (those that have better adaptation to their environment) get more chances to reproduce, their offspring have a chance to inherit those strong traits from the genes of their parents, making subsequent generations more adapted to their environment. A member of the population could be initialized with three genes that represent Kp, Ki, and Kd values. If the fitness of the member could be measured using some kind of fitness function, by the process of evolution, crossover, and gene mutation, a variety of PID gains would be tested, and the genes of the strongest individual after simulation would be used as the controller PID values. When the softball in the simulation is squeezed, the reaction forces and thus the target torques/currents will be changing rapidly. Intuitively, a good fitness function should encompass rapid changes. For this reason, a target current is chosen as a step function (Eq. \ref{eq:test_ga}), and the fitness of the individuals will be represented by a sum of absolute errors, meaning the best-performing members of the population will have the lowest tracking error.
+The PID controller has positional, integral, and derivative gains Kp, Ki, and Kd that need to be tuned. When the transfer function is known, analytical methods such as root locus can be used to systematically tune a closed-loop system's pole locations as a function of PID gains to meet performance and stability requirements. Model-free systems are often tuned manually. Heuristic approaches like Ziegler–Nichols can be used to obtain initial controller parameters. Manual tuning proved to be difficult and time-consuming. It was easy to get stuck in a local minimum, and drastic changes in gains require restarting the tuning process. During this trial-and-error phase, a thought occurred - could an evolutionary algorithm (EA) be employed to automatically tune a PID controller of a model-free system? EA algorithms are inspired by biology and the process of natural selection, where the fittest individuals (those that have better adaptation to their environment) get more chances to reproduce, their offspring have a chance to inherit those strong traits from the genes of their parents, making subsequent generations more adapted to their environment. A member of the population could be initialized with three genes that represent Kp, Ki, and Kd values. If the fitness of the member could be measured using some kind of fitness function, by the process of evolution, crossover, and gene mutation, a variety of PID gains would be tested, and the genes of the strongest individual after simulation would be used as the controller PID values. When the softball in the simulation is squeezed, the reaction forces and thus the target torques/currents will be changing rapidly. Intuitively, a good fitness function should encompass rapid changes. For this reason, a target current is chosen as a step function (Eq. \ref{eq:test_ga}), and the fitness of the individuals will be represented by a sum of absolute errors, meaning the best-performing members of the population will have the lowest tracking error.
 
 \begin{equation}
 f(\text{iteration}) =
@@ -177,13 +175,13 @@ The exoskeleton was also tested by squeezing the virtual ball in the simulation.
 \centering
 \begin{subfigure}{\textwidth}
 \centering
-\includegraphics[width=0.7\linewidth]{chapters/exoskeleton/images/genetic_algorithm/testing_ball_switching.png}
+\includegraphics[width=0.65\linewidth]{chapters/exoskeleton/images/genetic_algorithm/testing_ball_switching.png}
 \caption{Current}
 \end{subfigure}
 \centering
 \begin{subfigure}{\textwidth}
 \centering
-\includegraphics[width=0.7\linewidth]{chapters/exoskeleton/images/genetic_algorithm/testing_pwm_switching.png}
+\includegraphics[width=0.65\linewidth]{chapters/exoskeleton/images/genetic_algorithm/testing_pwm_switching.png}
 \caption{PWM}
 \end{subfigure}
 \caption{Squeezing the virtual ball 5 times using PWM control}
@@ -195,7 +193,7 @@ This control mode allows the current to be controlled directly. Internally it wo
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.7\linewidth]{chapters/exoskeleton/images/current/current_control.png}
+\includegraphics[width=0.65\linewidth]{chapters/exoskeleton/images/current/current_control.png}
 \caption{Current control test}
 \label{fig:current_control_test}
 \end{figure}
@@ -205,7 +203,7 @@ In Fig. \ref{fig:current_control_5_times_squeeze} it can be seen that when the v
 
 \begin{figure}[h!t]
 \centering
-\includegraphics[width=0.7\linewidth]{chapters/exoskeleton/images/current/squeezing_ball_5_times.png}
+\includegraphics[width=0.65\linewidth]{chapters/exoskeleton/images/current/squeezing_ball_5_times.png}
 \caption{Squeezing the virtual ball 5 times using current control}
 \label{fig:current_control_5_times_squeeze}
 \end{figure}
@@ -221,14 +219,14 @@ In Fig. \ref{fig:current_control_5_times_squeeze} it can be seen that when the v
 \centering
 \begin{subfigure}{\textwidth}
 \centering
-\includegraphics[width=0.7\linewidth]{chapters/exoskeleton/images/current/No_smoothing.png}
+\includegraphics[width=0.65\linewidth]{chapters/exoskeleton/images/current/No_smoothing.png}
 \caption{No target current smoothing}
 \label{fig:current_no_smoothing}
 \end{subfigure}
 \centering
 \begin{subfigure}{\textwidth}
 \centering
-\includegraphics[width=0.7\linewidth]{chapters/exoskeleton/images/current/smoothing_k10.png}
+\includegraphics[width=0.65\linewidth]{chapters/exoskeleton/images/current/smoothing_k10.png}
 \caption{Target current exponential smoothing with K=10}
 \label{fig:current_smoothing}
 \end{subfigure}

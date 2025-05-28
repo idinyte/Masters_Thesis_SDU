@@ -1,0 +1,17 @@
+\addvspace {10pt}
+\addvspace {10pt}
+\contentsline {table}{\numberline {2.1}{\ignorespaces Feature Comparison of Popular Physics Simulators for Robotics Applications}}{4}{table.caption.6}%
+\contentsline {table}{\numberline {2.2}{\ignorespaces RoboGripVR V2 Exoskeleton Parts}}{23}{table.caption.29}%
+\contentsline {table}{\numberline {2.3}{\ignorespaces Spur Gear Parameters}}{23}{table.caption.31}%
+\addvspace {10pt}
+\contentsline {table}{\numberline {3.1}{\ignorespaces Comparison of common RL methods. D - discrete, C - continuous, NN - neural network.}}{40}{table.caption.49}%
+\contentsline {table}{\numberline {3.2}{\ignorespaces Ball types and their respective properties.}}{45}{table.caption.56}%
+\contentsline {table}{\numberline {3.3}{\ignorespaces Observation Space}}{51}{table.caption.65}%
+\contentsline {table}{\numberline {3.4}{\ignorespaces Action Space}}{51}{table.caption.66}%
+\contentsline {table}{\numberline {3.5}{\ignorespaces Comparison of Chosen and Default Parameters for SAC}}{54}{table.caption.69}%
+\contentsline {table}{\numberline {3.6}{\ignorespaces Successes in groups of 10}}{60}{table.caption.77}%
+\contentsline {table}{\numberline {3.7}{\ignorespaces Experiment Outcomes for Different Ball Types}}{60}{table.caption.78}%
+\addvspace {10pt}
+\addvspace {10pt}
+\addvspace {10pt}
+\addvspace {10pt}

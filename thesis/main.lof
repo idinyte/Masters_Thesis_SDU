@@ -1,0 +1,45 @@
+\addvspace {10pt}
+\addvspace {10pt}
+\contentsline {figure}{\numberline {2.1}{\ignorespaces Design of Dexmo Glove}}{8}{figure.caption.11}%
+\contentsline {figure}{\numberline {2.2}{\ignorespaces Design of Sensaglove Nova 2}}{9}{figure.caption.12}%
+\contentsline {figure}{\numberline {2.3}{\ignorespaces Design of DextrES}}{9}{figure.caption.13}%
+\contentsline {figure}{\numberline {2.4}{\ignorespaces Design of RoboGripVR V1 }}{12}{figure.caption.14}%
+\contentsline {figure}{\numberline {2.5}{\ignorespaces PyBullet environment for testing RoboGripVR V1 }}{12}{figure.caption.15}%
+\contentsline {figure}{\numberline {2.6}{\ignorespaces Polynomial fitting of data between gripper's motor angle and distance between finger pads}}{13}{figure.caption.16}%
+\contentsline {figure}{\numberline {2.7}{\ignorespaces Diagram of distance calculation for RoboGripVR V1 }}{14}{figure.caption.17}%
+\contentsline {figure}{\numberline {2.8}{\ignorespaces Varying subdivission setting}}{15}{figure.caption.18}%
+\contentsline {figure}{\numberline {2.9}{\ignorespaces Force diagrams}}{16}{figure.caption.19}%
+\contentsline {figure}{\numberline {2.10}{\ignorespaces Diagram of PID controller}}{17}{figure.caption.21}%
+\contentsline {figure}{\numberline {2.11}{\ignorespaces Function for testing trained PID values}}{18}{figure.caption.22}%
+\contentsline {figure}{\numberline {2.12}{\ignorespaces Squeezing the virtual ball 5 times using PWM control}}{19}{figure.caption.23}%
+\contentsline {figure}{\numberline {2.13}{\ignorespaces Current control test}}{20}{figure.caption.25}%
+\contentsline {figure}{\numberline {2.14}{\ignorespaces Squeezing the virtual ball 5 times using current control}}{20}{figure.caption.26}%
+\contentsline {figure}{\numberline {2.15}{\ignorespaces Exponential smoothing with different window sizes}}{21}{figure.caption.27}%
+\contentsline {figure}{\numberline {2.16}{\ignorespaces Influence of exponential smoothing when squeezing a virtual ball}}{21}{figure.caption.28}%
+\contentsline {figure}{\numberline {2.17}{\ignorespaces RoboGripVR V2 Exoskeleton}}{24}{figure.caption.30}%
+\contentsline {figure}{\numberline {2.18}{\ignorespaces Connection Diagram}}{25}{figure.caption.32}%
+\contentsline {figure}{\numberline {2.19}{\ignorespaces Experimental Setup}}{25}{figure.caption.33}%
+\contentsline {figure}{\numberline {2.20}{\ignorespaces Experiment Results}}{26}{figure.caption.34}%
+\contentsline {figure}{\numberline {2.21}{\ignorespaces Squeezing soft virtual ball with target current smoothing window K=10 using RoboGripVR V2 }}{28}{figure.caption.37}%
+\addvspace {10pt}
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Biological and artificial neuron}}{32}{figure.caption.41}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces Multilayer Perceptron}}{33}{figure.caption.42}%
+\contentsline {figure}{\numberline {3.3}{\ignorespaces Reinforcement learning model}}{34}{figure.caption.44}%
+\contentsline {figure}{\numberline {3.4}{\ignorespaces Main Categories of Reinforcement Learning}}{38}{figure.caption.48}%
+\contentsline {figure}{\numberline {3.5}{\ignorespaces Environment setup.}}{44}{figure.caption.55}%
+\contentsline {figure}{\numberline {3.6}{\ignorespaces Projection matrix}}{47}{figure.caption.59}%
+\contentsline {figure}{\numberline {3.7}{\ignorespaces Scene point cloud.}}{48}{figure.caption.60}%
+\contentsline {figure}{\numberline {3.8}{\ignorespaces ACN architecture}}{53}{figure.caption.68}%
+\contentsline {figure}{\numberline {3.9}{\ignorespaces Wearing exoskeleton RoboGripVR V2 in VR environment.}}{57}{figure.caption.73}%
+\contentsline {figure}{\numberline {3.10}{\ignorespaces The frequency distribution of actions over all collected trajectories.}}{59}{figure.caption.74}%
+\contentsline {figure}{\numberline {3.11}{\ignorespaces Training NN Classifier}}{61}{figure.caption.79}%
+\contentsline {figure}{\numberline {3.12}{\ignorespaces SAC Reinforcement Learning Training}}{61}{figure.caption.81}%
+\contentsline {figure}{\numberline {3.13}{\ignorespaces GAIL Inverse Reinforcement Learning Training (Discriminator Metrics)}}{62}{figure.caption.83}%
+\contentsline {figure}{\numberline {3.14}{\ignorespaces GAIL Inverse Reinforcement Learning Training}}{63}{figure.caption.84}%
+\addvspace {10pt}
+\addvspace {10pt}
+\addvspace {10pt}
+\contentsline {figure}{\numberline {A.1}{\ignorespaces Design 1}}{72}{figure.caption.86}%
+\contentsline {figure}{\numberline {A.2}{\ignorespaces Design 2}}{72}{figure.caption.87}%
+\contentsline {figure}{\numberline {A.3}{\ignorespaces Design 3}}{72}{figure.caption.88}%
+\addvspace {10pt}

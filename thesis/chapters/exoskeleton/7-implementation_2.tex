@@ -71,7 +71,7 @@ Using these equations in the softball squeezing testing environment (Fig. \ref{f
 \subsection{Tracking}
 The goal position for the tracking is obtained by capturing the VR controller's pose and applying a fixed transformation to account for the physical offset between the controller (located on the back of the hand) and the exoskeleton. An issue arises when setting the goal position directly in the simulation every frame: the gripper passes through the virtual objects, and the user is not able to interact with them.
 
-\noindent
+\bigskip \noindent
 To overcome this issue, a proportional (P) controller is employed based on positional and orientational errors. Controlling the gripper through linear and angular velocities instead of directly setting the position allows the gripper to interact and collide with virtual objects. The positional error definition is shown in Eq. \ref{eq:pos_error_gripper_2}. 
 
 \begin{equation} e_p = p_{target} - p_{current} \label{eq:pos_error_gripper_2} \end{equation}

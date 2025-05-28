@@ -9,7 +9,7 @@ with open('output.txt', 'r', encoding='utf-8') as file:
     text = file.read()
 
 start_pattern = r"Recent advancements in computer hardware and software have enabled"
-end_pattern = r"Appendix - Gripper Ideation"
+end_pattern = r"the user experience and enable longer distance movement."
 
 start_match = re.search(start_pattern, text)
 end_matches = list(re.finditer(end_pattern, text))
