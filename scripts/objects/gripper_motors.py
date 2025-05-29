@@ -6,7 +6,7 @@ import math
 import numpy as np
 import traceback
 
-DEVICENAME = 'COM5'
+DEVICENAME = 'COM4'
 BAUDRATE = 1000000
 PROTOCOL_VERSION = 2.0
 

@@ -21,7 +21,7 @@ VR=False
 VRCameraPos = [0, 0, 1]
 VRCameraRot = [0, 0, 180]
 
-softBallPos = [0, 0, 1.045]
+softBallPos = [0, 0.01, 1.045]
 softBallYoungsModulus = 3000
 softBallName = "1"
 
@@ -54,13 +54,12 @@ while True:
 
   gripper.exosceleton_update(env.ball.id, ControlType.Current, verbose = False, plot = True)
   #print(i)
-  if 500 < i:
-    gripper.collect_force_data(env.ball.id)
+  gripper.collect_force_data(env.ball.id)
   
   if env.restart_episode:
     p.disconnect(env.baseEnv.physicsClient)
     env = SortBallsEnv(robot, camera, vis, realtime, debug, VR, VRCameraPos, VRCameraRot)
   
   i += 1
-  
-gripper.plot_forces(gripper_opening, softBallYoungsModulus)
+
+gripper.save_data()

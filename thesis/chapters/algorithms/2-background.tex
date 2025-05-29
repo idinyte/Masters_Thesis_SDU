@@ -4,7 +4,7 @@
 In 1961, Unimate, the first industrial robot, which worked on the General Motors assembly line, was created. The Unimate was a hydraulically operated 5-degrees-of-freedom arm that performed pick-and-place tasks. The robot could be programmed by manually moving a robot arm to the desired position and recording the position. Then the robot could replay the movement by moving to the same position. This resulted in the first of its kind point-to-point movement, which is still a standard feature in many robotic arms today. 
 
 \bigskip \noindent
-Such a control method is quite simple; it is most suited for simple, repetitive tasks in well-known environments. The simplest way to move between two points is to use linear interpolation. Orientation can also be interpolated, but the interpolation method depends on the chosen orientation representation. For example, if orientation is represented as quaternions, a spherical linear interpolation (SLERP) \cite{shoemake1985animating} can be used. This is because a quaternion is a rotation representation on a 4D unit sphere, and in order to move between two points on a sphere in the shortest distance possible, the movement has to follow a geodesic. 
+Such a control method is quite simple; it is most suited for simple, repetitive tasks in well-known environments. The simplest way to move between two points is to use linear interpolation. Orientation can also be interpolated, but the interpolation method depends on the chosen orientation representation. For example, if orientation is represented as quaternions, a spherical linear interpolation (SLERP) \cite{shoemake1985animating} can be used. A quaternion is a rotation representation on a 4D unit sphere, and in order to move between two points on a sphere in the shortest distance possible, the movement has to follow a geodesic. 
 
 \bigskip \noindent
 Linear interpolation results in a constant velocity motion. In practice, this means that at the beginning of the motion, the robot will need an infinite acceleration to achieve the desired velocity instantly, and at the end of the movement, it will need infinite deceleration to stop immediately. Objects with mass resist changes in motion due to inertia. The higher the object's mass is, the more force will be needed to accelerate it. The resistance to rotation also depends on the shape of the object, which is described by the moment of inertia. As a robot is a system constrained by physical limitations, infinite acceleration is not possible. Nonetheless, the motors will apply a high torque during the brief moments at the beginning and the end of the motion. This increases wear and tear on the motor and other components, leading to the decreased lifespan of the robot. This issue can be mitigated by using parabolic trajectories. Such a trajectory will have a linear increase and a decrease in its velocity profile instead of being constant throughout the whole trajectory. Consequently, the maximum acceleration will be smaller compared to just linear interpolation, leading to less wear and tear. A balance between trajectory duration and maximum acceleration can be achieved by merging these two methods. Linear trajectories with parabolic blends have a linear part in the middle and parabolic parts at the start and end of the interpolation.
@@ -13,25 +13,13 @@ Linear interpolation results in a constant velocity motion. In practice, this me
 There are many more interpolation methods. More natural-looking trajectories can be achieved by using splines. Splines ensure a smooth transition between path segments; they avoid abrupt changes in velocity and acceleration profiles. An easy way to implement splines in a path with many points is to use B-splines. This approach is recommended only for the parts in the trajectory that do not need to go through the point exactly, as B-splines are just an approximation of the path. If the robot has to move through the point in the path exactly, one of the interpolation methods should be used instead. 
 
 \bigskip \noindent
-The B-splines have a method for where to place an anchor point for fitting a Bezier curve. This methodical placement of anchor points is special in a way that it enables local control. Local control means that moving a single point in the trajectory will affect only that local portion of the trajectory, keeping the rest of the trajectory unaffected. The B-splines are easy to implement and have $C^2$ continuity. $C^2$ continuity (second-order continuity) ensures that the position, velocity, and acceleration in the trajectory are smooth. $C^0$ position continuity ensures that the end of one segment matches the start of another. $C^1$ velocity continuity ensures that the first derivatives at the end of one segment match the start of another. And $C^2$ acceleration continuity ensures that the second derivative matches at the junction points between the segments. It is possible to achieve even higher-order continuity; for example, quintic splines can achieve a $C^3$ jerk continuity or even higher if a higher-degree polynomial is used to interpolate between the points. 
+The B-splines have a method for where to place an anchor point for fitting a Bezier curve. This methodical placement of anchor points is special in a way that it enables local control. Local control means that moving a single point in the trajectory will affect only that local portion of the trajectory, keeping the rest of the trajectory unaffected. The B-splines are easy to implement and have $C^2$ continuity. $C^2$ continuity (second-order continuity) ensures that the position, velocity, and acceleration in the trajectory are smooth. $C^0$ position continuity ensures that the end of one segment matches the start of another. $C^1$ velocity continuity ensures that the first derivatives at the end of one segment match the start of another. And $C^2$ acceleration continuity ensures that the second derivative matches at the junction points between the segments.
 
 \bigskip \noindent
-Quintic splines, unlike B-splines, are an interpolation method. Quintic splines do come with several disadvantages, such as lack of local control and computational complexity, so the choice of splines used would depend on the use case scenario. Often interpolation methods are chosen for manually defined trajectories where precision is needed and approximation methods in recorded or noisy trajectories.
-
-
-% \bigskip \noindent
-% When moving between two points, it is not always clear if the robot will be able to move between them without collision. This is especially true with high-degree-of-freedom robotic arms, as even if the path for the end effector is clear, other robot parts may be in collision due to the configuration of the robot. It is a difficult problem to address efficiently due to the high dimensionality of the problem. Many modern robotics incorporate Rapidly-exploring Random Tree (RRT) \cite{lavalle1998rapidly} or RRT* \cite{karaman2011sampling} into their path planning algorithms to address this problem. RRT explores the robot's configuration space, which is a high-dimensional space that represents every possible configuration the robot can be in. C-Space can be divided into two sets: C-Free, a space with valid robot configurations, and C-Obs, a space where robot configuration would be in a collision. 
-
-% \begin{gather*}
-% C = C_{\text{free}} \cup C_{\text{obs}} \\
-% C_{\text{free}} \cap C_{\text{obs}} = \emptyset
-% \end{gather*}
-
-% \noindent
-% RRT can find a collision-free path between the two configurations in C-free space if one exists. The algorithm builds a tree-like structure by selecting a random point in a C-free space, connecting it to the closest node in a tree, and growing a branch from that tree towards the random point until it or the maximum step distance is reached. That point will be the new location for the node to be added into the tree if the shortest path between the node and the tree is obstacle-free. This process continues until a tree grows large enough so a path that connects the two points in configuration space is found. This method, however, does not yield the shortest path. RRT* addresses this issue by doing additional processing before placing a node in a tree. Within a specified search radius around the new point, RRT* checks if the nodes can be reconnected in a way that yields a shorter path. It has been proved that when the time goes to infinity, RRT* will yield the shortest path between two points by continuously rewiring the tree. 
+Quintic splines, unlike B-splines, are an interpolation method. Quintic splines do come with several disadvantages, such as lack of local control and computational complexity, but they can be better suited in time-critical scenarios, and they are better suited when smooth acceleration and jerk profiles are needed. Quintic splines can achieve a $C^3$ jerk continuity or even higher if a higher-degree polynomial is used to interpolate between the points. The choice of splines used would depend on the use case scenario. Often interpolation methods are chosen for manually defined trajectories where precision is needed and approximation methods in recorded or noisy trajectories.
 
 \subsection{Neural Networks}
-A neural network is a mathematical model inspired by biological neural network - the human brain (Fig. \ref{fig:artificial_and_human_neuron}). Neural networks are used in machine learning to achieve tasks that would be difficult or impossible by classical algorithms. The feedforward neural network \cite{lippmann1988introduction} was among the first types of neural networks. The information in such a network only flows forward from input to the output. Such a network is suitable for classification, regression, and pattern recognition tasks. Multilayer Perceptron (MLP) is the most common kind of feedforward neural network. It is divided into one-dimensional layers: an input layer, one or more hidden layers, and an output layer (Fig. \ref{fig:MLP}). If layers are fully connected, each neuron will be connected to every neuron in the previous layer. Modern networks can have millions and even billions of neurons; in such cases, weak connections are often pruned to optimize the network. The value of the neuron is calculated by multiplying inputs with weights and adding a bias Fig. \ref{fig:artificial_and_human_neuron}. As this operation is a linear function, the neurons need an additional activation function in order to learn non-linear patterns from the data.
+A neural network is a mathematical model inspired by biological neural network - the human brain (Fig. \ref{fig:artificial_and_human_neuron}). Neural networks are used in machine learning to achieve tasks that would be difficult or impossible by classical algorithms. The feedforward neural network \cite{lippmann1988introduction} was among the first types of neural networks. The information in such a network only flows forward from input to the output. Such a network is suitable for classification, regression, and pattern recognition tasks. Multilayer Perceptron (MLP) is the most common kind of feedforward neural network. It is divided into one-dimensional layers: an input layer, one or more hidden layers, and an output layer (Fig. \ref{fig:MLP}). If layers are fully connected, each neuron will be connected to every neuron in the previous layer. Modern networks can have millions and even billions of neurons; in such cases, weak connections are often pruned to optimize the network. The value of the neuron is calculated by multiplying inputs with weights and adding a bias (Fig. \ref{fig:artificial_and_human_neuron}). As this operation is a linear function, the neurons need an additional activation function in order to learn non-linear patterns from the data.
 
 \begin{figure}[ht]
   \centering
@@ -65,12 +53,7 @@ where:
 \end{itemize}
 
 \noindent
-The cross-entropy measures the difference between two probability distributions, leading to stronger gradients than using mean square error. For a one-hot encoded dataset, the cross-entropy simplifies to $\mathcal{L} = - \log(\hat{y}_{c})$ where $\hat{y}_c$ is the predicted probability of the true class. The goal of the neural network training process is to minimize this loss. This is done through a process called backpropagation. The weights and biases need to be adjusted in a way that leads to a lower loss. During the backpropagation, the gradients are calculated for each weight and bias by the use of the gradient chain rule. Then by taking a step for each weight and bias in the negative gradient direction, a loss will decrease. This process is repeated until either a local or global minimum is reached. When the network is big and there is a lot of data, it is impractical to use all of the data for each pass; often the data is split into smaller batches before being passed through the network. Another way a neural network training process is sped up is instead of using the vanilla gradient descent, a modern optimizer like Adam is often employed. Adam (Adaptive Momentum Estimation) improves the gradient descent with two key ideas. Firstly, it incorporates momentum by using the mean of past gradients. This helps the optimizer move in a constant direction and to reduce oscillations. Secondly, it optimizes the step size for each parameter individually based on past updates. This results in faster convergence, less sensitivity to noisy gradients (which can occur in mini-batch training), and less sensitivity to hyperparameter tuning.
-
-% \bigskip \noindent
-% Over the years, the feedforward neural network evolved into different architectures that are more suitable for specific tasks. Recurrent Neural Networks (RNNs) \cite{rumelhart1986learning} build upon a feedforward neural network by introducing loops in the network, a hidden state that carries information from the previous inputs. This makes RNNs ideal for tasks where order matters, such as language modeling or speech recognition. The hidden states however can not retain information over long period of time, for that an improvement was made with Long Short-Term Memory architecture. It uses cell state to carry information across time steps and gates that regulate what information should be store, what should be forgotten and what should be passed as an output. For image recognition and feature extraction tasks Convolutional Neural Networks (CNNs) \cite{krizhevsky2012imagenet} are often employed. Clasical image processing tasks, such as blurring, sharpening and edge detection are often achieved by sweeping a square 3x3 or bigger kernel throught the entire image and applying a convolution operation between kernel and each area in order to produce a new image pixel. Instead of using predefined kernel values, convolutional layers in CNNs learn these values during backpropogation. Image passed through convolution layers is called a feature map. A single image often produces many feature maps. Parameters like stride, padding, kernel size and pooling layers afftect the size of the feature map, but it is often smaller than the image itself, leading to a dense representation of the most important features. These feature maps then are flattened to one dimension and concatinated together before being passed through a feedforward neural network. CNNs themselves can only be around 15 layers deep before experiencing vanishing gradient problem. It has been found that deeper network can result in better feature extraction, a breaktrhough was achieved with residual neural network (ResNet) \cite{he2016deep} a type of CNN architecture that overcame the vanishing gradient problem. The ResNet layers can be 50 or even a 100 layers deep, making them the choice in many pre-trained backbones. For data compression, denoising and anomaly detection autoencoders are often used. They are often a fully connected networks with a bottleneck in the middle. This bottleneck is a lower-dimension space called laten space. It is the part of the network that captures the esential features of the input data.
-
-%\subsection{3D Camera Perception}
+The cross-entropy measures the difference between two probability distributions, leading to stronger gradients than using mean square error. For a one-hot encoded dataset, the cross-entropy simplifies to $\mathcal{L} = - \log(\hat{y}_{c})$ where $\hat{y}_c$ is the predicted probability of the true class. The goal of the neural network training process is to minimize this loss. This is done through a process called backpropagation. The weights and biases need to be adjusted in a way that leads to a lower loss. During the backpropagation, the gradients are calculated for each weight and bias by the use of the gradient chain rule. Then, by taking a step for each weight and bias in the negative gradient direction, a loss will decrease. This process is repeated until either a local or global minimum is reached. When the network is big and there is a lot of data, it is impractical to use all of the data for each pass; often the data is split into smaller batches before being passed through the network. Another way a neural network training process is sped up is instead of using the vanilla gradient descent, a modern optimizer like Adam is often employed. Adam (Adaptive Momentum Estimation) improves the gradient descent with two key ideas. Firstly, it incorporates momentum by using the mean of past gradients. This helps the optimizer move in a constant direction and to reduce oscillations. Secondly, it optimizes the step size for each parameter individually based on past updates. This results in faster convergence, less sensitivity to noisy gradients (which can occur in mini-batch training), and less sensitivity to hyperparameter tuning.
 
 \subsection{Reinforcement Learning}
 Reinforcement learning (RL) is a subset of machine learning. There are three main types of machine learning: supervised learning, unsupervised learning, and reinforcement learning. Supervised learning has labeled data; a model finds patterns that relate to labeled input-output data, and once trained, it can use those patterns to predict outcomes not yet known. Unsupervised learning has no labeled data or human feedback; instead, it finds hidden structure in the data itself and can be used to cluster it. RL learns through trial and error by interacting with the environment, receiving feedback in the form of reward or punishment \ref{fig:reinforcement_learning_model}. It is ideal for tasks that require sequential decision-making, such as playing games, navigating self-driving cars, or controlling robots, just to name a few.
@@ -109,7 +92,7 @@ Discount factor: $\gamma \in [0,1] $ is a parameter that discounts the future re
 Policy: the policy is what defines the agent's strategy. It is a mapping between states and actions. There are two types of policies, deterministic and stochastic. An agent following a deterministic policy will always choose the same action given the same state. On the other hand, an agent following a stochastic policy will have a probability distribution over the available actions.
 
 \bigskip \noindent
-Value function: it represents an expected cumulative reward for a certain state or state-action pair if the agent were to act according to the same policy forever after. It shows how good a particular state or action is. State-value function $V(s)$: represents expected reward starting in a state s. Action-value function $Q(s, a)$: represents expected reward for taking action a in state s and following the policy thereafter. The action-value function is also known as the Q-function.
+Value function: it represents an expected cumulative reward for a certain state or state-action pair if the agent were to act according to the same policy forever after. It shows how good a particular state or action is. State-value function $V(s)$: represents the expected reward starting in a state s. Action-value function $Q(s, a)$: represents the expected reward for taking action a in state s and following the policy thereafter. The action-value function is also known as the Q-function.
 
 \bigskip \noindent
 Exploration vs. Exploitation: it is a key challenge in RL on how to balance between exploration and exploitation. Exploitation means the agent chooses the best-known action in order to maximize its reward. Exploration means the agent tries less-known actions in order to discover new, potentially better strategies. There are several exploration vs. exploitation balancing strategies; one that is simple and well known is called $\epsilon - Greedy$. During the beginning of the training, $\epsilon \in [0,1]$ is initialized to a high value (e.g., 1), making the agent perform mostly random actions, and as training continues, epsilon decreases, making the robot prefer to exploit the policy (Eq. \ref{eq:e-greedy}).
@@ -164,77 +147,64 @@ These describe the expected return when following policy \( \pi \). The Bellman 
 \end{align}
 
 \noindent
-These define the maximum achievable return when the agent always chooses the best possible action. Bellman equations are foundational because they enable dynamic programming methods such as value iteration and policy iteration for computing optimal policies. Solving Bellman equations exactly is often not possible in large or continuous spaces, in that case approximate methods are used.
+These define the maximum achievable return when the agent always chooses the best possible action. Bellman equations are foundational because they enable dynamic programming methods such as value iteration and policy iteration for computing optimal policies. Solving Bellman equations exactly is often not possible in large or continuous spaces; in that case, approximate methods are used.
 
 \subsubsection{Overview of the Reinforcement Learning Methods}
-Problems that could be characterized by small MDPs are often solved using dynamic programming or temporal-difference (TD) updates. The states and actions from these low-dimensional problems can often be stored in a simple table. A classic algorithms Q-learning \cite{watkins_q-learning_1992} is an example of such method. Over time, function approximation with the use of neural networks extended RL to larger state spaces. The deep RL era was launched by the Deep Q-Network (DQN) \cite{mnih_human-level_2015}. It achieved human-level Atari game performance by using a convolutional neural net to approximate Q-values from raw pixel data. This success of function approximation spurred many deep RL algorithms that use neural nets for policies or value functions.
+Problems that could be characterized by small MDPs are often solved using dynamic programming or temporal-difference (TD) updates. The states and actions from these low-dimensional problems can often be stored in a simple table. A classic algorithm, Q-learning \cite{watkins_q-learning_1992} is an example of such a method. Over time, function approximation with the use of neural networks extended RL to larger state spaces. The deep RL era was launched by the Deep Q-Network (DQN) \cite{mnih_human-level_2015}. It achieved human-level Atari game performance by using a convolutional neural net to approximate Q-values from raw pixel data. This success of function approximation spurred many deep RL algorithms that use neural nets for policies or value functions.
 
 \begin{figure}[ht]
-  \centering
-  \includegraphics[width=0.8\linewidth]{chapters/algorithms/images/RL/RL_methods.png}
-  \caption{Main Categories of Reinforcement Learning}
-  \label{fig:reinforcement_learning_categories}
+\centering
+\includegraphics[width=0.8\linewidth]{chapters/algorithms/images/RL/RL_methods.png}
+\caption{Main Categories of Reinforcement Learning}
+\label{fig:reinforcement_learning_categories}
 \end{figure}
 
 \bigskip \noindent
-Methods of reinforcement learning can be put in three main categories: Value-based, Actor-Critic, and Policy Gradient (Fig. \ref{fig:reinforcement_learning_categories}).
+Methods of reinforcement learning can be put in three main categories: value-based, actor-critic, and policy gradient (Fig. \ref{fig:reinforcement_learning_categories}).
 
 \begin{itemize}
-  \item Value-based methods learn a value V(s) or action-value Q(a,s) function. From these functions a policy is derived by selecting actions with highest values (e.g. greedy or $\epsilon-greedy$). Value based methods are simple and stable for discrete action spaces, but require discretization or function approximation for continuous action spaces. They also do not perfrom well for stochastic policies. 
-  \item Policy gradient methods learn policy directly, without relying on value functions. The policy is typically parametrized. By computing gradients of the expected reward with respect to the policy parameters the policy is trained using gradient ascent. These methods can handle continuous action spaces and stochastic policies. Stohastic policies are particularly useful for partially observable environments and increased exploration. On the other hand, policy-based methods tend to have high variance in gradient estimates, which can lead to unstable training. Also these methods often converge to local optima, leading to suboptimal policies, so careful parameter tuning is required.
-  \item Actor-Critic methods combine ideas from both categories. They have a policy (actor) which is updated using feedback from a learned value function (critic). This critic's guidace reduces variance in actor's updates compared to purely policy gradient based methods. Actor-Critic methods can be flexible for both discrete and continuous action spaces, but due two different interacting components these methods can be more complex to implement and can be sensitive to the choice of hyperparemeters.
+\item Value-based methods learn a value V(s) or action-value Q(a,s) function. From these functions, a policy is derived by selecting actions with the highest values (e.g., greedy or $\epsilon-greedy$). Value-based methods are simple and stable for discrete action spaces but require discretization or function approximation for continuous action spaces. They also do not perform well for stochastic policies. 
+\item Policy gradient methods learn policy directly, without relying on value functions. The policy is typically parameterized. By computing gradients of the expected reward with respect to the policy parameters, the policy is trained using gradient ascent. These methods can handle continuous action spaces and stochastic policies. Stochastic policies are particularly useful for partially observable environments and increased exploration. On the other hand, policy-based methods tend to have high variance in gradient estimates, which can lead to unstable training. Also, these methods often converge to local optima, leading to suboptimal policies, so careful parameter tuning is required.
+\item Actor-critic methods combine ideas from both categories. They have a policy (actor) that is updated using feedback from a learned value function (critic). This critic's guidance reduces variance in actors' updates compared to purely policy gradient-based methods. Actor-critic methods can be flexible for both discrete and continuous action spaces, but due to two different interacting components, these methods can be more complex to implement and can be sensitive to the choice of hyperparameters.
 \end{itemize}
 
 \bigskip \noindent
-Characteristics of different methods are summarized in Table. \ref{tab:rl_methods}.
+Characteristics of different methods are summarized in table \ref{tab:rl_methods}.
 
 \begin{table}[ht]
-  \centering
-  \begin{tabular}{|l|c|c|c|c|c|l|}
-  \hline
-  \multicolumn{1}{|c|}{\rotatebox{270}{\parbox[c][3cm][c]{3cm}{\centering \textbf{Method}}}} &
-  \rotatebox{270}{\parbox{3cm}{\centering \textbf{Action Space}}} & 
-  \rotatebox{270}{\parbox{3cm}{\centering \textbf{Function\\Approximator}}} & 
-  \rotatebox{270}{\parbox{3cm}{\centering \textbf{TD Learning}}} & 
-  \rotatebox{270}{\parbox{3cm}{\centering \textbf{Model Free}}} & 
-  \rotatebox{270}{\parbox{3cm}{\centering \textbf{On/Off-Policy}}} & 
-  \rotatebox{270}{\parbox{3cm}{\centering \textbf{Reference}}} \\
-  \hline
-  \multicolumn{7}{|l|}{\textbf{Value-Based}} \\ \hline
-  Monte Carlo & D & Tabular & No & Yes & On & \cite{sutton2018reinforcement} \\
-  Q-Learning & D & Tabular & Yes & Yes & Off & \cite{watkins_q-learning_1992} \\
-  SARSA & D & Tabular & Yes & Yes & On & \cite{sutton2018reinforcement} \\
-  DQN & D & NN & Yes & Yes & Off & \cite{mnih_human-level_2015} \\  \hline
-  \multicolumn{7}{|l|}{\textbf{Policy Gradient}} \\ \hline
-  VPG & D/C & NN & No & Yes & On & \cite{10.5555/3009657.3009806} \\
-  REINFORCE & D/C & NN & No & Yes & On & \cite{williams_simple_1992} \\ \hline
-  \multicolumn{7}{|l|}{\textbf{Actor-Critic}} \\ \hline
-  TRPO & D/C & NN & Yes (Critic) & Yes & On & \cite{schulman2017trustregionpolicyoptimization} \\
-  PPO & D/C & NN & Yes (Critic) & Yes & On & \cite{schulman2017proximalpolicyoptimizationalgorithms} \\ 
-  A3C & D/C & NN & Yes & Yes & On & \cite{babaeizadeh2016reinforcement} \\
-  DDPG & C & NN & Yes & Yes & Off & \cite{lillicrap2019continuouscontroldeepreinforcement} \\
-  SAC & C & NN & Yes (Critic) & Yes & Off & \cite{haarnoja2018softactorcriticoffpolicymaximum} \\
-  \hline
-  \end{tabular}
-  \caption{Comparison of common RL methods. D - discrete, C - continuous, NN - neural network.}
-  \label{tab:rl_methods}
+\centering
+\begin{tabular}{|l|c|c|c|c|c|l|}
+\hline
+\multicolumn{1}{|c|}{\rotatebox{270}{\parbox[c][3cm][c]{3cm}{\centering \textbf{Method}}}} &
+\rotatebox{270}{\parbox{3cm}{\centering \textbf{Action Space}}} & 
+\rotatebox{270}{\parbox{3cm}{\centering \textbf{Function\\Approximator}}} & 
+\rotatebox{270}{\parbox{3cm}{\centering \textbf{TD Learning}}} & 
+\rotatebox{270}{\parbox{3cm}{\centering \textbf{Model Free}}} & 
+\rotatebox{270}{\parbox{3cm}{\centering \textbf{On/Off-Policy}}} & 
+\rotatebox{270}{\parbox{3cm}{\centering \textbf{Reference}}} \\
+\hline
+\multicolumn{7}{|l|}{\textbf{Value-Based}} \\ \hline
+Monte Carlo & D & Tabular & No & Yes & On & \cite{sutton2018reinforcement} \\
+Q-Learning & D & Tabular & Yes & Yes & Off & \cite{watkins_q-learning_1992} \\
+SARSA & D & Tabular & Yes & Yes & On & \cite{sutton2018reinforcement} \\
+DQN & D & NN & Yes & Yes & Off & \cite{mnih_human-level_2015} \\ \hline
+\multicolumn{7}{|l|}{\textbf{Policy Gradient}} \\ \hline
+VPG & D/C & NN & No & Yes & On & \cite{10.5555/3009657.3009806} \\
+REINFORCE & D/C & NN & No & Yes & On & \cite{williams_simple_1992} \\ \hline
+\multicolumn{7}{|l|}{\textbf{Actor-Critic}} \\ \hline
+TRPO & D/C & NN & Yes (Critic) & Yes & On & \cite{schulman2017trustregionpolicyoptimization} \\
+PPO & D/C & NN & Yes (Critic) & Yes & On & \cite{schulman2017proximalpolicyoptimizationalgorithms} \\ 
+A3C & D/C & NN & Yes & Yes & On & \cite{babaeizadeh2016reinforcement} \\
+DDPG & C & NN & Yes & Yes & Off & \cite{lillicrap2019continuouscontroldeepreinforcement} \\
+SAC & C & NN & Yes (Critic) & Yes & Off & \cite{haarnoja2018softactorcriticoffpolicymaximum} \\
+\hline
+\end{tabular}
+\caption{Comparison of common RL methods. D - discrete, C - continuous, NN - neural network.}
+\label{tab:rl_methods}
 \end{table}
 
 \noindent
-Modern robot control that uses RL for tasks such as pick-and-place uses continuous-action deep RL. A major challenge for a lot of these tasks is sparse rewards. The issue is that the agent does not know what to improve from failed attempts, it mostly learns from successes. Hindsight Experience Replay (HER) \cite{andrychowicz2018hindsightexperiencereplay} addresses this issue. The key idea for this method is to change the goal for failed attempts and pretend that that the goal it actually achieved was the goal all along. This significantly improving sample efficiency in many robotic tasks like pushing, sliding, or pick-and-place. The method works only for off-policy algorithms due to the need of replay buffer to manipulate past experiences. The robot training is usually done in simulation and transferred to real robots afterwards. Survey paper \cite{robotics10030105} note that while many algorithms have been tested, no single method stands out as an industry standard for pick-and-place tasks. The performance of algorithms vary based on task complexity, scene clutter, and the training environment, online vs simulation. SAC, PPO and DDPG are popular choices that are often combined with HER method for tasks that rely on sparse rewards.
-
-% The On-Policy method SARSA has the following Q-function update equation:
-
-% \begin{align}
-% Q(s_t, a_t) &\leftarrow Q(s_t, a_t) + \alpha \left( r_{t+1} + \gamma Q(s_{t+1}, a_{t+1}) - Q(s_t, a_t) \right)
-% \end{align}
-
-% \noindent
-% $\alpha \in [0,1]$ is a learning rate. The Off-Policy method Q-Learning has the following Q-function update equation:
-
-% \begin{align}
-% Q(s_t, a_t) &\leftarrow Q(s_t, a_t) + \alpha \left( r_{t+1} + \gamma \max_{a'} Q(s_{t+1}, a') - Q(s_t, a_t) \right)
-% \end{align}
+Modern robot control that uses RL for tasks such as pick-and-place uses continuous-action deep RL. A major challenge for a lot of these tasks is sparse rewards. The issue is that the agent does not know what to improve from failed attempts; it mostly learns from successes. Hindsight Experience Replay (HER) \cite{andrychowicz2018hindsightexperiencereplay} addresses this issue. The key idea for this method is to change the goal for failed attempts and pretend that the goal it actually achieved was the goal all along. This significantly improves sample efficiency in many robotic tasks like pushing, sliding, or pick-and-place. The method works only for off-policy algorithms due to the need for a replay buffer to manipulate past experiences. The robot training is usually done in simulation and transferred to real robots afterwards. Survey paper \cite{robotics10030105} notes that while many algorithms have been tested, no single method stands out as an industry standard for pick-and-place tasks. The performance of algorithms varies based on task complexity, scene clutter, and the training environment (online vs. simulation). SAC, PPO, and DDPG are popular choices that are often combined with the HER method for tasks that rely on sparse rewards.
 
 \subsection{Learning from Demonstration}
 RL generalizes to many applications requiring decision-making, but often it is difficult to design a reward function. Learning from Demonstration (LfD), also known as imitation learning, addresses this challenge by using expert demonstrations instead of a manually defined reward function. In LfD, an expert provides examples of how to perform a task, and the agent learns a policy that aims to imitate the expert's behavior. The environment in imitation learning is often defined as a Markov Decision Process. The environment has a set of states and actions, transition probabilities between the states, and an unknown reward function. The expert demonstrations, also known as trajectories, are defined as a sequence of state-action pairs. 
@@ -244,7 +214,7 @@ RL generalizes to many applications requiring decision-making, but often it is d
 \end{align}
 
 \noindent
-The expert demonstrations are assumend to be coming from an optimal policy $\pi^*$. There are a several approaches to LfD. In this section, two common methods will be discussed: behavior cloning (BC) and inverse reinforcement learning (IRL).
+The expert demonstrations are assumed to be coming from an optimal policy $\pi^*$. There are several approaches to LfD. In this section, two common methods will be discussed: behavior cloning (BC) and inverse reinforcement learning (IRL).
 
 \subsubsection{Behaviour Cloning}
 The idea of behavior cloning \cite{bain1995framework} is relatively straightforward. Given expert trajectories, learn a mapping from states to actions using supervised learning. A commonly used example to explain behavior cloning consists of a radio-controlled (RC) car equipped with sensors that is being controlled on a race track. A human expert would drive around the racetrack recording the state (camera feedback, speed) and actions (steering, acceleration). The training would consist of a neural network whose inputs are states from the expert trajectory and outputs are predicted actions. The network then would try to minimize the loss between predicted and expert actions. Behavioral cloning is a simple method, suited for tasks that do not require long-term planning and in which expert trajectories cover the whole state space. On the other hand, BC has severe limitations; it can only get as good as the expert, the agent can only perform well in situations it has seen before, and the generalization is poor. Often the agent does not match the expert trajectory perfectly, leading to an accumulation of error over time. Once the error grows large, the agent can find itself in a situation it has never seen before; this will lead to failure as the agent will not know what to do in novel states. 
@@ -253,7 +223,7 @@ The idea of behavior cloning \cite{bain1995framework} is relatively straightforw
 The paper "ChauffeurNet: Learning to Drive by Imitating the Best and Synthesizing the Worst" \cite{bansal2018chauffeurnet} proposes that the network is trained not only on the expert trajectories, but the dataset is augmented with simulated uncommon scenarios, such as collisions and off-road events in the case of training a car to drive autonomously. Another interesting proposition \cite{goecks2020integratingbehaviorcloningreinforcement} is the Cycle-of-Learning (CoL) framework, where behavior cloning and reinforcement learning are combined by pre-training the agent from expert demonstrations and fine-tuning it through RL.
 
 \subsubsection{Inverse Reinforcement Learning}
-The inverse reinforcement learning takes a different approach to imitation learning. The main goal of this method is to learn the reward function instead of the policy directly. IRL can be more accurate but it is also more expensive to train as it requires an inner loop of RL to train on the learned reward function. 
+Inverse reinforcement learning takes a different approach to imitation learning. The main goal of this method is to learn the reward function instead of the policy directly. IRL can be more accurate, but it is also more expensive to train, as it requires an inner loop of RL to train on the learned reward function.
 
 \begin{algorithm}
 \caption{Inverse Reinforcement Learning (IRL)}
@@ -271,26 +241,7 @@ The inverse reinforcement learning takes a different approach to imitation learn
 In model-based approaches, the reward function is often assumed to be a linear combination of known features. At each iteration of IRL, a full RL problem is solved using approaches such as dynamic programming (DP) to compute the optimal policy under the current reward estimate. In the model-free approach, the reward function is often represented as a non-linear function (e.g., using neural networks), and transition probabilities are unknown; in this case, the reward function is continuously updated using short-horizon updates (e.g., 1-step policy evaluation rollouts) to estimate gradients and update the reward function incrementally.
 
 \bigskip \noindent
-The inverse reinforcement learning has very good generalization, meaning, unlike the behavior cloning, IRL can better deal with scenarios that were not explicitly shown by the expert as the model learns the goal rather than state-action mappings. Sometimes the policy trained with IRL can even outperform the expert. It is a good choice for more complex scenarios requiring long-term planning or decision-making. On the other hand, the IRL has problems of its own. The biggest is ambiguity in the reward function. There can be many reward functions that explain the behavior of the expert. Different approaches have been proposed on which reward function to choose.
-
-\subsubsection{Maximum Margin Inverse Reinforcement Learning}
-Maximum Margin Inverse Reinforcement Learning (MM-IRL) \cite{ratliff2006maximum} envisions the problem as structured prediction over the space of policies. The goal of MM-IRL is to learn a cost function, which is assumed to be a linear combination of features. The features are problem specific; for example, in a robot pick-and-place task, they could be the time taken to achieve a task, applied grasping force, smoothness of motion, etc. The cost function is just a negative reward function. The cost function here is assumed to be linear in the features.
-
-\begin{align}
-R(s,a) &= -C(s,a) \\
-C(s,a) &= w^T \phi(s,a)
-\end{align}
-
-\noindent
-where:
-\begin{itemize}
-\item \( C(s,a) \) is the cost function,
-\item \( w \) is the weight vector that must be learned,
-\item \( \phi(s,a) \) are the features describing state-action pairs,
-\end{itemize}
-
-\noindent
-Knowing the cost function is akin to knowing the reward function; using it, the policy can be learned. MM-IRL is a model-based method; solving the optimization requires access to environment dynamics. The problem can be viewed as a constrained optimization problem, where the goal is to find the set of weights $w$ that explain the expert trajectory. More specifically, the cost of the expert trajectory has to be smaller or equal to the cost of all the possible trajectories in MDP. This optimization problem can not be solved by a linear solver, as the trivial solution $w = 0$ would satisfy the constraint. To avoid this, MM-IRL introduces a margin: the cost of expert trajectories has to be smaller than the cost of all of the remaining trajectories by a fixed margin. In order to account for cases where the set of weights is very large (and thus the margin term becomes small), an additional constraint is added that maximizes the margin.
+The inverse reinforcement learning has very good generalization, meaning, unlike the behavior cloning, IRL can better deal with scenarios that were not explicitly shown by the expert, as the model learns the goal rather than state-action mappings. Sometimes the policy trained with IRL can even outperform the expert. It is a good choice for more complex scenarios requiring long-term planning or decision-making. On the other hand, the IRL has problems of its own. The biggest is ambiguity in the reward function. There can be many reward functions that explain the behavior of the expert. Different approaches have been proposed on which reward function to choose.
 
 \subsubsection{Generative Adversarial Imitation Learning}
 Generative Adversarial Imitation Learning (GAIL) \cite{ho2016generativeadversarialimitationlearning} is a model-free IRL algorithm. It frames the imitation learning problem as an adversarial game similar to generative adversarial networks (GANs). GAIL does not explicitly solve the IRL problem of uncovering the reward function; instead, its goal is to make the learner's policy indistinguishable from the expert trajectories through implicit rewards obtained from the discriminator. GAIL casts imitation learning as a minimax game between a policy (generator) and a discriminator (reward network). The discriminator $D\in(0,1)$ is a binary classifier that's trained to distinguish between expert and generator samples. It tries to maximize the expression for telling the expert and generator samples apart (Eq. \ref{eq:discriminator_GAIL}). High discriminator values mean that samples are expert-like.
@@ -312,14 +263,4 @@ R(s,a) = -\log (1 - D(s,a))
 The generator can be sensitive to reward magnitude and variance. As the reward is implicitly obtained from the discriminator network, which is also being trained, the scale of rewards can change dramatically during training. For this reason it is a good idea to normalize the rewards in order to stabilize the learning.
 
 \bigskip \noindent
-Since GAIL does not explicitly learn the reward function, imperfect human demonstrations can degrade its performance. One study in the paper Goal-Aware Generative Adversarial Imitation Learning (GA-GAIL) \cite{tsurumine2022goalawaregenerativeadversarialimitation} attemps to address this issue. They implement a second discriminator network in parallel to the standard imitation discriminator; it distinguishes between the goal states from the demonstrations and states coming from the environment. This network serves as an additional reward signal guiding the agent towards the goal state. Authors successfully applied GA-GAIL to a robot cloth-manipulation task using imperfect human demonstrations. The robot being able to fold intricate soft-body objects such as cloth showcases the GAIL's potential for complex, high-dimensional tasks.
-
-% \bigskip \noindent
-% Maximum Entropy Inverse Reinforcement Learning \cite{ziebart2008maximum} aims to find a reward function that explains expert behavior while being as unbiased as possible. It does that by choosing the reward function that produces a trajectory distribution with maximum entropy, subject to the constraint that the expected feature counts match those of the expert. The idea is built upon a moment-matching principle. This principle states that if the expected values of the feature counts (sum of feature values across a trajectory) between the learner and the expert match, then the expert cost will be equal to the learner cost, and the behavior of the agent will result in a similar behavior to the expert's, without explicitly observing the expert's actions.
-
-% \begin{align}
-% \mathbb{E}_{\pi_{\text{expert}}}[\phi(s, a)] &= \mathbb{E}_{\pi_{\text{learner}}}[\phi(s, a)]
-% \end{align}
-
-% \noindent
-% There can be many different trajectory distributions that can satisfy the moment-matching principle. The objective function that determines which distribution best matches feature counts is chosen as the one that has maximum entropy. The idea behind maximum entropy is to choose a distribution that is least committal, as this will result in the most unbiased distribution over feature counts.
+Since GAIL does not explicitly learn the reward function, imperfect human demonstrations can degrade its performance. One study in the paper Goal-Aware Generative Adversarial Imitation Learning (GA-GAIL) \cite{tsurumine2022goalawaregenerativeadversarialimitation} attempts to address this issue. They implement a second discriminator network in parallel to the standard imitation discriminator; it distinguishes between the goal states from the demonstrations and states coming from the environment. This network serves as an additional reward signal guiding the agent towards the goal state. Authors successfully applied GA-GAIL to a robot cloth-manipulation task using imperfect human demonstrations. The robot being able to fold intricate soft-body objects such as cloth showcases the GAIL's potential for complex, high-dimensional tasks.

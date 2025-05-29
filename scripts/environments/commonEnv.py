@@ -19,7 +19,10 @@ class CommonEnv:
         if self.VR:
             self.physicsClient = p.connect(p.SHARED_MEMORY)
         else:
-            self.physicsClient = p.connect(p.GUI if self.vis else p.DIRECT)
+            if self.vis:
+                self.physicsClient = p.connect(p.GUI, options="--width=1920 --height=1080")
+            else:
+                self.physicsClient = p.connect(p.DIRECT)
         
         assert self.physicsClient != -1, "Could not connect to the bullet server."
         self.connected = True
@@ -51,10 +54,10 @@ class CommonEnv:
             
         # debug camera position
         if self.vis:
-            p.resetDebugVisualizerCamera(cameraDistance=2, 
-                              cameraYaw=0.0, 
-                              cameraPitch=-15.0, 
-                              cameraTargetPosition=[0, 0, 1.5])
+            p.resetDebugVisualizerCamera(cameraDistance=1.5, 
+                              cameraYaw=180.0, 
+                              cameraPitch=-89.0, 
+                              cameraTargetPosition=[0, 0, 0])
 
     def step_simulation(self):
         if self.realtime:

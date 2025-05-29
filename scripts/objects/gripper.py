@@ -27,6 +27,7 @@ class Gripper:
       self.plot_i = 0
       self.plot_start_time = None
       self.target_left_pad_currents, self.target_right_pad_currents, self.present_left_pad_currents, self.present_right_pad_currents, self.present_left_pwm, self.present_right_pwm = [], [], [], [], [], []
+      self.current_time = []
 
   def initialize_gripper_controller(self, pos, orn):
         self.id = p.loadURDF(os.path.join(os.getcwd(), "assets/objects/UR5/urdf/robotiq_140_modified.urdf"), pos, orn)
@@ -157,18 +158,20 @@ class Gripper:
         self.target_right_pad_currents.append(target_right_pad_current)
         self.present_left_pad_currents.append(present_left_pad_current)
         self.present_right_pad_currents.append(present_right_pad_current)
+        self.current_time.append(time.time())
+        print(time.time())
         if control_type == ControlType.PWM:
           self.present_left_pwm.append(pwm_value_left)
           self.present_right_pwm.append(pwm_value_right)
-        iterations = 300
-        if self.plot_i == iterations:
-          print(f"iteration time is {1000 * (time.time() - self.plot_start_time) / iterations} ms")
-          if isinstance(self.gripper_motors, gripper2):
-            self.plot_single()
-          else:
-            self.plot()
-          if control_type == ControlType.PWM:
-            self.plot_pwm()
+        # iterations = 300
+        # if self.plot_i == iterations:
+        #   print(f"iteration time is {1000 * (time.time() - self.plot_start_time) / iterations} ms")
+        #   if isinstance(self.gripper_motors, gripper2):
+        #     self.plot_single()
+        #   else:
+        #     self.plot()
+        #   if control_type == ControlType.PWM:
+        #     self.plot_pwm()
           #self.plot_smoothed_curves()
           
   def plot_smoothed_curves(self):
@@ -305,4 +308,14 @@ class Gripper:
     
     plt.show()
     
+  def save_data(self):
+    l_forces = np.array(self.left_forces, dtype=np.float64)
+    r_forces = np.array(self.right_forces, dtype=np.float64)
+    target_lc = np.array(self.target_left_pad_currents, dtype=np.float64)
+    target_rc = np.array(self.target_right_pad_currents, dtype=np.float64)
+    present_lc = np.array(self.present_left_pad_currents, dtype=np.float64)
+    present_rc = np.array(self.present_right_pad_currents, dtype=np.float64)
+    current_time = np.array(self.current_time, dtype=np.float64)
+    data = np.column_stack((l_forces, r_forces, target_lc, target_rc, present_lc, present_rc, current_time))
+    np.savetxt('results_exo1.txt', data, fmt='%.6f', delimiter=' ')
   
