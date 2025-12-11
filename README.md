@@ -1,5 +1,25 @@
 ### Masters_Thesis_SDU
 
+Paper: thesis/main.pdf
+
+Presentation: https://docs.google.com/presentation/d/1ul82qsHP4YktPpbWv47e2lFntKokRuuEZ5_1GCtryyM/edit?usp=sharing
+
+# Overview
+
+A wearable exoskeleton was developed to enable physical interaction with soft bodies in VR and to collect expert trajectories for robotic training. The system uses Bullet3 (PyBullet) for VR integration, soft-body simulation, and robot control.
+
+# Main Results
+
+Two exoskeleton prototypes built: a rapid test model and a functional, low-cost version.
+
+Expert trajectories collected in VR for pick-and-place training.
+
+IRL performed better and required less training than RL, but classical trajectory control remained the most effective.
+
+# Future Work
+
+Wireless communication, improved efficiency, and expanded VR-robot interaction features.
+
 ## Setup Windows
 
 # Code
